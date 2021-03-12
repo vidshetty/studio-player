@@ -1,0 +1,52 @@
+.radio{
+    width: 100%;
+    height: 100%;
+    /* background-color: blue; */
+    background-color: black;
+    padding-top: 60px;
+    opacity: 0;
+    animation: comein 1s ease-in-out 0s 1 normal forwards;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+}
+@keyframes comein {
+    0%{
+        opacity: 0;
+    }
+    100%{
+        opacity: 1;
+    }
+}
+
+.topdiv{
+    position: relative;
+    width: 700px;
+    height: 350px;
+    /* background-color: white; */
+    margin-top: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.mainalbum{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    width: 350px;
+    height: 350px;
+    /* background-color: aqua; */
+    box-shadow: 5px 5px 30px black;
+}
+.firstalbum,.secondalbum{
+    width: 250px;
+    height: 250px;
+    /* background-color: black; */
+    box-shadow: 5px 5px 30px black;
+}
+.mainalbum img,.firstalbum img,.secondalbum img{
+    width: 100%;
+    height: auto;
+}

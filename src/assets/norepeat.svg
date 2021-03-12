@@ -1,0 +1,16 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0)">
+<rect width="200" height="200" fill="#202020"/>
+<rect x="10" y="10" width="180" height="180" rx="90" fill="white"/>
+<rect x="25" y="25" width="150" height="150" rx="75" fill="#202020"/>
+<rect x="165" y="85" width="35" height="30" fill="#202020"/>
+<rect y="85" width="35" height="30" fill="#202020"/>
+<path d="M20 100L37.3205 115H2.67949L20 100Z" fill="white"/>
+<path d="M182 100L164.679 85H199.321L182 100Z" fill="white"/>
+</g>
+<defs>
+<clipPath id="clip0">
+<rect width="200" height="200" fill="white"/>
+</clipPath>
+</defs>
+</svg>

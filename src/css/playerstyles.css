@@ -1,0 +1,382 @@
+.dummyplayer{
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 50px;
+    /* background-color: #202020; */
+    background-color: #101010;
+}
+.outerplayer{
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 90px;
+    /* background-color: aqua; */
+    background-color: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+.player{
+    /* position: absolute;
+    bottom: 0;
+    left: 0; */
+    /* width: 100%; */
+    width: 1400px;
+    /* width: 1000px; */
+    /* height: 100px; */
+    height: 100%;
+    /* background-color: black; */
+    /* background-color: #050505; */
+    /* background-color: #202020; */
+    /* background-color: #181818; */
+    transition: background-color 0.3s ease-in-out;
+    /* z-index: 20; */
+    /* background-color: #282828; */
+}
+.innerplayer{
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+}
+.albumpart,.playerpart,.volumepart{
+    height: 100%;
+    display: flex;
+}
+.albumpart{
+    width: 30%;
+    /* background-color: blue; */
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: 30px;
+}
+.albumthumbnail{
+    width: 55px;
+    height: 55px;
+    margin-right: 15px;
+    /* border-radius: 50%; */
+    box-shadow: 0px 0px 50px 5px black;
+}
+.albumthumbnail img{
+    width: 100%;
+    height: auto;
+}
+.songdetails{
+    width: 200px;
+    height: 40px;
+    /* background-color: white; */
+    display: flex;
+    flex-direction: column;
+}
+.songtitle,.songartists{
+    font-family: "montserrat";
+    font-weight: 500;
+    width: 200px;
+    /* height: 50%; */
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: default;
+}
+.songtitle{
+    /* background-color: blue; */
+    align-items: flex-end;
+    padding: 5px 0px 0px 2px;
+    color: white;
+    font-size: 0.8em;
+    font-weight: 500;
+    height: 60%;
+}
+.songartists{
+    /* background-color: blueviolet; */
+    color: rgba(2255,255,255,0.5);
+    font-size: 0.7em;
+    padding: 0px 0px 0px 2px;
+    height: 40%;
+}
+
+
+.playerpart{
+    width: 40%;
+    /* background-color: blue; */
+    display: flex;
+    flex-direction: column;
+}
+.controlsdiv,.progressbar{
+    width: 100%;
+    display: flex;
+}
+.controlsdiv{
+    height: 65%;
+    /* background-color: blue; */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.shuffle,.back,.middle,.forward,.repeat{
+    width: 40px;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+.shuffle,.repeat,.back,.forward{
+    /* background-color: aqua; */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+/* .back:hover,.forward:hover{
+    border: 1px solid white;
+} */
+.shuffle img{
+    width: 15px;
+    height: auto;
+    cursor: pointer;
+}
+.back img{
+   width: 15px;
+   height: auto;
+   cursor: pointer;
+   /* transform: rotateZ(180deg); */
+}
+.forward img{
+    width: 15px;
+    height: auto;
+    cursor: pointer;
+}
+.repeat img{
+    width: 15px;
+    height: auto;
+    cursor: pointer;
+}
+.bufferloader{
+    background-color: transparent;
+    width: 25px;
+    height: 25px;
+    border-top: 2px solid rgba(255,255,255,0.5);
+    border-right: 2px solid rgba(255,255,255,0.5);
+    border-bottom: 2px solid rgba(255,255,255,0.5);
+    border-left: 3px solid rgba(255,255,255,0);
+    border-radius: 50%;
+    animation: buffer 0.5s ease-in-out 0s infinite normal forwards;
+}
+@keyframes buffer {
+    0%{
+        transform: rotate(0deg);
+    }
+    /* 50%{
+        transform: rotate(180deg);
+    } */
+    100%{
+        transform: rotate(360deg);
+    }
+}
+.bufferloader.hidden{
+    display: none;
+}
+.mainplay{
+    /* width: 40px; */
+    width: 35px;
+    /* height: 40px; */
+    height: 35px;
+    border-radius: 50%;
+    /* background-color: rgba(255,255,255,0); */
+    background-color: rgba(255,255,255,1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* padding-left: 1px; */
+    cursor: pointer;
+    /* border: 1px solid rgba(255,255,255,0.5); */
+    transition: background-color 0.3s ease-in-out;
+}
+.mainplay:hover{
+    /* border: 1px solid rgba(255,255,255,0.8); */
+    background-color: rgba(255,255,255,0.8);
+    /* box-shadow: 0px 0px 10px 0px black; */
+}
+.mainplay img{
+    width: 15px;
+    height: auto;
+}
+
+.progressbar{
+    height: 35%;
+    /* background-color: blueviolet; */
+}
+.elapsedtime,.progresscontainer,.progressduration{
+    height: 100%;
+    display: flex;
+    font-family: "montserrat";
+}
+.elapsedtime{
+    width: 10%;
+    /* background-color: black; */
+    justify-content: flex-end;
+    align-items: flex-start;
+    padding: 5px 5px 0px 0px;
+    color: rgba(2255,255,255,0.8);
+    font-size: 0.7em;
+}
+.progresscontainer{
+    width: 80%;
+    /* background-color: black; */
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 10px;
+}
+.progresscontainer:hover .range::-webkit-slider-thumb{
+    width: 15px;
+    height: 15px;
+}
+.range{
+    -webkit-appearance: none;
+    appearance: none;
+    /* background-color: rgba(2255,255,255,0.3); */
+    /* background: linear-gradient(to right, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.1) 0%); */
+    background: linear-gradient(to right, aquamarine 0%, rgba(255,255,255,0.1) 0%);
+    width: 95%;
+    height: 3px;
+    border-radius: 50px;
+    overflow: visible;
+    cursor: pointer;
+}
+.range:focus{
+    outline: none;
+}
+.range::-webkit-slider-thumb{
+    -webkit-appearance: none;
+    appearance: none;
+    width: 0px;
+    height: 0px;
+    border-radius: 50%;
+    background-color: white;
+    cursor: pointer;
+    transition: width 0.1s ease-in-out, height 0.1s ease-in-out;
+}
+/* .range:hover::-webkit-slider-thumb{
+    width: 15px;
+    height: 15px;
+    background-color: rgba(2255,255,255,1);
+} */
+.progressduration{
+    width: 10%;
+    /* background-color: aliceblue; */
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding: 5px 0px 0px 5px;
+    color: rgba(2255,255,255,0.8);
+    font-size: 0.7em;
+}
+
+
+.volumepart{
+    width: 30%;
+    /* background-color: blue; */
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding-right: 20px;
+}
+.queueopener,.fullscreenopener{
+    /* background-color: black; */
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+    transition: width 0.3s ease-in-out, height 0.3s ease-in-out, margin-right 0.3s ease-in-out;
+}
+.fullscreenopener{
+    /* background-color: aqua; */
+    margin-left: 2px;
+    margin-right: 0px;
+}
+.queueopener:hover{
+    width: 20px;
+    height: 20px;
+    margin-right: 7px;
+}
+.fullscreenopener:hover{
+    margin-left: 0px;
+    width: 20px;
+    height: 20px;
+    /* margin-right: 7px; */
+}
+.queueopener img,.fullscreenopener img{
+    width: 100%;
+    height: auto;
+    cursor: pointer;
+}
+.volumerocker{
+    width: 100px;
+    height: 20px;
+    /* background-color: aqua; */
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+}
+.volumebutton{
+    width: 20%;
+    height: 100%;
+    /* background-color: aqua; */
+}
+.volumeinput{
+    width: 100%;
+    height: 100%;
+    /* background-color: aquamarine; */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.volumerange{
+    appearance: none;
+    width: 90%;
+    height: 3px;
+    overflow: visible;
+    background: linear-gradient(to right, white 100%, rgba(255,255,255,0.1) 0%);
+    outline: none;
+}
+.volumerange::-webkit-slider-thumb{
+    appearance: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: white;
+    cursor: pointer;
+}
+.destroyplayer,.crossinsearch,.fullscreenbutton{
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    /* background-color: rgba(255,255,255,0.1); */
+    background-color: rgba(0,0,0,1);
+    transition: background-color 0.3s ease-in-out;
+}
+.crossinsearch{
+    position: absolute;
+    top: 8px;
+    right: 2px;
+    z-index: 1;
+}
+.destroyplayer:hover,.crossinsearch:hover,{
+    background-color: rgba(255,255,255,0.1);
+}
+.destroyplayer img,.crossinsearch img{
+    width: 15px;
+    height: auto;
+}
+.fullscreenbutton img{
+    width: 10px;
+    height: auto;
+}

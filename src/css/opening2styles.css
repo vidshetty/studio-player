@@ -1,0 +1,398 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap');
+
+*{
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.mainwindow-start,.mainwindow-end{
+    width: 100vw;
+    height: 100vh;
+    background-color: #121212;
+    opacity: 1;
+}
+.mainwindow-end{
+    animation: screenfadeout 0.5s ease-in-out 0s 1 normal forwards;
+}
+@keyframes screenfadeout {
+    0%{
+        opacity: 1;
+    }
+    100%{
+        opacity: 0;
+    }
+}
+
+.logoholder{
+    position: absolute;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    width: 220px;
+    height: 220px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* background-color: white; */
+    opacity: 0;
+    animation: logofade 0.5s ease-in-out 1s 1 normal forwards;
+}
+@keyframes logofade {
+    0%{
+        opacity: 0;
+    }
+    100%{
+        opacity: 1;
+    }
+}
+.logoholder img{
+    width: 180px;
+    height: auto;
+    border-radius: 50%;
+    box-shadow: 10px 10px 10px black;
+}
+
+.openingloader{
+    position: absolute;
+    top: 70%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    width: 200px;
+    height: 80px;
+    /* background-color: aliceblue; */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.firstcircle,.secondcircle,.thirdcircle,.fourthcircle{
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin: 8px;
+    background-color: rgba(255,255,255,0.5);
+}
+.firstcircle{
+    animation: loader 0.5s ease-in-out 0s infinite normal forwards;
+}
+.secondcircle{
+    animation: loader 1s ease-in-out 0.25s infinite normal forwards;
+}
+.thirdcircle{
+    animation: loader 1s ease-in-out 0.75s infinite normal forwards;
+}
+.fourthcircle{
+    animation: loader 1s ease-in-out 1s infinite normal forwards;
+}
+@keyframes loader {
+    0%{
+        background-color:rgba(255,255,255,0.5);
+    }
+    50%{
+        background-color: white;
+    }
+    100%{
+        background-color: rgba(255,255,255,0.5);
+    }
+}
+.openingloader.hidden{
+    display: none;
+}
+
+
+.loginscreen-in,.loginscreen-out{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    width: 500px;
+    /* height: 630px; */
+    height: 90%;
+    /* z-index: 10; */
+    background-color: black;
+    border-radius: 10px;
+}
+.loginscreen-in{
+    opacity: 0;
+    animation: fadein 0.5s ease-in-out 0s 1 normal forwards;
+}
+.loginscreen-out{
+    opacity: 1;
+    animation: fadeout 0.5s ease-in-out 0s 1 normal forwards;
+}
+
+.signupscreen-in,.signupscreen-out{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    width: 500px;
+    height: 90%;
+    background-color: black;
+    border-radius: 10px;
+}
+.signupscreen-in{
+    opacity: 0;
+    animation: fadein 0.5s ease-in-out 0s 1 normal forwards;
+}
+.signupscreen-out{
+    opacity: 1;
+    animation: fadeout 0.5s ease-in-out 0s 1 normal forwards;
+}
+@keyframes fadein {
+    0%{
+        opacity: 0;
+    }
+    100%{
+        opacity: 1;
+    }
+}
+@keyframes fadeout {
+    0%{
+        opacity: 1;
+    }
+    100%{
+        opacity: 0;
+    }
+}
+
+.logocontainer{
+    width: 100%;
+    height: 15%;
+    /* background-color: aliceblue; */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.leftlogo{
+    width: 80px;
+    height: 80px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    /* background-color: aqua; */
+}
+.leftlogo img{
+    width: 40px;
+    height: auto;
+}
+.rightlogo{
+    width: 140px;
+    height: 80px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding-left: 5px;
+    /* background-color: blue; */
+}
+.rightlogo p{
+    font-size: 1.8em;
+    font-family: "montserrat";
+    font-weight: 500;
+    color: white;
+}
+
+.title{
+    width: 100%;
+    height: 10%;
+    /* background-color: aqua; */
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+}
+.title p{
+    font-size: 2em;
+    font-weight: 600;
+    font-family: "montserrat";
+    color: white;
+}
+
+.inputfields{
+    width: 100%;
+    height: 40%;
+    /* background-color: aqua; */
+}
+.errordiv{
+    width: 100%;
+    height: 40px;
+    /* background-color: blue; */
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-end;
+}
+.errordiv p{
+    font-weight: 600;
+    font-size: 0.8em;
+    color: red;
+    margin-left: 22%;
+    margin-bottom: 10px;
+    font-family: "montserrat";
+}
+.errordivreplacement{
+    width: 100%;
+    height: 40px;
+    /* background-color: blue; */
+    margin-top: 10px;
+}
+.username,.email,.password{
+    width: 100%;
+    height: 60px;
+    /* background-color: blueviolet; */
+    border-bottom: 1px solid black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.username input,.email input,.password input{
+    width: 60%;
+    height: 50px;
+    background-color: #121212;
+    /* border: 1px solid white; */
+    border-radius: 5px;
+    border: none;
+    outline: none;
+    padding: 0px 15px 0px 15px;
+    color: rgba(255,255,255,0.8);
+    font-family: "montserrat";
+}
+.password input{
+    border-top-right-radius: 0px;
+    border-bottom-right-radius: 0px;
+    width: 50%;
+}
+.viewer{
+    width: 10%;
+    height: 50px;
+    background-color: #121212;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+.ball-password,.ball-text{
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+.ball-password{
+    border: 1px solid rgba(255,255,255,0.5);
+}
+.ball-text{
+    background-color: rgba(255,255,255,0.5);
+}
+.username input::placeholder,.email input::placeholder,.password input::placeholder{
+    color: rgba(255,255,255,0.5);
+    font-size: 0.9em;
+    font-family: "montserrat";
+}
+
+.remember{
+    width: 100%;
+    height: 28%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: 20%;
+    padding-right: 21%;
+    /* background-color: blueviolet; */
+}
+.remember p{
+    color: rgba(255,255,255,0.5);
+    font-family: "montserrat";
+    font-size: 0.8em;
+}
+.checkbox-start,.checkbox-end{
+    position: relative;
+    width: 30px;
+    height: 15px;
+    border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    overflow: visible;
+}
+.checkbox-start div,.checkbox-end div{
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background-color: white;
+    z-index: 2;
+}
+.checkbox-start{
+    background-color: #131313;
+    justify-content: flex-start;
+}
+.checkbox-end{
+    /* background-color: blueviolet; */
+    /* background-color: aquamarine; */
+    background-color: rgba(127,255,212,0.5);
+    justify-content: flex-end;
+    border: none;
+}
+
+.loginbutton,.loginbutton-loading,.signupbutton,.signupbutton-loading{
+    width: 100%;
+    height: 80px;
+    /* background-color: white; */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.loginbutton button,.loginbutton-loading button,.signupbutton button,.signupbutton-loading button{
+    width: 60%;
+    height: 50px;
+    background-color: #121212;
+    border: 1px solid white;
+    border-radius: 25px;
+    color: white;
+    font-size: 0.9em;
+    font-family: "montserrat";
+    outline: none;
+    cursor: pointer;
+    transition: background-color 0.5s ease-in-out, border 0.5s ease-in-out;
+}
+.loginbutton button:hover,.signupbutton button:hover,.loginbutton button:focus,.signupbutton button:focus{
+    outline: none;
+    /* border: blueviolet;
+    background-color: blueviolet; */
+    border: aquamarine;
+    /* background-color: aquamarine; */
+    background-color: rgba(127,255,212,0.5);
+}
+.loginbutton-loading button,.signupbutton-loading button{
+    pointer-events: none;
+}
+
+.gotosignup,.gotosignup-loading,.gotologin,.gotologin-loading{
+    width: 100%;
+    height: 60px;
+    /* background-color: aqua; */
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    padding-bottom: 10px;
+}
+.gotosignup-loading,.gotologin-loading{
+    pointer-events: none;
+}
+.gotosignup p:nth-child(1),.gotosignup p:nth-child(2),.gotologin p:nth-child(1),.gotologin p:nth-child(2),
+.gotosignup-loading p:nth-child(1),.gotosignup-loading p:nth-child(2),
+.gotologin-loading p:nth-child(1),.gotologin-loading p:nth-child(2){
+    font-size: 0.9em;
+    color: white;
+    font-family: "montserrat";
+    font-weight: 500;
+}
+.gotosignup p:nth-child(2),.gotologin p:nth-child(2),.gotologin-loading p:nth-child(2),.gotosignup-loading p:nth-child(2){
+    margin-left: 10px;
+    text-decoration: underline;
+    cursor: pointer;
+}
+.gotologin-loading p:nth-child(2),.gotosignup-loading p:nth-child(2){
+    pointer-events: none;
+}

@@ -1,0 +1,341 @@
+.queue{
+    width: 100%;
+    height: 100%;
+    /* background-color: aqua; */
+    padding-top: 60px;
+    transition: background-color 0.3s ease-in-out;
+    /* overflow: auto; */
+    /* overflow-y: overlay; */
+    /* background-size: 1000%; */
+    /* animation: backg 5s linear 0s infinite normal forwards; */
+}
+@keyframes backg {
+    0%{
+        background-position: 100% 0%;
+    }
+    50%{
+        background-position: 50% 50%;
+    }
+    100%{
+        background-position: 0% 100%;
+    }
+}
+
+.queuetitle{
+    width: 100%;
+    height: 60px;
+    /* background-color: white; */
+    background-color: transparent;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding-left: 35px;
+    font-family: "montserrat";
+    font-size: 1.4em;
+    font-weight: 600;
+    color: white;
+}
+.nowplayingtitle{
+    width: 100%;
+    height: 30px;
+    padding-left: 35px;
+    padding-right: 80px;
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* background-color: white; */
+    font-family: "montserrat";
+    font-size: 0.8em;
+    color: rgba(255,255,255,0.5);
+}
+.frontblock{
+    width: 500px;
+    height: 100%;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    /* font-family: "montserrat";
+    font-size: 0.8em;
+    color: rgba(255,255,255,0.5); */
+}
+.backblock{
+    width: 100px;
+    height: 100%;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    cursor: pointer;
+}
+.backblock:hover{
+    text-decoration: underline;
+}
+
+.nowplaying{
+    width: 100%;
+    height: 100px;
+    /* background-color: white; */
+    padding: 5px 30px;
+}
+.innernowplaying{
+    width: 100%;
+    height: 100%;
+    background-color: #181818;
+    border-radius: 5px;
+    padding: 5px 30px 5px 30px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.firstpart{
+    width: 20px;
+    height: 100%;
+    /* background-color: aliceblue; */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 30px;
+}
+
+.nowplayingart{
+    width: 50px;
+    height: 50px;
+    /* background-color: white; */
+    margin-right: 30px;
+    box-shadow: 0px 0px 100px black;
+    /* border-radius: 10px; */
+}
+.nowplayingart img{
+    width: 100%;
+    height: auto;
+}
+
+.queuesongdetails{
+    width: 87%;
+    height: 80%;
+    /* background-color: white; */
+    display: flex;
+    align-items: center;
+}
+.startingpart{
+    /* width: 40%; */
+    width: 70%;
+    height: 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    /* background-color: aliceblue; */
+}
+.playingsongname,.playingsongartist{
+    font-family: "montserrat";
+    /* padding-left: 10px; */
+    /* width: 330px; */
+    width: 250px;
+    /* height: 50px; */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.playingsongname{
+    /* background-color: aqua; */
+    /* display: flex;
+    justify-content: flex-start;
+    align-items: flex-end; */
+    padding-bottom: 0px;
+    font-size: 1.5em;
+    color: white;
+    font-weight: 600;
+    letter-spacing: -2px;
+    padding-right: 5px;
+    height: 40px;
+}
+.playingsongartist{
+    /* background-color: aquamarine; */
+    /* display: flex;
+    justify-content: flex-start;
+    align-items: center; */
+    padding-top: 5px;
+    font-size: 0.7em;
+    color: rgba(255,255,255,0.5);
+    font-weight: 500;
+    height: 25px;
+}
+
+.centerpart{
+    /* width: 30%; */
+    /* width: 270px; */
+    width: 10px;
+    height: 15px;
+    /* background-color: aqua; */
+    font-size: 0.8em;
+    font-family: "montserrat";
+    color: rgba(255,255,255,0.8);
+    font-weight: 500;
+    /* letter-spacing: -2px; */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lastpart{
+    width: 30%;
+    height: 100%;
+    /* background-color: aliceblue; */
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    /* padding-right: 20px; */
+}
+.lastpartduration{
+    width: 60px;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.8em;
+    font-family: "montserrat";
+    color: rgba(255,255,255,0.5);
+    font-weight: 600;
+    /* background-color: aqua; */
+}
+.removesong{
+    width: 60px;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.queuelist{
+    width: 100%;
+    height: auto;
+    /* background-color: aqua; */
+    padding: 5px 30px;
+    margin-bottom: 30px;
+}
+.queuelistsong{
+    width: 100%;
+    height: 60px;
+    /* background-color: aliceblue; */
+    /* background-color: transparent; */
+    margin: 5px 0px;
+    /* margin: 5px 30px; */
+    padding: 0 30px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.1s ease-in-out;
+    cursor: pointer;
+}
+.queuelistsong:hover{
+    background-color: rgba(255,255,255,0.1);
+}
+.dummyanim{
+    width: 20px;
+    height: 100%;
+    margin-right: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.8em;
+    font-family: "montserrat";
+    color: rgba(255,255,255,0.5);
+    font-weight: 600;
+}
+
+.queuesongname{
+    /* background-color: aqua; */
+    /* width: 300px; */
+    width: 200px;
+    /* display: flex; */
+    justify-content: flex-start;
+    align-items: flex-end;
+    padding-top: 5px;
+    padding-bottom: 0px;
+    font-size: 0.8em;
+    color: white;
+    font-weight: 600;
+    font-family: "montserrat";
+    /* letter-spacing: -2px; */
+    padding-right: 5px;
+    height: 50px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.queuesongartist{
+    /* background-color: aquamarine; */
+    width: 300px;
+    justify-content: flex-start;
+    align-items: flex-start;
+    /* padding-top: 5px; */
+    font-size: 0.7em;
+    font-family: "montserrat";
+    color: rgba(255,255,255,0.5);
+    font-weight: 500;
+    height: 50px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+.nowplaying2{
+    width: 100%;
+    height: 300px;
+    padding: 5px 30px;
+    /* border-radius: 5px; */
+    /* background-color: #181818; */
+}
+.innernowplaying2{
+    width: 100%;
+    height: 100%;
+    border-radius: 5px;
+    background-color: #181818;
+}
+
+.bottomqueue{
+    width: 100%;
+    height: calc(100% - 40px);
+    display: flex;
+}
+.leftqueuepart{
+    width: 40%;
+    height: 100%;
+    /* background-color: white; */
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    /* align-items: center; */
+}
+.leftalbumcontainer{
+    width: 330px;
+    /* width: 290px; */
+    height: 330px;
+    /* height: 290px; */
+    background-color: #181818;
+    border-radius: 10px;
+    margin-top: 40px;
+    /* margin-top: 30px; */
+    /* margin-top: 15%; */
+    padding: 15px;
+    /* padding: 20px; */
+    box-shadow: 5px 5px 50px black;
+}
+.leftalbumcontainer img{
+    /* width: 300px; */
+    /* width: 290px; */
+    width: 100%;
+    /* height: 300px; */
+    /* height: 290px; */
+    height: auto;
+    /* border-radius: 10px; */
+}
+.rightqueuepart{
+    width: 60%;
+    height: 100%;
+    /* background-color: aqua; */
+    background-color: transparent;
+    overflow-y: overlay;
+}
