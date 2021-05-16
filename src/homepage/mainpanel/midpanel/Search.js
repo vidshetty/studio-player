@@ -18,6 +18,7 @@ import { HorizontalList } from "./HomeScreen";
 let timeout = undefined, searchBar, topBar, topBgColorLocal, setcolor = false;
 
 
+
 const InnerSongList = ({ obj }) => {
     const [hidden, setHidden] = useState(true);
 
@@ -195,6 +196,7 @@ const ActualSearch = () => {
                 show: false,
                 callLoading: false
             });
+
         }
     },[]);
 
@@ -309,12 +311,24 @@ const ActualSearch = () => {
 };
 
 const Search = () => {
-    const [queueOpened,] = CustomUseState(queueOpenedGlobal);
+    // const [queueOpened,] = CustomUseState(queueOpenedGlobal);
+    const [searchConfig, setSearchConfig] = CustomUseState(searchBarGlobal);
 
-    if (queueOpened) {
-        return <Queue/>
-    }
-    return <ActualSearch/>
+    // if (queueOpened) {
+    //     return <Queue/>
+    // }
+    // return <ActualSearch/>
+    useEffect(() => {
+        console.log("search page");
+        return () => {
+            setSearchConfig({
+                ...searchConfig,
+                open: false
+            });
+        };
+    }, []);
+
+    return <></>
 };
 
 

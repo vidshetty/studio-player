@@ -1,28 +1,54 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Anton&display=swap');
 *{
     user-select: none;
     font-family: "Montserrat";
+    /* font-family: "Roboto"; */
+}
+
+.main-outer-container, .main-outer-container.scrolling{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    overflow-y: overlay;
+}
+.main-outer-container::-webkit-scrollbar, .main-outer-container.scrolling::-webkit-scrollbar{
+    width: 10px;
+}
+.main-outer-container::-webkit-scrollbar-thumb{
+    width: 10px;
+    background-color: gray;
+    transition: background-color 0.5s ease-in-out;
+}
+.main-outer-container::-webkit-scrollbar-track{
+    width: 10px;
+    border-left: 1px solid rgba(128,128,128,0.2);
+    background-color: #202020;
+}
+.main-outer-container.scrolling::-webkit-scrollbar-thumb{
+    width: 10px;
+    background-color: gray;
 }
 
 .dummyleft{
     width: 100%;
-    height: 65px;
+    height: 75px;
     position: relative;
     background-color: black;
-    border-bottom: 0.5px solid rgba(255,255,255,0.2);
+    /* border-bottom: 0.5px solid rgba(255,255,255,0.1); */
     overflow-y: overlay;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 .dummymid{
-    width: 100%;
-    height: calc(100% - 65px);
-    background-color: black;
-    /* background-color: #121212; */
-    padding: 0px 50px 0px 50px;
-    overflow-y: overlay;
+    width: 1700px;
+    height: auto;
+    background-color: #030303;
+    padding: 0px 60px 70px 60px;
 }
 
 .libraryname{
@@ -31,18 +57,20 @@
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    /* background-color: white; */
     color: white;
-    font-size: 2em;
+    font-size: 1.8em;
     font-weight: 700;
-    margin-top: 20px;
+    /* margin-top: 20px; */
     /* padding-left: 30px; */
 }
 .librarycontainer{
     width: 100%;
     /* background-color: blue; */
     padding: 0px 0px 30px 0px;
-    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    /* margin-top: 20px; */
 }
 
 .createrow{
@@ -51,24 +79,32 @@
     /* background-color: white; */
     margin: 5px 0px 5px 0px;
     display: flex;
+    /* justify-content: space-between; */
     justify-content: space-between;
     align-items: flex-start;
 }
 .eachinrow{
     /* width: calc(100% / 4); */
-    width: 15%;
+    /* width: 12.5%; */
+    width: 100%;
     /* width: auto; */
     /* height: 300px; */
     /* height: auto; */
-    min-height: 320px;
-    /* background-color: aqua; */
+    min-height: 280px;
+    /* background-color: blue; */
     display: flex;
-    /* justify-content: space-between; */
+    justify-content: center;
     /* align-items: flex-start; */
+}
+@media screen and (min-width: 1600px) {
+    .eachinrow{
+        min-height: 320px;
+    }
 }
 .innerineach{
     width: 100%;
     height: 100%;
+    cursor: pointer;
     /* background-color: white; */
     /* padding: 10px; */
 }
@@ -81,19 +117,59 @@
     width: 100%;
     height: auto;
     margin-top: 10px;
-    font-size: 1em;
-    font-weight: 500;
+    font-size: 0.9em;
+    font-weight: 600;
     letter-spacing: -1px;
     color: white;
+}
+.eachalbumname:hover{
+    text-decoration: underline;
+}
+.eachbottom{
+    width: 100%;
+    height: auto;
+    margin-top: 5px;
+    font-size: 0.8em;
+    letter-spacing: -1px;
+    color: rgba(255,255,255,0.7);
+    display: flex;
+    /* align-items: center; */
+    /* background-color: blue; */
+}
+.eachbottom span{
+    padding-right: 10px;
+}
+/* .smallseparator{
+    width: 5px;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: aqua;
+}
+.smallseparator div{
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: rgba(255,255,255,0.7);
+} */
+.smallseparator{
+    font-size: 5em;
+}
+.smallseparator span{
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: rgba(255,255,255,0.7);
 }
 .eachalbumartist{
     width: 100%;
     height: auto;
     margin-top: 5px;
-    font-size: 1em;
+    font-size: 0.8em;
     /* font-weight: 600; */
     letter-spacing: -1px;
-    color: rgba(255,255,255,0.5);
+    color: rgba(255,255,255,0.7);
 }
 
 
@@ -104,19 +180,22 @@
 
 
 .logopart{
-    width: 180px;
+    width: 200px;
     height: 100%;
     position: absolute;
     top: 0;
     left: 0;
+    /* background-color: aqua; */
 }
 .logopartdiv{
-    width: 100%;
+    width: 65%;
     height: 100%;
     display: flex;
+    justify-content: flex-start;
     align-items: center;
     padding-left: 20px;
-    /* background-color: aqua; */
+    cursor: pointer;
+    /* background-color: blue; */
 }
 .logopartdiv img{
     width: 25px;
@@ -124,14 +203,18 @@
     cursor: pointer;
 }
 .logopartdiv p{
-    font-size: 1.5em;
+    font-size: 1.3em;
     color: white;
-    font-family: "montserrat";
-    margin-left: 5px;
+    font-family: "anton";
+    margin-left: 3px;
+    /* padding-top: 2px; */
     cursor: pointer;
-    letter-spacing: -1px;
-    font-weight: 600;
+    /* letter-spacing: -1px; */
+    /* font-weight: 700; */
+    font-weight: 400;
     /* padding-right: 5px; */
+    cursor: pointer;
+    /* background-color: aqua; */
 }
 .middlepart{
     width: 60%;
@@ -143,33 +226,168 @@
 }
 .centermiddlepart{
     height: 100%;
-    width: auto;
+    width: 45%;
     display: flex;
-    justify-content: center;
+    justify-content: space-evenly;
     align-items: center;
+    /* background-color: blue; */
 }
 .tabs,.lighttabs{
-    /* margin: 0px 20px 0px 20px; */
     color: white;
-    letter-spacing: -1px;
-    cursor: pointer;
     height: 100%;
+    letter-spacing: -1px;
     display: flex;
     justify-content: center;
     align-items: center;
     font-size: 1.1em;
-    padding: 0px 25px 0px 25px;
-    /* background-color: aqua; */
+    font-weight: 600;
+    padding: 5px 10px;
+    cursor: pointer;
+    /* background-color: black; */
 }
 .lighttabs{
     color: rgba(255,255,255,0.5);
 }
+.searchicon{
+    width: 15px;
+    height: auto;
+    margin-right: 5px;
+}
+/* .tabs span, .lighttabs span{
+    padding-right: 5px;
+    cursor: pointer;
+    background-color: aliceblue;
+} */
 .profilepart{
-    width: 300px;
+    width: 150px;
     height: 100%;
     position: absolute;
     top: 0;
     right: 0;
     display: flex;
+    justify-content: flex-end;
     align-items: center;
+    /* background-color: aliceblue; */
+    padding-right: 25px;
+}
+
+.picture-container{
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.eachshadow{
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0), rgba(0,0,0,0))
+}
+.eachartcover{
+    position: relative;
+    height: auto;
+    width: 100%;
+    cursor: pointer;
+}
+.eachartcover:hover .eachshadow{
+    opacity: 1;
+    /* transition: opacity 0.2s 0.2s ease-in-out; */
+}
+.eachalbumart{
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+}
+.showplaybutton,.showplaybuttonfixed{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
+    padding: 0px 20px 20px 0px;
+}
+.showplaybuttonfixed{
+    opacity: 1;
+}
+.showplaybutton{
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+.eachartcover:hover .showplaybutton{
+    opacity: 1;
+    /* transition: opacity 0.2s 0.2s ease-in-out; */
+}
+.innerplaybutton{
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0,0,0,0.7);
+    border-radius: 50%;
+    transition: background-color 0.2s ease-in-out;
+}
+.innerplaybutton:hover{
+    background-color: rgba(0,0,0,1);
+}
+.innerplaybutton img{
+    width: 40%;
+    height: auto;
+}
+
+
+.library-opener{
+    position: absolute;
+    width: 25px;
+    height: 20px;
+    top: 10px;
+    right: 20px;
+    /* background-color: blue; */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+.eachartcover:hover .library-opener{
+    opacity: 1;
+}
+.library-opener1,.library-opener2,.library-opener3{
+    width: 5px;
+    height: 5px;
+    background-color: rgba(255,255,255,0.7);
+    border-radius: 50%;
+}
+.library-opener:hover .library-opener1,
+.library-opener:hover .library-opener2,
+.library-opener:hover .library-opener3{
+    background-color: rgba(255,255,255,1);
+}
+
+
+.librarygrid{
+    width: 100%;
+    height: auto;
+    display: grid;
+    grid-template-columns: repeat(7,12.7%);
+    grid-column-gap: calc((100% - 88.9%) / 6);
+    /* background-color: aqua; */
+}
+@media screen and (min-width: 1600px) {
+    .eachinrow{
+        min-height: 320px;
+    }
+    .librarygrid{
+        grid-template-columns: repeat(8,11%);
+        grid-column-gap: calc((100% - 88%) / 7); 
+    }
 }

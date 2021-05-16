@@ -5,7 +5,9 @@ import "../css/opening2styles.css";
 // import "../css/loginstyles.css";
 // import "../css/signupstyles.css";
 // import logo2 from "../assets/colouredlogo.svg";
-import logo2 from "../assets/aquamarinelogo.svg";
+// import logo2 from "../assets/aquamarinelogo.svg";
+// import logo2 from "../assets/bluelogo.svg";
+import logo2 from "../assets/latest-whiteblack.svg";
 import logo from "../assets/blackandwhitelogo.svg";
 import {
     wait,
@@ -18,7 +20,8 @@ import {
     sendRequest,
     keepServersActive,
     // keepButtonGlobal
-    topBarGlobal
+    topBarGlobal,
+    prefix
 } from "../common";
 let topBar, setup;
 
@@ -608,18 +611,18 @@ const SignUp2 = ({ setGoToLogin, setGoToSignUp }) => {
 
 const Opening2 = () => {
     const [redirectValue, setRedirectValue] = useState(false);
-    const [mainClass, setMainClass] = useState("mainwindow-start");
+    // const [mainClass, setMainClass] = useState("mainwindow-start");
     const [loaderClass, setLoaderClass] = useState("openingloader hidden");
-    const [goToLogin, setGoToLogin] = useState(false);
-    const [goToSignUp, setGoToSignUp] = useState(false);
-    const [,setClass] = CustomUseState(homeClass);
-    const [isPlaying, setIsPlaying] = CustomUseState(playingGlobal);
+    // const [goToLogin, setGoToLogin] = useState(false);
+    // const [goToSignUp, setGoToSignUp] = useState(false);
+    // const [,setClass] = CustomUseState(homeClass);
+    const [,setIsPlaying] = CustomUseState(playingGlobal);
     const [,setSong] = CustomUseState(albumGlobal);
     const [,setQueue] = CustomUseState(queueGlobal);
 
     setup = async () => {
-        let queue = JSON.parse(localStorage.getItem("queue"));
-        if (queue !== null) {
+        const queue = JSON.parse(localStorage.getItem("queue"));
+        if (queue) {
             setIsPlaying(true);
             let nowplaying = JSON.parse(localStorage.getItem("nowplaying"));
             if (nowplaying !== null) {
@@ -667,37 +670,18 @@ const Opening2 = () => {
             endpoint: "/activateCheck"
         });
         if (res.status === "active") {
-            const token = localStorage.getItem("token");
-            if (token === null) {
-                setGoToLogin(true);
-            } else {
-                const id = localStorage.getItem("userId");
-                if (id === null) {
-                    setGoToLogin(true);
-                    return;
-                } else {
-                    res = await sendRequest({
-                        method: "GET",
-                        endpoint: "/checkLoginStatus"
-                    });
-                    if (res.loggedOut) {
-                        setGoToLogin(true);
-                        return;
-                    }
-                }
-                sendRequest({
-                    method: "GET",
-                    endpoint: "/recordTime"
-                });
-                setClass("homemain start");
-                await wait(500);
-                await setup();
-                setLoaderClass("openingloader hidden");
-                await wait(500);
-                setMainClass("mainwindow-end");
-                await wait(500);
-                setRedirectValue(true);
-            }
+            sendRequest({
+                method: "GET",
+                endpoint: "/recordTime"
+            });
+            // setClass("homemain start");
+            // await wait(500);
+            // await setup();
+            // setLoaderClass("openingloader hidden");
+            await wait(500);
+            // setMainClass("mainwindow-end");
+            // await wait(500);
+            setRedirectValue(true);
         }
     };
 
@@ -706,15 +690,14 @@ const Opening2 = () => {
     }, []);
 
     if (redirectValue) {
-        return(
-            <Redirect to="/home/homescreen" />
-        );
+        return <Redirect to={prefix+"/home/homescreen"} />;
     }
     return(
-        <div className={mainClass}>
-            {
+        // <div className={mainClass}>
+        <div className="mainwindow">
+            {/* {
                 !goToLogin && !goToSignUp ?
-                <>
+                <> */}
                     <div className="logoholder">
                         <img src={logo2} alt="Studio" />
                     </div>
@@ -724,15 +707,15 @@ const Opening2 = () => {
                         <div className="thirdcircle"></div>
                         <div className="fourthcircle"></div>
                     </div>
-                </> : ""
-            }
-            {
+                {/* </> : ""
+            } */}
+            {/* {
                 goToLogin ? <Login2 setGoToLogin={setGoToLogin} setGoToSignUp={setGoToSignUp}
                     setMainClass={setMainClass} setRedirectValue={setRedirectValue}/> : ""
             }
             {
                 goToSignUp ? <SignUp2 setGoToLogin={setGoToLogin} setGoToSignUp={setGoToSignUp}/> : ""
-            }
+            } */}
         </div>
     );
 };

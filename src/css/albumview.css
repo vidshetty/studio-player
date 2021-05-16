@@ -251,6 +251,9 @@
     align-items: center;
     cursor: pointer;
 }
+.openercontrol.hidden{
+    display: none;
+}
 .customopener{
     margin-left: 10px;
     /* background-color: aliceblue; */
@@ -394,13 +397,17 @@
 .div1,.div2,.div3,.div4{
     width: 3px;
     height: 0px;
-    background-color: aquamarine;
+    /* background-color: aquamarine; */
+    /* background-color: #339DFF; */
+    background-color: #066bff;
 }
 .div5,.div6,.div7,.div8{
     width: 3px;
     height: 3px;
     border-radius: 50%;
-    background-color: aquamarine;
+    /* background-color: aquamarine; */
+    /* background-color: #339DFF; */
+    background-color: #066bff;
 }
 .div1{
     animation: div1 0.5s ease-in-out 0s infinite normal forwards;
@@ -537,12 +544,13 @@
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    padding-left: 35px;
-    /* background-color: black; */
+    /* padding-left: 35px; */
+    /* background-color: blue; */
     font-size: 0.5em;
     font-family: "montserrat";
     font-weight: 500;
-    color: rgba(255,255,255,0.5);
+    /* color: rgba(255,255,255,0.5); */
+    color: #909090;
 }
 .copyright1 img,.copyright2 img{
     width: 10px;
@@ -577,3 +585,280 @@
     padding-left: 35px;
     margin-bottom: 10px;
 }
+
+
+
+
+
+
+.newalbum{
+    width: 1700px;
+    height: auto;
+    /* overflow-y: overlay; */
+    padding: 0px 60px 0px 60px;
+    background-color: #030303;
+    /* background-color: white; */
+}
+/* .newalbum::-webkit-scrollbar{
+    width: 5px;
+} */
+.backbuttonview{
+    position: absolute;
+    top: 25px;
+    left: 0;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    /* background-color: #339DFF; */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* background-color: rgba(255,255,255,0.2); */
+    background-color: #303030;
+    transition: background-color 0.2s ease-in-out;
+    cursor: pointer;
+}
+.backbuttonview:hover{
+    background-color: #404040;
+}
+.backbuttonview img{
+    width: 20px;
+    height: auto;
+}
+.topalbumview{
+    position: relative;
+    width: 100%;
+    height: 320px;
+    /* background-color: #339DFF; */
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-end;
+}
+.coverview{
+    width: 260px;
+    height: 260px;
+    border-radius: 3px;
+}
+.coverview img{
+    width: 100%;
+    height: auto;
+}
+.detailsview{
+    width: calc(100% - 320px);
+    height: 260px;
+    /* background-color: blue; */
+    margin-left: 40px;
+    display: flex;
+    justify-content: flex-start;
+    /* align-items: flex-end; */
+    align-items: center;
+    /* padding-bottom: 40px; */
+}
+.innerdetailsview{
+    width: 800px;
+    height: auto;
+    /* background-color: #339DFF; */
+    display: flex;
+    flex-direction: column;
+}
+.albumnameview{
+    width: 100%;
+    height: auto;
+    font-size: 2em;
+    font-weight: 700;
+    color: white;
+    padding: 5px 5px 10px 5px;
+    letter-spacing: -2px;
+}
+.detailsoneview{
+    width: 100%;
+    height: 20px;
+    /* background-color: blue; */
+    display: flex;
+}
+.albumtype,.albumartistview,.albumyear{
+    width: auto;
+    height: 100%;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    font-size: 0.95em;
+    font-weight: 500;
+    color: #909090;
+    padding: 0px 5px;
+}
+.content-separator{
+    width: 10px;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.content-separator div{
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background-color: #909090;
+}
+.buttonholder{
+    width: 100%;
+    height: 50px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    /* background-color: #339DFF; */
+    padding-left: 5px;
+}
+.playbuttonview{
+    width: 150px;
+    height: 35px;
+    border-radius: 2px;
+    /* background-color: #339DFF; */
+    background-color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: black;
+    font-size: 0.9em;
+    font-weight: 600;
+    cursor: pointer;
+}
+.playbuttonview img, .addtoqueue img{
+    width: 15px;
+    height: auto;
+    margin-right: 5px;
+}
+
+.addtoqueue{
+    width: 200px;
+    height: 35px;
+    margin-left: 20px;
+    border-radius: 2px;
+    background-color: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 0.8em;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid white;
+}
+
+.opener-holder{
+    width: 50px;
+    height: 35px;
+    margin-left: 10px;
+    /* background-color: blue; */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.bottomalbumview{
+    width: 100%;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+}
+.newsongrow{
+    width: 100%;
+    height: 50px;
+    /* background-color: blue; */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    transition: background-color 0.1s ease-in-out;
+    /* cursor: pointer; */
+}
+/* .newsongrow:hover{
+    background-color: #202020;
+} */
+.outerindex,.songnameview,.artistnameview,.streams,.durationview{
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.outerindex{
+    width: 5%;
+    /* margin-right: 2%; */
+    /* background-color: #066bff; */
+}
+.index{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 500;
+    color: #909090;
+    font-size: 0.9em;
+}
+.outerindeximg{
+    width: 15px;
+    height: auto;
+    cursor: pointer;
+}
+.outerindeximg.hidden{
+    display: none;
+}
+.songnameview{
+    /* width: 33%; */
+    width: 30%;
+    /* background-color: blue; */
+}
+.songnameview div{
+    width: 100%;
+    height: auto;
+    padding-right: 50px;
+    color: white;
+    font-weight: 500;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 0.9em;
+}
+.artistnameview{
+    /* width: 30%; */
+    width: 25%;
+    /* background-color: aqua; */
+}
+.artistnameview div{
+    width: 100%;
+    height: auto;
+    padding-right: 50px;
+    color: #909090;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 0.9em;
+}
+.streams{
+    /* width: 5%; */
+    width: 10%;
+    /* background-color: #066bff; */
+}
+.durationview{
+    position: relative;
+    /* width: 25%; */
+    width: 20%;
+    /* background-color: blue; */
+}
+.durationcontainer{
+    position: absolute;
+    top: 0;
+    right: 10px;
+    width: 50px;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1em;
+    color: #909090;
+    font-size: 0.9em;
+}
+
+

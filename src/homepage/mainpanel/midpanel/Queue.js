@@ -1,7 +1,11 @@
 import "../../../css/queuestyles.css";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { Redirect, useHistory } from "react-router-dom";
 import Close from "../../../assets/deletewhite.svg";
 import Placeholder from "../../../assets/placeholder.svg";
+import Expand from "../../../assets/expand-white.svg";
+// import Expand from "../../../assets/fullscreen.png";
+import Minimize from "../../../assets/minimizeplayer-white.svg";
 import { MidPanelLoader } from "./index";
 import {
     CustomUseState,
@@ -10,85 +14,126 @@ import {
     songIsPausedGlobal,
     albumGlobal,
     responseBar,
-    // keepButtonGlobal,
-    // onClickFuncGlobal
-    topBarGlobal
+    openerGlobal,
+    topBarGlobal,
+    miniPlayerGlobal,
+    checkX,
+    checkY,
+    routesGlobal,
+    prefix
 } from "../../../common";
 let finalQueue = [], queueLength, songIndex, smallArr;
-let actualQueue, firstpart, lastpart, topBar;
+let actualQueue, firstpart, lastpart, topBar, miniLocal, isOpen;
 
 
 
-const NowPlaying = ({ songIsPaused, song }) => {
+const SongInQueue = ({ nowPlaying = false, songIsPaused = null, song, number = null, openerFunc }) => {
+    const [hovered, setHovered] = useState(false);
+    const [,setPlayingSong] = CustomUseState(albumGlobal);
+    const [,setSongIsPaused] = CustomUseState(songIsPausedGlobal);
+
+    const mouseOver = e => {
+        setHovered(true);
+    };
+
+    const mouseOut = e => {
+        setHovered(false);
+    };
+
+    const setSong = () => {
+        if (nowPlaying) {
+            return;
+        }
+        setPlayingSong(song);
+        setSongIsPaused(true);
+    };
+
+    const handleMenu = e => {
+        e.stopPropagation();
+        const dimensions = { x: e.clientX, y: e.clientY };
+        const windowDim = { width: document.documentElement.clientWidth, height: document.documentElement.clientHeight };
+        openerFunc(e, { dimensions, windowDim, song });
+    };
+
     return(
-        <div className="nowplaying">
-            <div className="innernowplaying">
-                <div className="firstpart">
-                    {
-                        !songIsPaused ?
-                        <div className="playinganim">
-                            <div className="div1"></div>
-                            <div className="div2"></div>
-                            <div className="div3"></div>
-                            <div className="div4"></div>
-                        </div> : 
-                        <div className="pausedanim">
-                            <div className="div5"></div>
-                            <div className="div6"></div>
-                            <div className="div7"></div>
-                            <div className="div8"></div>
-                        </div>
-                    }
-                </div>
+        <div className="nowplaying" style={{
+            marginTop: `${ nowPlaying ? "10px" : "" }`,
+            marginBottom: `${ nowPlaying ? "30px" : "" }`,
+            borderBottom: `${ nowPlaying ? "" : "1px solid rgba(255,255,255,0.1)" }`
+        }} onMouseOver={mouseOver} onMouseOut={mouseOut}>
+            <div className="innernowplaying"
+            style={{ backgroundColor: `${ nowPlaying || hovered ? "#202020" : "" }` }}
+            onClick={setSong}
+            >
+                {
+                    nowPlaying ?
+                    <div className="firstpartifnowplaying">
+                        {
+                            !songIsPaused ?
+                            <div className="playinganim">
+                                <div className="div1"></div>
+                                <div className="div2"></div>
+                                <div className="div3"></div>
+                                <div className="div4"></div>
+                            </div> : 
+                            <div className="pausedanim">
+                                <div className="div5"></div>
+                                <div className="div6"></div>
+                                <div className="div7"></div>
+                                <div className="div8"></div>
+                            </div>
+                        }
+                    </div> :
+                    <div className="firstpart">{number}</div>
+                }
                 <div className="nowplayingart">
                     <img src={song.Thumbnail} alt=""/>
                 </div>
                 <div className="queuesongdetails">
                     <div className="startingpart">
                         <div className="playingsongname"
-                        style={{ color: "aquamarine" }}>{song.Title || song.Album}</div>
+                        style={{ color: `${ nowPlaying ? "white" : "white" }` }}>{song.Title || song.Album}</div>
                         <div className="playingsongartist">{song.Artist}</div>
                     </div>
-                    <div className="centerpart">
-                        {/* {song.Album} */}
+                </div>
+                <div className="lastpart">
+                    <div className={ hovered ? "openercontrol" : "openercontrol hidden" } style={{marginLeft: "0px"}}
+                    onClick={handleMenu}>
+                        <div className="opener1"></div>
+                        <div className="opener2"></div>
+                        <div className="opener3"></div>
                     </div>
-                    <div className="lastpart">
-                        <div className="lastpartduration">{song.Duration}</div>
-                        <div className="removesong">
-                        </div>
-                    </div>
+                    { hovered ? "" : song.Duration }
                 </div>
             </div>
         </div>
     );
 };
 
-const NowPlaying2 = () => {
-    return(
-        <div className="nowplaying2">
-            <div className="innernowplaying2"></div>
-        </div>
-    );
-};
-
-
 const Queue = () => {
-    const [, setQueueOpened] = CustomUseState(queueOpenedGlobal);
-    const [songIsPaused, setSongIsPaused] = CustomUseState(songIsPausedGlobal);
-    const [song, setSong] = CustomUseState(albumGlobal);
+    const [queueOpened, setQueueOpened] = CustomUseState(queueOpenedGlobal);
+    const [songIsPaused,] = CustomUseState(songIsPausedGlobal);
+    const [song,] = CustomUseState(albumGlobal);
     const [queue, setQueue] = CustomUseState(queueGlobal);
+    const [openerDetails, setOpenerDetails] = CustomUseState(openerGlobal);
     const [update, setUpdate] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
     const [,setResBar] = CustomUseState(responseBar);
-    // const [,setKeepButton] = CustomUseState(keepButtonGlobal);
-    // const [,setOnClickFunc] = CustomUseState(onClickFuncGlobal);
     const [topBarConfig, setTopBarConfig] = CustomUseState(topBarGlobal);
+    const [mini, setMini] = CustomUseState(miniPlayerGlobal);
+    // const [redirectTo, setRedirectTo] = useState("");
+    // const [routes, setRoutes] = CustomUseState(routesGlobal);
     actualQueue = queue;
     topBar = topBarConfig;
     queueLength = queue.length;
     songIndex = actualQueue.indexOf(song);
     firstpart = actualQueue.slice(0,songIndex);
     lastpart = actualQueue.slice(songIndex+1,queueLength);
+    miniLocal = mini;
+    isOpen = openerDetails.open;
+    const sDiv = useRef(null);
+    const hist = useHistory();
+
 
     const clearQueue = (e) => {
         e.stopPropagation();
@@ -98,6 +143,14 @@ const Queue = () => {
         setQueue(actualQueue);
         setResBar({ open: true, msg: "Queue cleared" });
         setUpdate(!update);
+    };
+
+    const goToAlbum = each => {
+        setQueueOpened(false);
+        // routes.push(`/home/album/${each.Album}`);
+        // setRoutes(routes);
+        hist.push(`${prefix}/home/album/${each.Album}`);
+        // setRedirectTo(`${each.Album}`);
     };
     
     const initial = () => {
@@ -130,40 +183,27 @@ const Queue = () => {
         setQueueOpened(false);
     };
 
-    const call = () => {
-        // setTopBarConfig({
-        //     button: true,
-        //     buttonFunc: close,
-        //     bgColor: "transparent",
-        //     title: ""
-        // });
-        // setKeepButton(true);
-        // setOnClickFunc(close);
-        setTopBarConfig({
-            button: true,
-            title: "",
-            bgColor: "transparent",
-            buttonFunc: close
-        });
-    };
-
-    const removeSong = (song,e) => {
-        e.stopPropagation();
+    const removeSong = (song) => {
         const removeIndex = actualQueue.indexOf(song);
         if (removeIndex !== -1) {
             actualQueue.splice(removeIndex, 1);
             localStorage.setItem("queue",JSON.stringify(actualQueue));
             setQueue(actualQueue);
             setUpdate(!update);
+            setResBar({
+                open: true,
+                msg: `Removed ${song.Title || song.Album} from queue`
+            });
         }
     };
 
     const albumName = () => {
+        if (actualQueue.length === 0) {
+            return "";
+        }
         const index = songIndex+1 < actualQueue.length ? songIndex+1 : 0;
         return actualQueue[index].Album;
     };
-
-    // initial();
 
     const lessen = (num) => {
         if (song.Color) {
@@ -174,22 +214,79 @@ const Queue = () => {
         }
     };
 
-    useEffect(() => {
-        call();
-        setIsLoading(false);
-        return () => {
-            // setTopBarConfig({
-            //     button: false,
-            //     buttonFunc: () => {},
-            //     title: "",
-            //     bgColor: "transparent"
-            // });
-            // setKeepButton(false);
-            // setOnClickFunc(() => {});
-            setTopBarConfig({
-                ...topBar,
-                button: false
+    const minimizer = () => {
+        setMini({
+            ...miniLocal,
+            show: true,
+            cover: song.Thumbnail
+        });
+        setQueueOpened(false);
+    };
+
+    const handleMenu = (e, { dimensions, windowDim, song: selectedSong }) => {
+        e.stopPropagation();
+        setOpenerDetails({
+            ...openerDetails,
+            open: true,
+            xValue: checkX(dimensions.x, windowDim.width),
+            yValue: checkY(dimensions.y, windowDim.height, 2),
+            data: [
+                {
+                    name: "Remove",
+                    func: () => removeSong(selectedSong)
+                },
+                {
+                    name: "Go to album",
+                    func: () => goToAlbum(selectedSong)
+                }
+            ]
+        });
+    };
+
+    const handlePlayingMenu = (e, { dimensions, windowDim, song: selectedSong }) => {
+        e.stopPropagation();
+        setOpenerDetails({
+            ...openerDetails,
+            open: true,
+            xValue: checkX(dimensions.x, windowDim.width),
+            yValue: checkY(dimensions.y, windowDim.height, 1),
+            data: [
+                {
+                    name: "Go to album",
+                    func: () => goToAlbum(selectedSong)
+                }
+            ]
+        });
+    };
+
+    const documentClick = e => {
+        const list = ["openercontrol","opener1","opener2","opener3"];
+        if (!list.includes(e.target.className)) {
+            setOpenerDetails({
+                ...openerDetails,
+                open: false
             });
+        }
+    };
+
+    const documentScroll = e => {
+        if (isOpen) {
+            setOpenerDetails({
+                ...openerDetails,
+                open: false
+            });
+        }
+    };
+
+
+    useEffect(() => {
+        setIsLoading(false);
+        sDiv.current = document.querySelector(".scrollcontainer");
+        document.addEventListener("click",documentClick);
+        sDiv.current && sDiv.current.addEventListener("scroll",documentScroll);
+        return () => {
+            document.removeEventListener("click",documentClick);
+            sDiv.current && sDiv.current.removeEventListener("scroll",documentScroll);
         };
     }, [update]);
 
@@ -197,119 +294,53 @@ const Queue = () => {
     if (isLoading) {
         return <MidPanelLoader/>
     }
+    // if (!queueOpened) {
+    //     return "";
+    // }
     return(
-        <div className="queue"
-        style={{ backgroundImage: `linear-gradient(to right,${lessen(0.2)},#121212,#121212,#121212)`}}
-        >
-            <div className="queuetitle">Now Playing</div>
-            <div className="bottomqueue">
+        // <div className={ queueOpened ? "bottomqueue up" : queueOpened !== "" ? "bottomqueue down" : "bottomqueue start" }>
+        <div className={ queueOpened ? "bottomqueue show" : queueOpened !== "" ? "bottomqueue hide" : "bottomqueue stay" }>
+        {/* <div className="bottomqueue"> */}
+            <div className="innerbottomqueue">
                 <div className="leftqueuepart">
-                    <div className="leftalbumcontainer" style={{
-                        backgroundImage: `url(${Placeholder})`,
-                        backgroundSize: "cover",
-                    }}>
-                        <img src={song.Thumbnail} alt="" 
-                        // style={{boxShadow: `0px 0px 20px ${lessen(0.5)}`}}
-                        />
+                    <div className="leftalbumartcover-container">
+                        <div className="leftalbumartcover">
+                            <div className="dummyforshadow"></div>
+                            <img className="expander" src={Expand} alt="" />
+                            <img className="minimizer" onClick={minimizer} src={Minimize} alt="" />
+                            <img src={song.Thumbnail} alt="" className="leftqueuealbumart" />
+                        </div>
                     </div>
                 </div>
                 <div className="rightqueuepart">
-                    <div className="nowplayingtitle">Now Playing</div>
-                    <NowPlaying songIsPaused={songIsPaused} song={song}/>
-                    {/* <NowPlaying2/> */}
-                    { actualQueue.length !== 1 ?
-                        <div className="nowplayingtitle">
-                            <div className="frontblock">Next from: {albumName()}</div>
-                            <div className="backblock" onClick={clearQueue}>Clear queue</div>
-                        </div> : ""
-                    }
-                    {
-                        lastpart.length !== 0 ?
-                        <div className="queuelist">
+                    <div className="innerrightqueue">
+                        <div className="nowplayingtitle">Now Playing</div>
+                        <SongInQueue nowPlaying={true} songIsPaused={songIsPaused} song={song} openerFunc={handlePlayingMenu} />
+                        { actualQueue.length !== 1 ?
+                            <div className="nowplayingtitle" style={{marginBottom: "8px"}}>
+                                <div className="frontblock">Next from: {albumName()}</div>
+                                <div className="backblock" onClick={clearQueue}>Clear</div>
+                            </div> : ""
+                        }
+                        <div className="scrollcontainer" style={{ overflowY: `${ isOpen ? "hidden" : "overlay" }` }}>
                             {
+                                lastpart.length !== 0 ?
                                 lastpart.map((each,i) => {
-                                    return(
-                                        <div className="queuelistsong" onClick={() => {
-                                            console.log("songindex",songIndex,"i",i);
-                                            // if (songIndex !== i) {
-                                                console.log("lastpart clicked");
-                                                setSong(each);
-                                                setSongIsPaused(true);
-                                            // }
-                                        }}>
-                                            <div className="dummyanim">{songIndex+i+2}</div>
-                                            <div className="nowplayingart" style={{
-                                                backgroundImage: `url(${Placeholder})`,
-                                                backgroundSize: "cover"
-                                            }}>
-                                                <img src={each.Thumbnail} alt=""/>
-                                            </div>
-                                            <div className="queuesongdetails">
-                                                <div className="startingpart">
-                                                    <div className="queuesongname">{each.Title || each.Album}</div>
-                                                    <div className="queuesongartist">{each.Artist}</div>
-                                                </div>
-                                                <div className="centerpart">
-                                                    {/* {each.Album} */}
-                                                </div>
-                                                <div className="lastpart">
-                                                    <div className="lastpartduration">{each.Duration}</div>
-                                                    <div className="removesong">
-                                                        <div className="destroyplayer" onClick={(e) => removeSong(each,e)}>
-                                                            <img src={Close} alt="" />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })
+                                    return <SongInQueue nowPlaying={false} song={each} number={songIndex+i+2} openerFunc={handleMenu} />
+                                }) : ""
                             }
-                        </div> : ""
-                    }
-                    {
-                        firstpart.length !== 0 ?
-                        <div className="queuelist">
                             {
-                                firstpart.map((each,i) => {
-                                    return(
-                                        <div className="queuelistsong" onClick={() => {
-                                            if (songIndex !== i) {
-                                                console.log("firspart click");
-                                                setSong(each);
-                                                setSongIsPaused(true);
-                                            }
-                                        }}>
-                                            <div className="dummyanim">{i+1}</div>
-                                            <div className="nowplayingart" style={{
-                                                backgroundImage: `url(${Placeholder})`,
-                                                backgroundSize: "cover"
-                                            }}>
-                                                <img src={each.Thumbnail} alt=""/>
-                                            </div>
-                                            <div className="queuesongdetails">
-                                                <div className="startingpart">
-                                                    <div className="queuesongname">{each.Title || each.Album}</div>
-                                                    <div className="queuesongartist">{each.Artist}</div>
-                                                </div>
-                                                <div className="centerpart">
-                                                    {/* {each.Album} */}
-                                                </div>
-                                                <div className="lastpart">
-                                                    <div className="lastpartduration">{each.Duration}</div>
-                                                    <div className="removesong">
-                                                        <div className="destroyplayer" onClick={(e) => removeSong(each,e)}>
-                                                            <img src={Close} alt="" />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })
+                                songIndex !== queueLength-1 && songIndex !== 0 ?
+                                <div style={{ width: "100%", height: "30px" }}></div> : ""
                             }
-                        </div> : ""
-                    }
+                            {
+                                firstpart.length !== 0 ?
+                                firstpart.map((each,i) => {
+                                    return <SongInQueue nowPlaying={false} song={each} number={i+1} openerFunc={handleMenu} />
+                                }) : ""
+                            }
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

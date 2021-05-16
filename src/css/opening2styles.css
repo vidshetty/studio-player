@@ -7,10 +7,12 @@
     overflow: hidden;
 }
 
-.mainwindow-start,.mainwindow-end{
+
+.mainwindow-start,.mainwindow-end,.mainwindow{
     width: 100vw;
     height: 100vh;
-    background-color: #121212;
+    /* background-color: #121212; */
+    background-color: #030303;
     opacity: 1;
 }
 .mainwindow-end{

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 import Opening from "./opening";
 import Home from "./homepage";
@@ -6,26 +6,36 @@ import {
     keepServersActive,
     fullScreenGlobal,
     playingGlobal,
-    CustomUseState
+    CustomUseState,
+    queueOpenedGlobal,
+    prefix,
+    httpCheck
 } from "./common";
-import { HashRouter as Router, Route } from "react-router-dom";
-// const { ipcRenderer } = window.electron;
+import { BrowserRouter as Router, Route } from "react-router-dom";
+let queueOpenedLocal, intervalTimeout = null;
 
 
 const App = () => {
+    httpCheck();
     const [screen, setScreen] = CustomUseState(fullScreenGlobal);
+    const [queueOpened, setQueueOpened] = CustomUseState(queueOpenedGlobal);
     const [playing,] = CustomUseState(playingGlobal);
     let screenLocal = screen;
     let playingLocal = playing;
+    queueOpenedLocal = queueOpened;
 
-    setInterval(keepServersActive, 5*60*1000);
+    if (intervalTimeout !== null) {
+        setInterval(() => {
+            keepServersActive();
+            intervalTimeout = null;
+        }, 5*60*1000);
+    }
 
     const screenSet = () => {
         setScreen({
             ...screenLocal,
             show: !screenLocal.show
         });
-        // ipcRenderer.send("full");
     };
 
     const keyDown = e => {
@@ -40,17 +50,25 @@ const App = () => {
         }
     };
 
+    const check = e => {
+        if (queueOpenedLocal) {
+            setQueueOpened(false);
+        }
+    };
+
     useEffect(() => {
         document.addEventListener("keydown",keyDown);
+        window.addEventListener("popstate",check);
         return () => {
             document.removeEventListener("keydown",keyDown);
+            window.removeEventListener("popstate",check);
         }
-    });
+    },[]);
 
     return(
         <Router>
-            <Route exact path="/" component={Opening} />
-            <Route path="/home" component={Home} />
+            <Route exact path={ prefix === "" ? "/" : prefix } component={Opening} />
+            <Route path={`${prefix}/home`} component={Home} />
         </Router>
     )
 };

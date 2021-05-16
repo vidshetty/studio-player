@@ -303,3 +303,41 @@
     color: rgba(255,255,255,0.7);
     /* background-color: aliceblue; */
 }
+
+
+
+
+.top-search-bar-container{
+    width: 85%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* background-color: blue; */
+}
+.search-bar{
+    width: 95%;
+    height: 70%;
+    border-radius: 2px;
+    background-color: #202020;
+    border: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+}
+.back-container, .input-container, .close-container{
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.back-container{
+    width: 8%;
+    background-color: aliceblue;
+}
+.input-container{
+    width: 84%;
+    background-color: blue;
+}
+.close-container{
+    width: 8%;
+    background-color: aqua;
+}

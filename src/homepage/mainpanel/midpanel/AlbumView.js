@@ -5,10 +5,6 @@ import {
     playingGlobal,
     routesGlobal,
     tabGlobal,
-    // keepButtonGlobal,
-    // onClickFuncGlobal,
-    // topTitleGlobal,
-    // topBgColor,
     topBarGlobal,
     checkArtist,
     albumGlobal,
@@ -21,14 +17,20 @@ import {
 } from "../../../common";
 import { MidPanelLoader } from "./index";
 import { HorizontalList } from "./HomeScreen";
-import { useParams, Redirect } from "react-router-dom";
+import { useParams, Redirect, useHistory, useLocation } from "react-router-dom";
 import play from "../../../assets/playwhite.png";
+import Play from "../../../assets/playbutton-black.svg";
+import Pause from "../../../assets/pausebutton-black.svg";
+import BackButton from "../../../assets/backbutton-white.svg";
+import PlayWhite from "../../../assets/playbutton-white.svg";
+import PauseWhite from "../../../assets/pausebutton-white.svg";
+import AddButton from "../../../assets/addbutton-black.svg";
 import pause from "../../../assets/pausewhite.png";
 import copyright from "../../../assets/copyright.png";
 import Placeholder from "../../../assets/placeholder.svg";
 import Queue from "./Queue";
 import { pauseOrPlay } from "../../../homepage";
-let mainscreen, actualIsOpen, bgChanged = false, topBar;
+let mainscreen, actualIsOpen, bgChanged = false, topBar, isOpen = false;
 
 
 const ShowMoreAlbum = ({ moreAlbums, albumartist }) => {
@@ -44,7 +46,6 @@ const ShowMoreAlbum = ({ moreAlbums, albumartist }) => {
         </div>
     );
 };
-
 const ActualAlbumView = () => {
     const [p, setP] = useState("");
     const params = useParams();
@@ -154,9 +155,12 @@ const ActualAlbumView = () => {
     };
 
     const playButton = (albumDetails) => {
+        console.log("clicked");
         if (decidePlayOrPause()) {
+        console.log("play/pause");
             pauseOrPlay();
         } else {
+        console.log("other");
             const main = albumDetails.Type === "Album" ? albumDetails.Tracks : [albumDetails];
             if (!playing) setPlaying(true);
             if (albumDetails.Type === "Single") {
@@ -167,6 +171,7 @@ const ActualAlbumView = () => {
                     song.Album = albumDetails.Album;
                     song.Thumbnail = albumDetails.Thumbnail;
                     song.Color = albumDetails.Color;
+                    song.Year = albumDetails.Year;
                 });
                 setQueue(main);
                 setAlbumForPlayer(main[0]);
@@ -195,6 +200,7 @@ const ActualAlbumView = () => {
                     song.Album = albumDetails.Album;
                     song.Color = albumDetails.Color;
                     song.Thumbnail = albumDetails.Thumbnail;
+                    song.Year = albumDetails.Year;
                     mainQueue.push(song);
                     // mainQueue.splice(index+i,0,song);
                     // ++i;
@@ -222,6 +228,7 @@ const ActualAlbumView = () => {
                     song.Album = albumDetails.Album;
                     song.Color = albumDetails.Color;
                     song.Thumbnail = albumDetails.Thumbnail;
+                    song.Year = albumDetails.Year;
                     queue.splice(index+1+i,0,song);
                 });
             }
@@ -462,7 +469,6 @@ const ActualAlbumView = () => {
         </div>
     );
 };
-
 const SongRow = ({ song, index, type, album }) => {
     const artistArr = song.Artist ? song.Artist.split(", ") : [];
     const [playing, setPlaying] = CustomUseState(playingGlobal);
@@ -505,6 +511,7 @@ const SongRow = ({ song, index, type, album }) => {
         }
         song.Color = album.Color;
         song.Thumbnail = album.Thumbnail;
+        song.Year = album.Year;
         queue.push(song);
         localStorage.setItem("queue",JSON.stringify(queue));
         setQueue(queue);
@@ -522,6 +529,7 @@ const SongRow = ({ song, index, type, album }) => {
             }
             song.Color = album.Color;
             song.Thumbnail = album.Thumbnail;
+            song.Year = album.Year;
             const index = queue.indexOf(albumSong);
             queue.splice(index+1,0,song);
             localStorage.setItem("queue",JSON.stringify(queue));
@@ -626,13 +634,415 @@ const SongRow = ({ song, index, type, album }) => {
     );
 };
 
-const AlbumView = () => {
-    const [queueOpened,] = CustomUseState(queueOpenedGlobal);
 
-    if (queueOpened) {
-        return <Queue/>
+const NewSongRow = ({ song, index, album }) => {
+    const [hovered, setHovered] = useState(false);
+    const [currentSong, setCurrentSong] = CustomUseState(albumGlobal);
+    const [songPaused, setSongPaused] = CustomUseState(songIsPausedGlobal);
+    const [playing, setPlaying] = CustomUseState(playingGlobal);
+    const [queue, setQueue] = CustomUseState(queueGlobal);
+    const [resp, setResp] = CustomUseState(responseBar); 
+
+    const isItSame = () => {
+        const currType = currentSong.Type === "Single";
+        const songType = album.Type === "Single";
+        const currName = currType ? currentSong.Album : currentSong.Title;
+        const songName = songType ? album.Album : song.Title;
+        return currName === songName;
+    };
+
+    const setUpPlayer = (song) => {
+        if (isItSame()) {
+            pauseOrPlay();
+            return;
+        }
+        if (!playing) setPlaying(true);
+        let newQueue = [];
+        if (album.Type === "Album") {
+            album.Tracks.forEach(each => {
+                each.Album = album.Album;
+                each.Color = album.Color;
+                each.Year = album.Year;
+                each.Thumbnail = album.Thumbnail;
+            });
+            newQueue = album.Tracks;
+        }
+        if (album.Type === "Single") {
+            song.Color = album.Color;
+            song.Thumbnail = album.Thumbnail;
+            song.Year = album.Year;
+            newQueue.push(song);
+        }
+        setQueue(newQueue);
+        localStorage.setItem("queue",JSON.stringify(newQueue));
+        if (currentSong !== song) setSongPaused(true);
+        setCurrentSong(song);
+        setResp({
+            ...resp,
+            open: true,
+            msg: `Playing '${song.Title || song.Album}' now`
+        });
+    };
+
+    const playButton = () => {
+        // if (isItSame()) {
+        //     pauseOrPlay();
+        // }
+        // if (decidePlayOrPause()) {
+        //     pauseOrPlay();
+        // } else {
+        //     const main = album.Type === "Album" ? album.Tracks : [album];
+        //     if (!playing) setPlaying(true);
+        //     if (album.Type === "Single") {
+        //         setQueue(main);
+        //         setPlayingSong(main[0]);
+        //     } else {
+        //         main.forEach(song => {
+        //             song.Album = album.Album;
+        //             song.Thumbnail = album.Thumbnail;
+        //             song.Color = album.Color;
+        //             song.Year = album.Year;
+        //         });
+        //         setQueue(main);
+        //         setPlayingSong(main[0]);
+        //     }
+        //     localStorage.setItem("queue",JSON.stringify(main));
+        //     setSongPaused(true);
+        // }
+    };
+
+    return(
+        <div className="newsongrow" onMouseOver={() => setHovered(true)} onMouseOut={() => setHovered(false)}
+        style={{ backgroundColor: `${ isItSame() ? "#202020" : "transparent" }` }}>
+            <div className="outerindex">
+                <img className={ hovered || isItSame() ? "outerindeximg" : "outerindeximg hidden" }
+                src={ isItSame() && !songPaused ? PauseWhite : PlayWhite} alt="" onClick={() => setUpPlayer(song)}
+                title={ isItSame() && !songPaused ? "Pause" : "Play" } />
+                {
+                    !hovered && !isItSame() ?
+                    <div className="index">{index+1}</div> : ""
+                }
+            </div>
+            <div className="songnameview">
+                <div>{album.Type === "Album" ? song.Title : album.Album}</div>
+            </div>
+            <div className="artistnameview">
+                <div>{album.Type === "Album" ? song.Artist : album.Artist}</div>
+            </div>
+            <div className="streams"></div>
+            <div className="durationview">
+                <div className="durationcontainer">
+                    <div>{album.Type === "Album" ? song.Duration : album.Duration}</div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const NewActualAlbumView = () => {
+    const params = useParams();
+    const [isLoading, setIsLoading] = useState(true);
+    const [album, setAlbum] = useState({});
+    const [playingSong, setPlayingSong] = CustomUseState(albumGlobal);
+    const [openerDetails, setOpenerDetails] = CustomUseState(openerGlobal);
+    const [playing, setPlaying] = CustomUseState(playingGlobal);
+    const [songPaused, setSongPaused] = CustomUseState(songIsPausedGlobal);
+    const [queue, setQueue] = CustomUseState(queueGlobal);
+    // const [routes, setRoutes] = CustomUseState(routesGlobal);
+    const [,setResObj] = CustomUseState(responseBar);
+    // const [redirectValue, setRedirectValue] = useState({ status: false, to: "" });
+    const topDiv = useRef(null);
+    const hist = useHistory();
+    const currentLocation = useLocation();
+    const list = ["tileopener","tileopener1","tileopener2","tileopener3"];
+    isOpen = openerDetails.open;
+
+
+    const decidePlayOrPause = () => {
+        let sameAlbum = false;
+        const titleInSong = playingSong.Title || false;
+        if (!titleInSong && album.Type === "Album") {
+            return false;
+        }
+        if (!titleInSong && album.Type === "Single") {
+            return playingSong.Album === album.Album;
+        }
+        album.Tracks && album.Tracks.every(song => {
+            if (song.Title === titleInSong) {
+                sameAlbum = true;
+                return false;
+            }
+            return true;
+        });
+        return sameAlbum;
+    };
+
+    const addAlbumToQueue = () => {
+        const main = album.Type === "Album" ? album.Tracks : [album];
+        const mainQueue = queue;
+        const index = mainQueue.indexOf(playingSong);
+        if (index === -1) return;
+        if (album.Type === "Single") {
+            mainQueue.push(main[0]);
+            localStorage.setItem("queue",JSON.stringify(mainQueue));
+            setQueue(mainQueue);
+            setResObj({ open: true, msg: `Added single to queue` });
+        } else {
+            main.forEach(song => {
+                song.Album = album.Album;
+                song.Color = album.Color;
+                song.Thumbnail = album.Thumbnail;
+                song.Year = album.Year;
+                mainQueue.push(song);
+            });
+            localStorage.setItem("queue",JSON.stringify(mainQueue));
+            setQueue(mainQueue);
+            setResObj({ open: true, msg: `Added album to queue` });
+        }
+    };
+
+    const playAlbumNext = () => {
+        if (queue.length !== 0) {
+            const index = queue.indexOf(playingSong);
+            if (album.Type === "Single") {
+                queue.splice(index+1,0,album);
+            } else {
+                album.Tracks.forEach((song,i) => {
+                    song.Album = album.Album;
+                    song.Color = album.Color;
+                    song.Thumbnail = album.Thumbnail;
+                    song.Year = album.Year;
+                    queue.splice(index+1+i,0,song);
+                });
+            }
+            localStorage.setItem("queue",JSON.stringify(queue));
+            setQueue(queue);
+            setResObj({ open: true, msg: `Playing ${album.Album} next` });
+        }
+    };
+
+    const goBack = () => {
+        hist.goBack();
+        // if (routes.length > 1) {
+        //     routes.splice(routes.length-1,1);
+        //     setRoutes(routes);
+        // }
+        // setRedirectValue({ status: true, to: routes[routes.length - 1] });
+    };
+
+    const playButton = () => {
+        if (decidePlayOrPause()) {
+            pauseOrPlay();
+        } else {
+            const main = album.Type === "Album" ? album.Tracks : [album];
+            if (!playing) setPlaying(true);
+            if (album.Type === "Single") {
+                setQueue(main);
+                setPlayingSong(main[0]);
+            } else {
+                main.forEach(song => {
+                    song.Album = album.Album;
+                    song.Thumbnail = album.Thumbnail;
+                    song.Color = album.Color;
+                    song.Year = album.Year;
+                });
+                setQueue(main);
+                setPlayingSong(main[0]);
+            }
+            localStorage.setItem("queue",JSON.stringify(main));
+            setSongPaused(true);
+        }
+    };
+
+    const call = async () => {
+        const res = await sendRequest({
+            method: "POST",
+            endpoint: `/getAlbumDetails`,
+            data: {
+                album: params.name
+            }
+        });
+        if (res) {
+            setAlbum(res.album);
+            // setMoreAlbums(res.moreAlbums);
+            setIsLoading(false);
+        }
+    };
+
+    const addAndDisplay = () => {
+        let min = 0, sec = 0;
+        if (album.Type === "Album") {
+            album.Tracks.forEach(track => {
+                const dur = track.Duration.split(": ");
+                min += parseInt(dur[0]);
+                sec += parseInt(dur[1]);
+            });
+            min += Math.floor(sec/60);
+            sec = sec%60;
+        } else {
+            const div = album.Duration.split(": ");
+            min = parseFloat(div[0]);
+            sec = parseFloat(div[1]);
+        }
+        return `${min} minutes${ sec !== 0 ? ` ${sec} seconds` : `` }`;
+    };
+
+    const handleMenu = e => {
+        e.stopPropagation();
+        const dimensions = { x: e.clientX, y: e.clientY };
+        setOpenerDetails({
+            ...openerDetails,
+            open: true,
+            xValue: dimensions.x + 5,
+            yValue: dimensions.y + 5,
+            data: [
+                {
+                    name: `Play next in queue`,
+                    func: playAlbumNext
+                }
+            ]
+        });
+    };
+
+    const documentClick = e => {
+        if (!list.includes(e.target.className) && isOpen) {
+            setOpenerDetails({
+                ...openerDetails,
+                open: false
+            });
+        }
+    };
+
+    const documentScroll = e => {
+        if (isOpen) {
+            setOpenerDetails({
+                ...openerDetails,
+                open: false
+            });
+        }
+    };
+
+
+    useEffect(() => {
+        setIsLoading(true);
+    }, [currentLocation.pathname]);
+
+    useEffect(() => {
+        if (isLoading) {
+            call();
+        }
+        topDiv.current = document.querySelector(".newalbum");
+        document.addEventListener("click", documentClick);
+        topDiv.current && topDiv.current.addEventListener("scroll", documentScroll);
+        return () => {
+            document.removeEventListener("click", documentClick);
+            topDiv.current && topDiv.current.removeEventListener("scroll", documentScroll);
+        };
+    }, [isLoading]);
+
+
+    if (isLoading) {
+        return <MidPanelLoader/>;
     }
-    return <ActualAlbumView/>
+    return (
+        <div className="newalbum">
+            <div className="topalbumview">
+                {/* <div className="backbuttoncontainer">
+                    <div className="backbuttonview" onClick={goBack}>
+                        <img src={BackButton} alt="" />
+                    </div>
+                </div> */}
+                <div className="coverview">
+                    <img src={album.Thumbnail} alt="" />
+                </div>
+                <div className="detailsview">
+                    <div className="innerdetailsview">
+                        <div className="albumnameview">{album.Album}</div>
+                        <div style={{width: "100%", height: "10px"}}></div>
+                        <div className="detailsoneview">
+                            <div className="albumtype">{album.Type}</div>
+                            <div className="content-separator"><div></div></div>
+                            {
+                                album.AlbumArtist.split(", ").length > 1 ? 
+                                album.AlbumArtist.split(", ").map((each,i) => {
+                                    return (
+                                        <>
+                                            <div className="albumartistview">{each}</div>
+                                            {
+                                                i !== album.AlbumArtist.split(", ").length-1 ?
+                                                <div className="content-separator"><div></div></div> : ""
+                                            }
+                                        </>
+                                    );
+                                }) :
+                                <div className="albumartistview">{album.AlbumArtist}</div>
+                            }
+                            <div className="content-separator"><div></div></div>
+                            <div className="albumyear">{album.Year}</div>
+                        </div>
+                        <div className="detailsoneview">
+                            <div className="albumtype">
+                                { album.Type === "Single" ? "1 Song" : album.Tracks.length > 1 ? `${album.Tracks.length} songs` : "1 song" }
+                            </div>
+                            <div className="content-separator"><div></div></div>
+                            <div className="albumtype">{addAndDisplay()}</div>
+                        </div>
+                        <div style={{width: "100%", height: "30px"}}></div>
+                        <div className="buttonholder">
+                            <div className="playbuttonview" onClick={playButton}>
+                                {
+                                    decidePlayOrPause() && !songPaused ?
+                                    <><img src={Pause} alt="" /><p>PAUSE</p></> :
+                                    <><img src={Play} alt="" /><p>PLAY</p></>
+                                }
+                            </div>
+                            <div className="addtoqueue" onClick={addAlbumToQueue}>
+                                <img src={AddButton} alt="" />
+                                ADD TO QUEUE
+                            </div>
+                            <div className="opener-holder">
+                                <div className="tileopener" title="More Options" onClick={handleMenu}>
+                                    <div className="tileopener1"></div>
+                                    <div className="tileopener2"></div>
+                                    <div className="tileopener3"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style={{width: "100%", height: "50px"}}></div>
+            <div className="bottomalbumview">
+                {
+                    album.Type === "Single" ?
+                    <NewSongRow song={album} index={0} album={album} /> :
+                    album.Tracks.map((each,i) => {
+                        return <NewSongRow song={each} index={i} album={album} />
+                    })
+                }
+            </div>
+            <div style={{width: "100%", height: "20px"}}></div>
+            <div className="copyright1">
+                <img src={copyright} alt="" />
+                {`All the songs on Studio Music ${String.fromCharCode(8482)} are pirated and we are aware of this being illegal.`}
+            </div>
+            <div className="copyright2">
+                <img src={copyright} alt="" />
+                We do not own any of the songs. This is just a project. Please do not sue us.
+            </div>
+            { playing ? <div style={{width: "100%", height: "100px"}}></div> : null }
+        </div>
+    );
+};
+
+
+const AlbumView = (props) => {
+    // const [queueOpened,] = CustomUseState(queueOpenedGlobal);
+
+    // if (queueOpened) {
+    //     return <Queue/>
+    // }
+    return <NewActualAlbumView/>
 };
 
 

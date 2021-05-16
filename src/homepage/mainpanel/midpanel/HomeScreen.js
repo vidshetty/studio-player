@@ -1,10 +1,14 @@
 import "../../../css/homestyles.css";
+import "../../../css/teststyles.css";
+import "../../../css/hometeststyles.css";
 import { MidPanelLoader } from "./index";
 import { useEffect, useState } from "react";
-import { Redirect } from "react-router-dom";
+import { Redirect, useHistory } from "react-router-dom";
 import playbutton from "../../../assets/playwhite.png";
 import pausebutton from "../../../assets/pausewhite.png";
 import Close from "../../../assets/deletewhite.svg";
+import Play from "../../../assets/playbutton-white.svg";
+import Pause from "../../../assets/pausebutton-white.svg";
 import Placeholder from "../../../assets/placeholder.svg";
 import {
     CustomUseState,
@@ -17,7 +21,11 @@ import {
     songIsPausedGlobal,
     playingGlobal,
     queueGlobal,
-    topBgColorGlobal
+    topBgColorGlobal,
+    modifyLibrary,
+    checkX,
+    checkY,
+    prefix
 } from "../../../common";
 import Queue from "./Queue";
 import { pauseOrPlay } from "../../../homepage";
@@ -105,7 +113,6 @@ const EachInList = ({ addCloseButton, closeFunc, item }) => {
         </div>
     );
 };
-
 export const HorizontalList = ({ list, addCloseButton = false, closeFunc = ()=>{} }) => {
     // const [redirectTo, setRedirectTo] = useState("");
     // const [, setTab] = CustomUseState(tabGlobal);
@@ -154,7 +161,6 @@ export const HorizontalList = ({ list, addCloseButton = false, closeFunc = ()=>{
         </>
     );
 };
-
 const EachTile = ({ mouseOver, mouseOut, album }) => {
     let songPausedLocal;
     const [redirectTo, setRedirectTo] = useState("");
@@ -216,7 +222,6 @@ const EachTile = ({ mouseOver, mouseOut, album }) => {
         </div>
     );
 };
-
 const EachRow = ({ row, mouseOver, mouseOut }) => {
     return(
         <div className="row">
@@ -232,7 +237,6 @@ const EachRow = ({ row, mouseOver, mouseOut }) => {
         </div>
     );
 };
-
 const TopDisplay = ({ mostPlayed, mouseOver, mouseOut }) => {
     const { title, list } = mostPlayed;
 
@@ -253,7 +257,6 @@ const TopDisplay = ({ mostPlayed, mouseOver, mouseOut }) => {
         </div>
     );
 };
-
 const ActualHomeScreen = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [all, setAll] = useState({});
@@ -395,14 +398,235 @@ const ActualHomeScreen = () => {
         </div>
     );
 };
+const QuickPickRow = ({ row }) => {
+    return(
+        <div className="quickpickrow">
+            {
+                row.map(item => {
+                    return <EachInQuickPick song={item} />
+                })
+            }
+        </div>
+    );
+};
+
+
+const EachInQuickPick = ({ song, openerFunc }) => {
+    const [hovered, setHovered] = useState(false);
+
+    const handleMenu = e => {
+        e.stopPropagation();
+        const dimensions = { x: e.clientX, y: e.clientY };
+        const windowDim = { width: document.documentElement.clientWidth, height: document.documentElement.clientHeight };
+        openerFunc(e, { dimensions, windowDim, song });
+    };
+
+    return(
+        <div className="eachinquick" onMouseOver={() => setHovered(true)} onMouseOut={() => setHovered(false)}>
+            <div className="tile-art">
+                <img src={song.Thumbnail || ""} alt="" />
+                <div className="tiledummyshadow">
+                    <img src={Play} alt="" />
+                </div>
+            </div>
+            <div className={ hovered ? "tile-details-short" : "tile-details" }>
+                <div className="tile-title">{song.Title || song.Album}</div>
+                <div className="tile-artist">{song.Artist}</div>
+            </div>
+            <div className={ hovered ? "tile-last" : "tile-last-hidden" }>
+                <div className="tileopener" onClick={handleMenu}>
+                    <div className="tileopener1"></div>
+                    <div className="tileopener2"></div>
+                    <div className="tileopener3"></div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const StartRadio = ({ picks, openerFunc }) => {
+    return(
+        <>
+            <div className="hugetitlename">
+                <div className="top-title">START RADIO FROM A SONG</div>
+                <div className="bottom-title">Quick Picks</div>
+            </div>
+            <div className="quickpick-container">
+                <div className="quickpick-grid">
+                    {
+                        picks.map(item => {
+                            return <EachInQuickPick song={item} openerFunc={openerFunc} />
+                        })
+                    }
+                </div>
+            </div>
+        </>
+    );
+};
+
+const EachAlbum = ({ item }) => {
+    const [song,] = CustomUseState(albumGlobal);
+    const [songPaused,] = CustomUseState(songIsPausedGlobal);
+    let songPausedLocal = songPaused;
+
+    const handleMenu = e => {};
+
+    const handlePlayPause = e => {};
+
+    if (Object.keys(item).length > 0) {
+        return(
+            <div className="homealbum">
+                <div className="innerhomealbum">
+                    <div className="homeartcover">
+                        <div className="homedummyshadow"></div>
+                        <div className={ (song.Album === item.Album) ? "homeplaybuttonfixed" : "homeplaybutton" }>
+                            <div className="innerhomeplaybutton" onClick={handlePlayPause}>
+                                <img src={ (!songPausedLocal && song.Album === item.Album) ? Pause : Play} alt="" />
+                            </div>
+                        </div>
+                        <div className="libraryopener" onClick={handleMenu}>
+                            <div className="libraryopener1"></div>
+                            <div className="libraryopener2"></div>
+                            <div className="libraryopener3"></div>
+                        </div>
+                        <img src={item.Thumbnail || ""} alt="" />
+                    </div>
+                    <div className="homealbumname">{item.Title || item.Album}</div>
+                    <span className="homeartistname">
+                        <span>{item.AlbumArtist}</span>
+                    </span>
+                </div>
+            </div>
+        );
+    }
+    return <div style={{ width: "15%", height: "100%" }}></div>
+};
+
+const NewActualHomeScreen = () => {
+    const [openerDetails, setOpenerDetails] = CustomUseState(openerGlobal);
+    // const [redirectTo, setRedirectTo] = useState("");
+    // const [routes, setRoutes] = CustomUseState(routesGlobal);
+    const [isLoading, setIsLoading] = useState(true);
+    const [data, setData] = useState({});
+    const [picks, setPicks] = useState({});
+    const list = ["tileopener","tileopener1","tileopener2","tileopener3"];
+    const hist = useHistory();
+
+    const call = async () => {
+        let res = await sendRequest({
+            method: "GET",
+            endpoint: `/getHomeAlbums`
+        });
+        if (res) {
+            res.albums = modifyLibrary(res.albums,6);
+            setData(res.albums);
+            setPicks(res.quickPicks);
+            // setPlayed(res.mostPlayed);
+            // ipcRenderer.send("response",res.albums);
+            setIsLoading(false);
+        }
+    };
+
+    const goToAlbum = song => {
+        // routes.push(`/home/album/${song.Album}`);
+        // setRoutes(routes);
+        hist.push(`${prefix}/home/album/${song.Album}`);
+        // hist.push(`/`);
+        // setRedirectTo(`${song.Album}`);
+    };
+
+    const sendTo = song => {
+        // ipcRenderer.send("response",song);
+    };
+
+    const handleMenu = (e, { dimensions, windowDim, song: album }) => {
+        e.stopPropagation();
+        setOpenerDetails({
+            ...openerDetails,
+            open: true,
+            xValue: checkX(dimensions.x, windowDim.width),
+            yValue: checkY(dimensions.y, windowDim.height, 3),
+            data: [
+                {
+                    name: "Go to album",
+                    func: () => goToAlbum(album)
+                },
+                {
+                    name: "Add to queue",
+                    func: () => sendTo(album)
+                },
+                {
+                    name: "Play next",
+                    func: () => sendTo(album)
+                },
+                {
+                    name: "Start radio",
+                    func: () => sendTo(album)
+                }
+            ]
+        });
+    };
+
+    const documentClick = e => {
+        if (!list.includes(e.target.className) && openerDetails.open) {
+            setOpenerDetails({
+                ...openerDetails,
+                open: false
+            });
+        }
+    };
+
+    useEffect(() => {
+        if (isLoading) {
+            call();
+        }
+        document.addEventListener("click",documentClick);
+        return () => {
+            document.removeEventListener("click",documentClick);
+        };
+    },[isLoading]);
+
+    
+    if (isLoading) {
+        return <MidPanelLoader/>
+    }
+    return(
+        <div className="newhome" style={{ overflowY: `${ openerDetails.open ? "hidden" : "overlay" }` }}>
+            {
+                picks.length !== 0 ?
+                <StartRadio picks={picks} openerFunc={handleMenu} /> : ""
+            }
+            {
+                Object.keys(data).map(each => {
+                    return(
+                        <>
+                        <div className="titlename">{each}</div>
+                        <div className="homecontainer">
+                            {
+                                data[each].map((item,i) => {
+                                    if (i<6) {
+                                        return <EachAlbum item={item} />
+                                    }
+                                    return ""
+                                })
+                            }
+                        </div>
+                        </>
+                    );
+                })
+            }
+        </div>
+    );
+};
+
 
 const HomeScreen = () => {
-    const [queueOpened,] = CustomUseState(queueOpenedGlobal);
+    // const [queueOpened,] = CustomUseState(queueOpenedGlobal);
 
-    if (queueOpened) {
-        return <Queue/>
-    }
-    return <ActualHomeScreen/>
+    // if (queueOpened) {
+    //     return <Queue/>
+    // }
+    return <NewActualHomeScreen/>
 };
 
 export default HomeScreen;

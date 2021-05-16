@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 let songservers = [];
 // let baseLink = "";
@@ -42,6 +42,7 @@ export const sendRequest = async config => {
         baseLink = await axios({
             method: "GET",
             url: "https://fervent-meninsky-931668.netlify.app/.netlify/functions/serverUrls"
+            // url: "https://studio-urls.netlify.app/.netlify/functions/serverUrls"
         }).then(res => res.data.server);
     }
 
@@ -53,14 +54,20 @@ export const sendRequest = async config => {
     try {
         res = await axios({
             method: config.method,
-            url: `${baseLink}${config.endpoint}`,
+            // url: `${baseLink}/api${config.endpoint}`,
+            url: `/api${config.endpoint}`,
             data: config.data || {},
             headers: baseHeaders
         });
-        return res.data;
+        const { data } = res;
+        if (data.redirect) {
+            window.location.href = "/login";
+            return null;
+        }
+        return data;
     } catch (e) {
         console.log("ERROR----",e.message);
-        return {};
+        return null;
     }
 };
 
@@ -81,10 +88,9 @@ const topBarConfig = {
 };
 
 const searchConfig = {
-    show: false,
+    open: false,
     input: "",
-    callLoading: false,
-    result: {}
+    prevTab: ""
 };
 
 const fullScreenConfig = {
@@ -156,10 +162,46 @@ export function Timer (delay, cb) {
 
 };
 
+export const httpCheck = () => {
+    if (window.location.protocol !== "https:") {
+        window.location.protocol = "https:";
+    }
+};
+
 export const wait = time => {
     return new Promise((resolve,) => {
         setTimeout(resolve, time);
     });
+};
+
+export const checkX = (cursorX, sWidth) => {
+    const atRight = (cursorX + 250 + 5) < sWidth;
+    if (atRight) {
+        return cursorX + 5;
+    }
+    return cursorX - 250 - 5;
+};
+
+export const checkY = (cursorY, sHeight, num) => {
+    const heightOfBody = (50 * num) + 10;
+    const atBottom = (heightOfBody + cursorY + 5) < sHeight;
+    if (atBottom) {
+        return cursorY + 5;
+    }
+    return cursorY - heightOfBody - 5;
+};
+
+export const modifyLibrary = (res, decidingNumber) => {
+    for (let key in res) {
+        if (res[key].length < decidingNumber) {
+            const arr = res[key];
+            const times = decidingNumber - arr.length;
+            for (let i=1;i<=times; i++) {
+                res[key].push({});
+            }
+        }
+    }
+    return res;
 };
 
 export const convertTime = time => {
@@ -261,6 +303,14 @@ export const CustomUseState = globalState => {
     return [state, setNewState];
 };
 
+export const usePrevious = value => {
+    const ref = useRef({});
+    useEffect(() => {
+        ref.current = value;
+    });
+    return ref.current;
+}
+
 export let playingGlobal = new createGlobalState(false);
 export let colorGlobal = new createGlobalState("");
 export let tabGlobal = new createGlobalState("Home");
@@ -274,12 +324,17 @@ export let searchBarGlobal = new createGlobalState(searchConfig);
 export let fullScreenGlobal = new createGlobalState(fullScreenConfig);
 export let albumGlobal = new createGlobalState({});
 export let queueGlobal = new createGlobalState([]);
-export let queueOpenedGlobal = new createGlobalState(false);
+export let queueOpenedGlobal = new createGlobalState("");
 export let songIsPausedGlobal = new createGlobalState(false);
 export let repeatTypeGlobal = new createGlobalState(0);
 export let radioGlobal = new createGlobalState(false);
 export let justOpened = new createGlobalState(true);
 export let openerGlobal = new createGlobalState(openerConfig);
+export let profileOpener = new createGlobalState(false);
 export let homeClass = new createGlobalState("homemain start");
-export let responseBar = new createGlobalState({ open: false, msg: "" });
+export let responseBar = new createGlobalState({ open: "", msg: "" });
+export let miniPlayerGlobal = new createGlobalState(false);
 export let topBgColorGlobal = new createGlobalState("#202020");
+
+// export const prefix = "/player";
+export const prefix = "";

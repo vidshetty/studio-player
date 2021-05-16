@@ -1,6 +1,7 @@
 import "../../../css/homestyles.css";
+import "../../../css/teststyles.css";
 import "../../../css/albumview.css";
-import { Route, Switch } from "react-router-dom";
+import { Route, Switch, useHistory } from "react-router-dom";
 import HomeScreen from "./HomeScreen";
 import AlbumView from "./AlbumView";
 import Library from "./Library";
@@ -19,10 +20,12 @@ import {
     albumGlobal,
     topBarGlobal,
     searchBarGlobal,
+    prefix
 } from "../../../common";
-import { useEffect, useState } from "react";
-import { Redirect } from "react-router-dom";
-let actualIsOpen, topBar, timeout = undefined, searchBar;
+import { useEffect, useRef, useState } from "react";
+import Queue from "./Queue";
+let actualIsOpen, topBar, timeout = undefined, searchBar, openLocal;
+let scrollTimeout = null;
 // const { ipcRenderer } =  window.electron;
 
 
@@ -221,7 +224,7 @@ const ProfileBar = () => {
 
 
     if (redirectValue.status) {
-        return <Redirect to={redirectValue.to} />
+        // return <Redirect to={redirectValue.to} />
     }
     return(
         <div className="entiretop"
@@ -255,19 +258,46 @@ const ProfileBar = () => {
 };
 
 const Mid = () => {
-    const [playing,] = useState(false);
+    const [openerDetails,] = CustomUseState(openerGlobal);
+    openLocal = openerDetails.open;
+    const scrollRef = useRef(null);
+
+    const removeClass = () => {
+        scrollRef.current.classList.remove("scrolling");
+    };
+
+    const handleScroll = e => {
+        if (scrollTimeout) {
+            clearTimeout(scrollTimeout);
+        }
+        scrollRef.current.classList.add("scrolling");
+        scrollTimeout = setTimeout(removeClass, 1000);
+    };
+
+    useEffect(() => {
+        scrollRef.current = document.querySelector(".main-outer-container");
+        scrollRef.current && scrollRef.current.addEventListener("scroll", handleScroll);
+
+        return () => {
+            scrollRef.current && scrollRef.current.removeEventListener("scroll", handleScroll);
+        };
+    }, []);
 
     return(
-        <div className={ playing ? "midmain-with-player" : "midmain-without-player" }>
-            <ProfileBar/>
-            <Switch>
-                <Route path="/home/homescreen"><HomeScreen/></Route>
-                <Route path="/home/search"><Search/></Route>
-                <Route path="/home/new-releases"><NewReleases/></Route>
-                <Route path="/home/album/:name"><AlbumView/></Route>
-                <Route path="/home/library"><Library/></Route>
-                <Route path="/home/radio"><Radio/></Route>
-            </Switch>
+        <div className="midmain-without-player">
+            <Queue/>
+            <div className="main-outer-container"
+            style={{ overflowY: `${ openLocal ? "hidden" : "overlay" }` }}
+            >
+                <Switch>
+                    <Route path={`${prefix}/home/homescreen`}><HomeScreen/></Route>
+                    <Route path={`${prefix}/home/search`}><Search/></Route>
+                    <Route path={`${prefix}/home/new-releases`}><NewReleases/></Route>
+                    <Route path={`${prefix}/home/album/:name`}><AlbumView/></Route>
+                    <Route path={`${prefix}/home/library`}><Library/></Route>
+                    <Route path={`${prefix}/home/radio`}><Radio/></Route>
+                </Switch>
+            </div>
         </div>
     );
 };

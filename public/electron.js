@@ -1,17 +1,20 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, screen } = require("electron");
 const localShortcut = require("electron-localshortcut");
 const path = require("path");
-let screen, isMaximized = false, anotherScreen, isFullScreen = false;
+let window, isMaximized = false, anotherScreen, isFullScreen = false;
 
 
 const create = () => {
-    screen = new BrowserWindow({
-        // width: 1320,
-        width: 1400,
-        // height: 660,
-        height: 800,
-        // height: 700,
-        // frame: false,
+    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+    console.log("width",width,"height",height);
+    // const finalWidth = width > 1500 ? 1500 : 0;
+    // const finalHeight = height > 790 ? 790 : 0;
+    const finalWidth = width > 1600 ? 1600 : 0;
+    const finalHeight = height > 860 ? 860 : 0;
+
+    const config = {
+        width: finalWidth,
+        height: finalHeight,
         frame: false,
         resizable: false,
         center: true,
@@ -19,11 +22,16 @@ const create = () => {
             nodeIntegration: true,
             preload: `${__dirname}/preload.js`
         },
-        // backgroundColor: "#131313",
-        backgroundColor: "#121212",
+        backgroundColor: "#000000",
         show: false,
-        icon: __dirname + "/aquamarinelogo.png"
-    });
+        icon: __dirname + "/bluelogo-small.png"
+    };
+    if (!finalHeight === 0 || finalWidth === 0) {
+        delete config.width;
+        delete config.height;
+    }
+    
+    window = new BrowserWindow(config);
 
     // screen.setThumbarButtons([
     //     {
@@ -35,26 +43,28 @@ const create = () => {
     //     }
     // ]);
 
-    // screen.loadURL(`file://${path.join(__dirname,"../build/index.html")}`);
+    window.loadURL(`file://${path.join(__dirname,"../build/index.html")}`);
     // screen.loadURL("http://localhost:5000");
-    screen.loadURL("http://localhost:3000");
-    // screen.loadURL("https://brokennews.herokuapp.com");
+    // window.loadURL("http://localhost:3000");
+    // window.loadURL("https://brokennews.herokuapp.com");
     // screen.loadURL("https://studioserver-backup.herokuapp.com");
-    // screen.webContents.openDevTools();
+    // window.webContents.openDevTools();
 
-    screen.once("ready-to-show",() => {
-        // screen.maximize();
+    window.once("ready-to-show",() => {
         // isMaximized = true;
         setTimeout(() => {
-            screen.show();
+            window.show();
+            // if (finalHeight === 0 || finalWidth === 0) {
+                window.maximize();
+            // }
             // localShortcut.register(screen,"Fn+F11",() => {
             //     console.log("full screen");
             // })
         },500);
     });
 
-    screen.on("close",() => {
-        screen = null;
+    window.on("close",() => {
+        window = null;
         app.quit();
     });
 };
@@ -87,26 +97,26 @@ const openNew = () => {
 };
 
 const minimize = () => {
-    screen.minimize();
+    window.minimize();
 };
 
 const maximize = () => {
     console.log("ismaximised",isMaximized);
     if (isMaximized) {
-        screen.unmaximize();
+        window.unmaximize();
         isMaximized = false;
     } else {
-        screen.maximize();
+        window.maximize();
         isMaximized = true;
     }
 };
 
 const close = () => {
-    screen.close();
+    window.close();
 };
 
 const toggleFullScreen = () => {
-    screen.setFullScreen(!isFullScreen);
+    window.setFullScreen(!isFullScreen);
     isFullScreen = !isFullScreen;
 };
 
@@ -126,6 +136,7 @@ ipcMain.on("opennew",() => {
     openNew();
 });
 ipcMain.on("full",toggleFullScreen);
+ipcMain.on("response",(e,res) => console.log("res",res));
 
 // ipcMain.on("paused",() => {
 //     screen.setThumbarButtons([

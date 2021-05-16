@@ -1,8 +1,9 @@
 import Mid, { MidPanelLoader } from "./midpanel";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useHistory } from "react-router-dom";
 import { useState, useEffect } from "react";
-// import logo from "../../assets/colouredlogo.svg";
-import logo from "../../assets/aquamarinelogo.svg";
+// import logo from "../../assets/bluelogo.svg";
+import logo from "../../assets/latest-whiteblack.svg";
+// import logo from "../../assets/aquamarinelogo.svg";
 // import logo from "../../assets/blackandwhitelogo.svg";
 import home from "../../assets/homewhite.svg";
 import search from "../../assets/searchwhite.svg";
@@ -18,20 +19,19 @@ import dropdown from "../../assets/dropdown.png";
 import tick from "../../assets/tickmark.svg";
 import "../../css/homestyles.css";
 import "../../css/teststyles.css";
+import "../../css/searchstyles.css";
 import {
     CustomUseState,
     playingGlobal,
     tabGlobal,
     routesGlobal,
     queueOpenedGlobal,
-    wait,
-    responseBar,
     topBarGlobal,
     searchBarGlobal,
-    sendRequest
+    prefix,
+    profileOpener
 } from "../../common";
-let topBar, tabLocal;
-// const { ipcRenderer } = window.electron;
+let topBar, tabLocal, queueOpenedLocal;
 
 
 const Left = () => {
@@ -253,65 +253,148 @@ const Left = () => {
     );
 };
 
-const Right = () => {
+
+const TopSearchBar = () => {
     return(
-        <div className="rightmain">
+        <div className="top-search-bar-container">
+            <div className="search-bar">
+                <div className="back-container"></div>
+                <div className="input-container"></div>
+                <div className="close-container"></div>
+            </div>
         </div>
     );
 };
 
-const ResponseBar = () => {
-    const [obj, setObj] = CustomUseState(responseBar);
-
-    if (obj.open) {
-        wait(2000).then(() => {
-            setObj({ ...obj, open: false });
-        });
-    }
-
-    return(
-        <>
-        { 
-            obj.open ? 
-            <div className="responsebar">
-                <div className="tickbar">
-                    <div className="innertick">
-                        <img src={tick} alt="" />
-                    </div>
-                </div>
-                <div className="message">{obj.msg}</div>
-            </div> : ""
-        }
-        </>
-    );
-};
-
-const NewLeft = () => {
-    const tabs = ["Home","Search","Library","Playlists"];
-    const currentTab = "Home";
+const TopNav = () => {
     const userName = localStorage.getItem("username");
+    const picture = localStorage.getItem("picture");
+    const topList = ["Home", "Library", "Search"];
+    const [tab, setTab] = CustomUseState(tabGlobal);
+    const [queueOpened, setQueueOpened] = CustomUseState(queueOpenedGlobal);
+    const [searchConfig, setSearchConfig] = CustomUseState(searchBarGlobal);
+    const [,setProfileOpen] = CustomUseState(profileOpener);
+    const currentLocation = useLocation();
+    const hist = useHistory();
+    tabLocal = tab;
+    queueOpenedLocal = queueOpened;
+
+    const initial = () => {
+        const loc = currentLocation.pathname.split("/")[2];
+        if (queueOpened) {
+            setTab("");
+            return;
+        }
+        switch(loc) {
+            case "homescreen":
+                if (tabLocal === loc) break;
+                setTab("Home");
+                break;
+            case "search":
+                if (tabLocal === loc) break;
+                setTab("Search");
+                break;
+            case "library":
+                if (tabLocal === loc) break;
+                setTab("Library");
+                break;
+            case "radio":
+                if (tabLocal === loc) break;
+                setTab("Radio");
+                break;
+            case "new-releases":
+                if (tabLocal === loc) break;
+                setTab("New Releases");
+                break;
+            default:
+                if (tabLocal === "") break;
+                setTab("");
+                break;
+        }
+    };
+
+    // useEffect(() => {
+        initial();
+    // },[tab]);
+
+    const goToHome = () => {
+        if (queueOpenedLocal) {
+            setQueueOpened(false);
+        }
+        if (tabLocal !== "Home") {
+            setTab("Home");
+            hist.push(prefix+"/home/homescreen");
+        }
+    };
+
+    const setFuncs = (item, currentTab) => {
+        if (item === tabLocal) {
+            return;
+        }
+        if (item === "Search") {
+            setSearchConfig({
+                ...searchConfig,
+                open: true,
+                prevTab: currentTab
+            });
+        }
+        if (queueOpenedLocal) {
+            setQueueOpened(false);
+        }
+    };
+
+    const getCorrespondingRoute = item => {
+        if(item === "Home") return `${prefix}/home/homescreen`;
+        else if(item === "Search") return `${prefix}/home/search`;
+        else if(item === "New Releases") return `${prefix}/home/new-releases`;
+        else if(item === "Library") return `${prefix}/home/library`;
+        else if(item === "Radio") return `${prefix}/home/radio`;
+        else if(item === "Most Played") return `${prefix}/home/mostplayed`;
+        else return `${prefix}/home/homescreen`;
+    };
+
+    const setRouteFunc = item => {
+        const route = getCorrespondingRoute(item);
+        hist.push(route);
+    };
+
+    const openProfile = e => {
+        setProfileOpen(true);
+    };
+
 
     return(
         <div className="dummyleft">
-            <div className="logopart">
-                <Link to="/home/homescreen" style={{ textDecoration: "none" }}>
-                    <div className="logopartdiv">
-                        <img src={logo} alt="logo"/>
-                        <p>Studio</p>
-                    </div>
-                </Link>
-            </div>
-            <div className="middlepart">
-                <div className="centermiddlepart">
-                    {
-                        tabs.map(each => {
-                            return <div className={ currentTab === each ? "tabs" : "lighttabs" }>{each}</div>
-                        })
-                    }
+            <div className="logopart" onClick={goToHome}>
+                <div className="logopartdiv" title="StudioMusic" >
+                    <img src={logo} alt="logo" />
+                    <p>Studio</p>
                 </div>
             </div>
+            <div className="middlepart">
+                {
+                    searchConfig.open ?
+                    <TopSearchBar/> :
+                    <div className="centermiddlepart">
+                        {
+                            topList.map(each => {
+                                return(
+                                    <div className={ tabLocal === each ? "tabs" : "lighttabs" }
+                                    onClick={() => {
+                                        setFuncs(each, tabLocal);
+                                        setRouteFunc(each);
+                                        setTab(each);
+                                    }}>
+                                        {each}
+                                    </div>
+                                ); 
+                            })
+                        }
+                    </div>
+                }
+            </div>
             <div className="profilepart">
-                <div className="profilebardiv">
+                {/* <div className="profilebardiv">
                     <div className="name">{userName}</div>
                     <div className="logoutbutton">
                         <img src={dropdown} alt=""/>
@@ -319,113 +402,32 @@ const NewLeft = () => {
                 </div>
                 <div className="topbuttons">
                     <div className="minimize"></div>
-                    {/* <div onClick={max} className="maximize"></div> */}
                     <div className="close"></div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-const EachAlbum = ({ each }) => {
-    return(
-        <div className="eachinrow">
-            <div className="innerineach">
-                <img className="albumimg" src={each.Thumbnail} alt="" />
-                <div className="eachalbumname">{each.Album}</div>
-                <div className="eachalbumartist">{each.AlbumArtist}</div>
-            </div>
-        </div>
-    );
-};
-
-const CreateRow = ({ row }) => {
-    return(
-        <div className="createrow">
-            {
-                row.map(each => {
-                    return <EachAlbum each={each}/>
-                })
-            }
-        </div>
-    );
-};
-
-const CreateAnotherRow = ({ row }) => {
-    return(
-        <div className="createanotherrow">
-
-        </div>
-    );
-};
-
-const NewMid = () => {
-    const [library, setLibrary] = useState({});
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        const call = async () => {
-            // const saved = JSON.parse(sessionStorage.getItem("library"));
-            const saved = null;
-            if (saved !== null) {
-                setLibrary(saved);
-                setIsLoading(false);
-                return;
-            }
-            const res = await sendRequest({
-                method: "GET",
-                endpoint: `/getLibrary`
-            });
-            await wait(500);
-            sessionStorage.setItem("library",JSON.stringify(res));
-            setLibrary(res);
-            setIsLoading(false);
-        };
-        if (isLoading) {
-            call();
-        }
-    },[isLoading]);
-
-    if (isLoading) {
-        return <MidPanelLoader/>
-    }
-    return(
-        <div className="dummymid">
-            {
-                ["New Releases","Recently Played","Most Played","Liked"].map((each,i) => {
-                    return(
-                        <>
-                            <div className="libraryname">{each}</div>
-                            <div className="librarycontainer">
-                                <CreateRow row={library[i]}/>
-                            </div>
-                        </>
-                    );
-                })
-            }
-            <div className="libraryname">Library</div>
-            <div className="librarycontainer">
+                </div> */}
                 {
-                    Object.keys(library).map((each,i) => {
-                        return <CreateRow row={library[each]}/>
-                    })
+                    picture ?
+                    <div className="picture-container" onClick={openProfile}>
+                        <img className="center-picture-img" src={picture} alt="" title={userName} />
+                    </div> :
+                    <div className="picture-container" onClick={openProfile} style={{ backgroundColor: "violet", color: "black", fontSize: "1em" }}>
+                        {userName[0].toUpperCase()}
+                    </div>
                 }
             </div>
         </div>
     );
 };
 
+
+
 const MainPanel = () => {
     const [isPlaying,] = CustomUseState(playingGlobal);
 
     return(
-        <div className={ isPlaying ? "mainpanel-with-player" : "mainpanel-without-player" }>
-            <NewLeft/>
-            <NewMid/>
-            {/* <Left/>
-            <Mid/> */}
-            <ResponseBar/>
-            {/* <Right/> */}
+        // <div className={ isPlaying ? "mainpanel-with-player" : "mainpanel-without-player" }>
+        <div className="mainpanel-without-player">
+            <TopNav/>
+            <Mid/>
         </div>
     );
 };
