@@ -897,16 +897,31 @@ const ResponseBar = () => {
 };
 
 const ProfileOpener = ({ setProfileOpen }) => {
+    const [isLoading, setIsLoading] = useState(false);
     const picture = localStorage.getItem("picture");
     const userName = localStorage.getItem("username").split(" ");
     const email = localStorage.getItem("email");
-    const list = ["profile-opener","rowinmenu","rowtext","picture-container"];
+    const list = [
+        "profile-opener",
+        "rowinmenu",
+        "rowtext",
+        "picture-container",
+        "account-section",
+        "account-picture",
+        "center-picture",
+        "dummy-class",
+        "account-name",
+        "account-email"
+    ];
+    window.isLoading = isLoading;
 
     const openAccount = () => {
         window.open("/account", "_blank");
+        return true;
     };
 
     const signOut = async () => {
+        setIsLoading(true);
         const res = await sendRequest({
             method: "GET",
             endpoint: "/sign-out"
@@ -914,34 +929,40 @@ const ProfileOpener = ({ setProfileOpen }) => {
         if (res.success) {
             localStorage.clear();
             window.location.href = "/";
-            return null;
+            return false;
         } else {
+            localStorage.clear();
             window.location.href = "/login";
-            return null;
+            return false;
         }
     };
 
     const click = e => {
-        if (!list.includes(e.target.className)) {
+        if (!list.includes(e.target.className) && !window.isLoading) {
             setProfileOpen(false);
         }
     };
 
     const data = [
         { name: "Account", func: openAccount },
-        { name: "History", func: ()=>{} },
-        { name: "Sign Out", func: signOut }
+        { name: "History", func: ()=>{ return false; } },
+        { name: "Sign Out", func: signOut, only: true }
     ];
 
     const handle = async (menu) => {
-        await menu.func();
-        setProfileOpen(false);
+        if (window.isLoading) {
+            return;
+        }
+        const hide = await menu.func();
+        if (hide) {
+            setProfileOpen(false);
+        }
     };
 
     useEffect(() => {
         document.addEventListener("click", click);
         return () => {
-            document.removeEventListener("click", click);
+            document.removeEventListener("click",click);
         };
     }, []);
 
@@ -952,7 +973,7 @@ const ProfileOpener = ({ setProfileOpen }) => {
                     {
                         picture ?
                         <div className="center-picture">
-                            <img src={picture} alt="" />
+                            <img src={picture} alt="" className="dummy-class" />
                         </div> :
                         <div className="center-picture" style={{ backgroundColor: "violet", color: "black", fontSize: "2em" }}>
                             {userName[0][0]?.toUpperCase()}{userName[1] && userName[1][0]?.toUpperCase()}
@@ -966,7 +987,15 @@ const ProfileOpener = ({ setProfileOpen }) => {
                 data.map(menu => {
                     return(
                         <div className="rowinmenu" onClick={() => handle(menu)}>
-                            <div className="rowtext">{menu.name}</div>
+                            { isLoading && menu.only ? 
+                                <div className="small-loader">
+                                    <div className="inner-small-loader">
+                                        <div className="s-one"></div>
+                                        <div className="s-two"></div>
+                                        <div className="s-three"></div>
+                                    </div>
+                                </div>
+                                : <div className="rowtext">{menu.name}</div> }
                         </div>
                     );
                 })
