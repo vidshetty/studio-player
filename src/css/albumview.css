@@ -386,13 +386,18 @@
     justify-content: center;
     /* background-color: aliceblue; */
 }
-.playinganim,.pausedanim{
+.playinganim,.pausedanim,.playinanim-queue,.pausedanim-queue{
     width: 20px;
     height: 20px;
     /* background-color: black; */
     display: flex;
     align-items: flex-end;
     justify-content: space-evenly;
+}
+.playinanim-queue,.pausedanim-queue{
+    position: absolute;
+    left: 0;
+    top: 0;
 }
 .div1,.div2,.div3,.div4{
     width: 3px;
@@ -722,6 +727,7 @@
     font-size: 0.9em;
     font-weight: 600;
     cursor: pointer;
+    border: none;
 }
 .playbuttonview img, .addtoqueue img{
     width: 15px;
@@ -847,6 +853,16 @@
     width: 20%;
     /* background-color: blue; */
 }
+.opener-container{
+    position: absolute;
+    top: 0;
+    right: 80px;
+    width: 50px;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 .durationcontainer{
     position: absolute;
     top: 0;
@@ -859,6 +875,7 @@
     font-size: 1em;
     color: #909090;
     font-size: 0.9em;
+    /* background-color: #030303; */
 }
 
 

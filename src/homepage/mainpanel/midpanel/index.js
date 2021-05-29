@@ -20,6 +20,7 @@ import {
     albumGlobal,
     topBarGlobal,
     searchBarGlobal,
+    playingGlobal,
     prefix
 } from "../../../common";
 import { useEffect, useRef, useState } from "react";
@@ -259,6 +260,7 @@ const ProfileBar = () => {
 
 const Mid = () => {
     const [openerDetails,] = CustomUseState(openerGlobal);
+    const [playing,] = CustomUseState(playingGlobal);
     openLocal = openerDetails.open;
     const scrollRef = useRef(null);
 
@@ -285,7 +287,7 @@ const Mid = () => {
 
     return(
         <div className="midmain-without-player">
-            <Queue/>
+            { playing ? <Queue/> : null }
             <div className="main-outer-container"
             style={{ overflowY: `${ openLocal ? "hidden" : "overlay" }` }}
             >

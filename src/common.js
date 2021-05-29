@@ -54,8 +54,8 @@ export const sendRequest = async config => {
     try {
         res = await axios({
             method: config.method,
-            // url: `${baseLink}/api${config.endpoint}`,
-            url: `/api${config.endpoint}`,
+            url: `${baseLink}/api${config.endpoint}`,
+            // url: `/api${config.endpoint}`,
             data: config.data || {},
             headers: baseHeaders
         });
@@ -163,7 +163,7 @@ export function Timer (delay, cb) {
 };
 
 export const httpCheck = () => {
-    if (window.location.protocol !== "https:") {
+    if (window.location.protocol !== "http:") {
         window.location.protocol = "https:";
     }
 };
@@ -335,6 +335,7 @@ export let homeClass = new createGlobalState("homemain start");
 export let responseBar = new createGlobalState({ open: "", msg: "" });
 export let miniPlayerGlobal = new createGlobalState(false);
 export let topBgColorGlobal = new createGlobalState("#202020");
+export const global = {};
 
 // export const prefix = "/player";
 export const prefix = "";

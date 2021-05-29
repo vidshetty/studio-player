@@ -31,6 +31,7 @@ import upArrow from "../assets/uparrow.svg";
 import downArrow from "../assets/downarrow.svg";
 import Expand from "../assets/expand-white.svg";
 import volumesvg from "../assets/volume.svg";
+import Button from "../Button";
 import {
     CustomUseState,
     playingGlobal,
@@ -61,16 +62,19 @@ let ctrlKey = false;
 let currentSongIndex = 0, isSongPlaying, actualQueue;
 let volumerange, elapsedTime, duration, range, percent = 0, style, bufferPercent = 0;
 export let pauseOrPlay;
+let goToNext, goToPrevious;
 let setVolume = 1, isBuffering, topBar, songPausedLocal, timeout = null;
 let trackingTimer, screenLocal;
 // const { ipcRenderer } = window.electron;
 
 
 const changeColor = (percent,bufferPercent) => {
-    // return `linear-gradient(to right, red ${percent}%, #505050 0%)`;
+    // return `linear-gradient(to right, #ff0000 ${percent}%, #303030 0%)`;
     // return `linear-gradient(to right, #066bff ${percent}%, #505050 0%)`;
-    return `linear-gradient(to right, #066bff ${percent}%, #303030 0%)`;
-    // return `linear-gradient(to right, #066bff ${percent}%, #505050 ${percent}%, #505050 ${bufferPercent}%, #303030 0%)`;
+    // return `linear-gradient(to right, #066bff ${percent}%, #303030 0%)`;
+    return `linear-gradient(to right, #066bff ${percent}%, #404040 ${percent}%, #404040 ${bufferPercent}%, #303030 0%)`;
+    // return `linear-gradient(to right, #3030ff ${percent}%, #404040 ${percent}%, #404040 ${bufferPercent}%, #303030 0%)`;
+    // return `linear-gradient(to right, #ffffff ${percent}%, #404040 ${percent}%, #404040 ${bufferPercent}%, #303030 0%)`;
 };
 
 const changeColorVolume = (value) => {
@@ -193,7 +197,7 @@ const Player = () => {
         documentClick(e);
         setQueueOpened(!queueOpened);
     };
-    const goToNext = (e = "") => {
+    goToNext = (e = "") => {
         if (e !== "") {
             e.stopPropagation();
         }
@@ -202,13 +206,29 @@ const Player = () => {
         if (actualQueue.length === 1) {
             audio.currentTime = 0;
         } else {
-            const nextIndex = currentSongIndex < actualQueue.length - 1 ? currentSongIndex + 1 : 0;
+            const findNextIndex = () => {
+                let found = false;
+                let nowIndex = currentSongIndex;
+                let nextIndex;
+                while (!found) {
+                    nextIndex = nowIndex < actualQueue.length - 1 ? nowIndex + 1 : 0;
+                    const nextSong = actualQueue[nextIndex];
+                    if (Object.keys(nextSong).length < 2) {
+                        nowIndex = nextIndex;
+                    } else {
+                        found = true;
+                    }
+                }
+                return nextIndex;
+            };
+            // const nextIndex = currentSongIndex < actualQueue.length - 1 ? currentSongIndex + 1 : 0;
+            const nextIndex = findNextIndex();
             setSong(actualQueue[nextIndex]);
             currentSongIndex = nextIndex;
         }
         setSongPaused(true);
     };
-    const goToPrevious = (e = "") => {
+    goToPrevious = (e = "") => {
         if (e !== "") {
             e.stopPropagation();
         }
@@ -217,15 +237,33 @@ const Player = () => {
         setSongPaused(true);
         if (actualQueue.length === 1 || audio.currentTime > 10) {
             audio.currentTime = 0;
-            trackingTimer = null;
+            trackingTimer.stop();
             trackingTimer = new Timer(30, addToRecentlyPlayed);
             if (!trackingTimer.hasStarted()) trackingTimer.start();
         } else {
-            const index = actualQueue.indexOf(song);
-            setSong(index === 0 ? actualQueue[actualQueue.length-1] : actualQueue[index-1]);
+            const findPreviousIndex = () => {
+                let found = false;
+                let nowIndex = currentSongIndex;
+                let previousIndex;
+                while (!found) {
+                    previousIndex = nowIndex === 0 ? actualQueue.length - 1 : nowIndex - 1;
+                    const previousSong = actualQueue[previousIndex];
+                    if (Object.keys(previousSong).length < 2) {
+                        nowIndex = previousIndex;
+                    } else {
+                        found = true;
+                    }
+                }
+                return previousIndex;
+            };
+            // const prevIndex = currentSongIndex === 0 ? actualQueue.length-1 : currentSongIndex - 1;
+            const prevIndex = findPreviousIndex();
+            setSong(actualQueue[prevIndex]);
+            currentSongIndex = prevIndex;
         }
     };
     const shutdown = () => {
+        console.log("shutting down");
         setPlaying(false);
         audio.src = "";
         setSong({});
@@ -281,7 +319,7 @@ const Player = () => {
         setSongPaused(true);
         if (actualQueue.length === 1 || audio.currentTime > 10) {
             audio.currentTime = 0;
-            trackingTimer = null;
+            trackingTimer.stop();
             trackingTimer = new Timer(30, addToRecentlyPlayed);
             if (!trackingTimer.hasStarted()) trackingTimer.start();
         } else {
@@ -327,10 +365,11 @@ const Player = () => {
         localStorage.setItem("duration",audio.duration);
         range.max = audio.duration;
         duration.innerText = convertTime(audio.duration);
-        audio.play();
         setBuffering(false);
         setSongPaused(false);
-        // audio.currentTime = 0;
+        audio.currentTime = 0;
+        audio.play();
+        if (!trackingTimer.hasStarted()) trackingTimer.start();
         // const time = localStorage.getItem("time");
         // console.log("time",time);
         // if (time === null) {
@@ -339,14 +378,11 @@ const Player = () => {
         //     audio.currentTime = time;
         //     console.log("setting time");
         // }
-        if (!trackingTimer.hasStarted()) trackingTimer.start();
     };
     const waiting = (e) => {
         setBuffering(true);
         setSongPaused(true);
-        if (trackingTimer.canPause()) {
-            trackingTimer.pause();
-        }
+        if (trackingTimer.canPause()) trackingTimer.pause();
     };
     const timeupdate = (e) => {
         localStorage.setItem("time", audio.currentTime);
@@ -370,9 +406,7 @@ const Player = () => {
         setBuffering(false);
         // audio.play();
         setSongPaused(false);
-        if (trackingTimer.canContinue()) {
-            trackingTimer.continue();
-        }
+        if (trackingTimer.canContinue()) trackingTimer.continue();
     };
     const onplay = (e) => {
         setIsPlaying(true);
@@ -381,21 +415,22 @@ const Player = () => {
     const ended = (e) => {
         range.value = 0;
         elapsedTime.innerText = "0: 00";
-        if (!trackingTimer.hasFinished()) {
-            trackingTimer.stop();
-        }
+        trackingTimer.stop();
+        range.style.background = changeColor(0,0);
         if (whichRepeat === 2) {
             audio.play();
-            trackingTimer = null;
+            trackingTimer.stop();
             trackingTimer = new Timer(30, addToRecentlyPlayed);
             if (!trackingTimer.hasStarted()) trackingTimer.start();
         } else if (whichRepeat === 0) {
             setIsPlaying(false);
             setSongPaused(true);
-            range.style.background = changeColor(0);
         } else {
             if (queue.length === 1) {
                 audio.play();
+                trackingTimer.stop();
+                trackingTimer = new Timer(30, addToRecentlyPlayed);
+                if (!trackingTimer.hasStarted()) trackingTimer.start();
             } else {
                 goToNext();
             }
@@ -404,9 +439,7 @@ const Player = () => {
     const onpaused = async (e) => {
         setSongPaused(true);
         setIsPlaying(false);
-        if (trackingTimer.canPause()) {
-            trackingTimer.pause();
-        }
+        if (trackingTimer.canPause()) trackingTimer.pause();
         document.title = "Studio";
         // ipcRenderer.send("paused");
         // await wait(1000);
@@ -415,9 +448,7 @@ const Player = () => {
     const onplaying = async (e) => {
         setSongPaused(false);
         setIsPlaying(true);
-        if (trackingTimer.canContinue()) {
-            trackingTimer.continue();
-        }
+        if (trackingTimer.canContinue()) trackingTimer.continue();
         document.title = `${song.Title || song.Album} - Studio`;
         // ipcRenderer.send("playing");
         // await wait(1000);
@@ -430,7 +461,8 @@ const Player = () => {
         if (e.keyCode === 17) {
             ctrlKey = true;
         }
-        if (e.keyCode === 32 && ctrlKey && !isBuffering) {
+        // if (e.keyCode === 32 && ctrlKey && !isBuffering) {
+        if (e.keyCode === 32 && !isBuffering) {
             e.preventDefault();
             pauseOrPlay();
         }
@@ -498,6 +530,12 @@ const Player = () => {
         }
     };
 
+    const calcColor = () => {
+        const split = song.Color.split(",");
+        split[3] = "0.1)";
+        return split.join(",");
+    };
+
     useEffect(() => {
         let shouldRemove = false;
         (() => {
@@ -533,26 +571,28 @@ const Player = () => {
             localStorage.removeItem("time");
             localStorage.removeItem("duration");
         }
-        trackingTimer = new Timer(30,addToRecentlyPlayed);
-        if ("mediaSession" in navigator) {
-            navigator.mediaSession.metadata = new window.MediaMetadata({
-                title: song.Title || song.Album,
-                artist: song.Artist,
-                album: song.Album,
-                artwork: [
-                    { src: song.Thumbnail }
-                ]
-            });
+        if (Object.keys(song).length !== 0) {
+            trackingTimer = new Timer(30,addToRecentlyPlayed);
+            if ("mediaSession" in navigator) {
+                navigator.mediaSession.metadata = new window.MediaMetadata({
+                    title: song.Title || song.Album,
+                    artist: song.Artist,
+                    album: song.Album,
+                    artwork: [
+                        { src: song.Thumbnail }
+                    ]
+                });
+            }
         }
         console.log("network",navigator?.connection?.downlink);
         console.log("type",navigator?.connection?.type);
         console.log("connection",navigator?.connection);
-        return () => {
-            if (trackingTimer !== null) {
-                trackingTimer.stop();
-                trackingTimer = null;
-            }
-        };
+        // return () => {
+        //     if (trackingTimer !== null) {
+        //         trackingTimer.stop();
+        //         trackingTimer = null;
+        //     }
+        // };
     },[song]);
 
     useEffect(() => {
@@ -613,7 +653,7 @@ const Player = () => {
                 audio.addEventListener("waiting",waiting);
                 audio.addEventListener("timeupdate",timeupdate);
                 audio.addEventListener("canplay",canplay);
-                audio.addEventListener("play",onplay);
+                // audio.addEventListener("play",onplay);
                 audio.addEventListener("ended",ended);
                 audio.addEventListener("pause",onpaused);
                 audio.addEventListener("playing",onplaying);
@@ -628,7 +668,7 @@ const Player = () => {
                     range.max = oldDuration;
                     range.value = oldTime;
                     percent = range.value/range.max * 100;
-                    range.style.background = changeColor(percent);
+                    range.style.background = changeColor(percent,0);
                     duration.innerText = convertTime(oldDuration);
                     elapsedTime.innerText = convertTime(oldTime);
                 }
@@ -639,7 +679,7 @@ const Player = () => {
                 range.max = oldDuration;
                 range.value = oldTime;
                 percent = range.value/range.max * 100;
-                range.style.background = changeColor(percent);
+                range.style.background = changeColor(percent,0);
                 duration.innerText = convertTime(oldDuration);
                 elapsedTime.innerText = convertTime(oldTime);
             }
@@ -680,7 +720,9 @@ const Player = () => {
         <div className="dummycover">
             <input type="range" min="0" defaultValue="0" className="range" disabled={buffering || song.url === ""} />
             <div className="outerplayer">
-                <div className="player">
+                <div className="player"
+                // style={{ backgroundColor: `${calcColor()}` }}
+                >
                     <div className="innerplayer" onClick={openQueue}
                     onMouseOver={() => setHovered(true)}
                     onMouseOut={() => setHovered(false)}>
@@ -765,7 +807,10 @@ const Player = () => {
                                 <img src={
                                     repeatType === 0 ? noRepeat :
                                     repeatType === 1 ? repeat : repeatOne
-                                } alt="" onClick={changeRepeat} title="Repeat" />
+                                } alt="" onClick={changeRepeat} title={
+                                    repeatType === 0 ? "Repeat Off" :
+                                    repeatType === 1 ? "Repeat All" : "Repeat One"
+                                } />
                             </div>
                             {
                                 screenLocal.show ? "" :
@@ -824,6 +869,7 @@ export const Opener = () => {
 
 const FullScreen = () => {
     const [song,] = CustomUseState(albumGlobal);
+    const [songIsPaused, setSongIsPaused] = CustomUseState(songIsPausedGlobal);
 
     const lessen = value => {
         let color = song.Color.split(",");
@@ -831,23 +877,30 @@ const FullScreen = () => {
         color = color.join(",");
         return color;
     };
+
+    const handleClick = e => {};
+
+    useEffect(() => {
+        document.querySelector(".full-display").requestFullscreen();
+    }, []);
     
     return(
-        <div className="fulldisplay">
-            <div className="innerfulldisplay"
-            // style={{ background: `linear-gradient(to bottom,${song.Color || ""},${song.Color || ""},black` }}
-            // style={{ background: `linear-gradient(to bottom,black,${lessen(0.5)},${lessen(0.5)},black` }}
-            // style={{ background: `${lessen(0.3)}` }}
-            style={{ background: `#7fffd430` }}
-            // style={{ background: `#252525` }}
-            // style={{ background: `radial-gradient(${lessen(1)},${lessen(1)},black)` }}
-            >
-                <div className="imageholder"
-                // style={{ backgroundImage: `url(${song.Thumbnail})`, backgroundSize: "cover" }}
-                >
-                    {/* <div className="innerimageholder">
-                    </div> */}
+        <div className="full-display">
+            <div className="inner-full-display" style={{ backgroundColor: lessen(0.2) }}>
+                <div className="imageholder">
                     <img src={song.Thumbnail} alt=""/>
+                </div>
+                {/* <p className="display-title">{song.Title || song.Album}</p> */}
+                <div className="controls-container">
+                    <Button className="button-control" onClick={goToPrevious}>
+                        <img src={previous} alt="" title="Previous Song / Rewind" />
+                    </Button>
+                    <Button className="button-control" onClick={pauseOrPlay}>
+                        <img src={Pause} alt="" title="Play / Pause" />
+                    </Button>
+                    <Button className="button-control" onClick={goToNext}>
+                        <img src={next} alt="" title="Next Song" />
+                    </Button>
                 </div>
                 <div className="bottombar"></div>
             </div>
@@ -1017,9 +1070,9 @@ const Home = () => {
             { profileOpen ? <ProfileOpener setProfileOpen={setProfileOpen} /> : null }
             <MiniPlayer/>
             <ResponseBar/>
+            { screen.show ? <FullScreen/> : null }
             <MainPanel/>
-            { screen.show ? <FullScreen/> : "" }
-            { playing ? <Player/> : "" }
+            { playing ? <Player/> : null }
         </div>
     );
 };

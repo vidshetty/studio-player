@@ -8,27 +8,28 @@ import {
     playingGlobal,
     CustomUseState,
     queueOpenedGlobal,
+    openerGlobal,
     prefix,
     httpCheck
 } from "./common";
 import { BrowserRouter as Router, Route } from "react-router-dom";
-let queueOpenedLocal, intervalTimeout = null;
+let queueOpenedLocal, intervalTimeout = null, playingLocal, screenLocal;
 
 
 const App = () => {
     httpCheck();
     const [screen, setScreen] = CustomUseState(fullScreenGlobal);
     const [queueOpened, setQueueOpened] = CustomUseState(queueOpenedGlobal);
+    const [openerDetails, setOpenerDetails] = CustomUseState(openerGlobal);
     const [playing,] = CustomUseState(playingGlobal);
-    let screenLocal = screen;
-    let playingLocal = playing;
+    screenLocal = screen;
+    playingLocal = playing;
     queueOpenedLocal = queueOpened;
 
-    if (intervalTimeout !== null) {
-        setInterval(() => {
+    if (intervalTimeout === null) {
+        intervalTimeout = setInterval(() => {
             keepServersActive();
-            intervalTimeout = null;
-        }, 5*60*1000);
+        }, 3*60*1000);
     }
 
     const screenSet = () => {
@@ -39,13 +40,13 @@ const App = () => {
     };
 
     const keyDown = e => {
-        if (e.keyCode === 122 || e.keyCode === 27) {
-            e.preventDefault();
-        }
+        // if (e.keyCode === 122 || e.keyCode === 27) {
+        //     e.preventDefault();
+        // }
         if (e.keyCode === 70) {
             e.preventDefault();
             if (playingLocal) {
-                screenSet();
+                // screenSet();
             }
         }
     };
@@ -54,6 +55,7 @@ const App = () => {
         if (queueOpenedLocal) {
             setQueueOpened(false);
         }
+        setOpenerDetails({ ...openerDetails, open: false });
     };
 
     useEffect(() => {

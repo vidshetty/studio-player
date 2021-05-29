@@ -13,7 +13,9 @@ import {
     songIsPausedGlobal,
     openerGlobal,
     responseBar,
-    sendRequest
+    sendRequest,
+    checkX,
+    checkY
 } from "../../../common";
 import { MidPanelLoader } from "./index";
 import { HorizontalList } from "./HomeScreen";
@@ -30,6 +32,7 @@ import copyright from "../../../assets/copyright.png";
 import Placeholder from "../../../assets/placeholder.svg";
 import Queue from "./Queue";
 import { pauseOrPlay } from "../../../homepage";
+import Button from "../../../Button";
 let mainscreen, actualIsOpen, bgChanged = false, topBar, isOpen = false;
 
 
@@ -635,7 +638,7 @@ const SongRow = ({ song, index, type, album }) => {
 };
 
 
-const NewSongRow = ({ song, index, album }) => {
+const NewSongRow = ({ song, index, album, openerFunc }) => {
     const [hovered, setHovered] = useState(false);
     const [currentSong, setCurrentSong] = CustomUseState(albumGlobal);
     const [songPaused, setSongPaused] = CustomUseState(songIsPausedGlobal);
@@ -711,6 +714,13 @@ const NewSongRow = ({ song, index, album }) => {
         // }
     };
 
+    const handleMenu = e => {
+        e.stopPropagation();
+        const dimensions = { x: e.clientX, y: e.clientY };
+        const windowDim = { width: document.documentElement.clientWidth, height: document.documentElement.clientHeight };
+        openerFunc(e, { dimensions, windowDim, song });
+    };
+
     return(
         <div className="newsongrow" onMouseOver={() => setHovered(true)} onMouseOut={() => setHovered(false)}
         style={{ backgroundColor: `${ isItSame() ? "#202020" : "transparent" }` }}>
@@ -731,6 +741,15 @@ const NewSongRow = ({ song, index, album }) => {
             </div>
             <div className="streams"></div>
             <div className="durationview">
+                <div className="opener-container">
+                    <div className={ hovered ? "openercontrol" : "openercontrol hidden" } style={{marginLeft: "0px"}}
+                    onClick={handleMenu}
+                    title="More Options">
+                        <div className="opener1"></div>
+                        <div className="opener2"></div>
+                        <div className="opener3"></div>
+                    </div>
+                </div>
                 <div className="durationcontainer">
                     <div>{album.Type === "Album" ? song.Duration : album.Duration}</div>
                 </div>
@@ -904,6 +923,54 @@ const NewActualAlbumView = () => {
         });
     };
 
+    const addTrackToQueue = each => {
+        const dummy = queue;
+        const len = dummy.length;
+        if (album.Type === "Album") {
+            each.Album = album.Album;
+            each.Color = album.Color;
+            each.Thumbnail = album.Thumbnail;
+            each.Year = album.Year;
+        }
+        dummy[len] = each;
+        setQueue(dummy);
+        setResObj({ open: true, msg: `Added ${each.Title || each.Album} to queue` });
+    };
+
+    const playTrackNext = each => {
+        const dummy = queue;
+        const curIndex = dummy.indexOf(playingSong);
+        if (album.Type === "Album") {
+            each.Album = album.Album;
+            each.Color = album.Color;
+            each.Thumbnail = album.Thumbnail;
+            each.Year = album.Year;
+        }
+        dummy.splice(curIndex+1, 0, each);
+        setQueue(dummy);
+        setResObj({ open: true, msg: `Playing ${each.Title || each.Album} next` });
+    };
+
+    const handleEachMenu = (e, { dimensions, windowDim, song: selectedSong }) => {
+        e.stopPropagation();
+        setOpenerDetails({
+            ...openerDetails,
+            open: true,
+            xValue: checkX(dimensions.x, windowDim.width),
+            yValue: checkY(dimensions.y, windowDim.height, 2),
+            data: [
+                {
+                    name: "Add track to queue",
+                    func: () => addTrackToQueue(selectedSong)
+                },
+                {
+                    name: "Play track next",
+                    func: () => playTrackNext(selectedSong)
+                }
+            ]
+        });
+    };
+
     const documentClick = e => {
         if (!list.includes(e.target.className) && isOpen) {
             setOpenerDetails({
@@ -989,17 +1056,17 @@ const NewActualAlbumView = () => {
                         </div>
                         <div style={{width: "100%", height: "30px"}}></div>
                         <div className="buttonholder">
-                            <div className="playbuttonview" onClick={playButton}>
+                            <Button className="playbuttonview" onClick={playButton}>
                                 {
                                     decidePlayOrPause() && !songPaused ?
                                     <><img src={Pause} alt="" /><p>PAUSE</p></> :
                                     <><img src={Play} alt="" /><p>PLAY</p></>
                                 }
-                            </div>
-                            <div className="addtoqueue" onClick={addAlbumToQueue}>
+                            </Button>
+                            <Button className="addtoqueue" onClick={addAlbumToQueue}>
                                 <img src={AddButton} alt="" />
                                 ADD TO QUEUE
-                            </div>
+                            </Button>
                             <div className="opener-holder">
                                 <div className="tileopener" title="More Options" onClick={handleMenu}>
                                     <div className="tileopener1"></div>
@@ -1015,9 +1082,9 @@ const NewActualAlbumView = () => {
             <div className="bottomalbumview">
                 {
                     album.Type === "Single" ?
-                    <NewSongRow song={album} index={0} album={album} /> :
+                    <NewSongRow song={album} index={0} album={album} openerFunc={handleEachMenu} /> :
                     album.Tracks.map((each,i) => {
-                        return <NewSongRow song={each} index={i} album={album} />
+                        return <NewSongRow song={each} index={i} album={album} openerFunc={handleEachMenu} />
                     })
                 }
             </div>

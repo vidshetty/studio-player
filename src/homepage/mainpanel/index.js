@@ -2,7 +2,8 @@ import Mid, { MidPanelLoader } from "./midpanel";
 import { Link, useLocation, useHistory } from "react-router-dom";
 import { useState, useEffect } from "react";
 // import logo from "../../assets/bluelogo.svg";
-import logo from "../../assets/latest-whiteblack.svg";
+// import logo from "../../assets/latest-whiteblack.svg";
+import logo from "../../assets/latest-bluewhite.svg";
 // import logo from "../../assets/aquamarinelogo.svg";
 // import logo from "../../assets/blackandwhitelogo.svg";
 import home from "../../assets/homewhite.svg";
@@ -313,9 +314,7 @@ const TopNav = () => {
         }
     };
 
-    // useEffect(() => {
-        initial();
-    // },[tab]);
+    initial();
 
     const goToHome = () => {
         if (queueOpenedLocal) {

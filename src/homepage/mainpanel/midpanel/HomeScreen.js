@@ -28,6 +28,7 @@ import {
     prefix
 } from "../../../common";
 import Queue from "./Queue";
+import Button from "../../../Button";
 import { pauseOrPlay } from "../../../homepage";
 let topBar, actualIsOpen;
 
@@ -431,7 +432,11 @@ const EachInQuickPick = ({ song, openerFunc }) => {
             </div>
             <div className={ hovered ? "tile-details-short" : "tile-details" }>
                 <div className="tile-title">{song.Title || song.Album}</div>
-                <div className="tile-artist">{song.Artist}</div>
+                <div className="tile-artist">
+                    <p>{song.Artist}</p>
+                    <div className="separator"></div>
+                    <p>{song.Album}</p>
+                </div>
             </div>
             <div className={ hovered ? "tile-last" : "tile-last-hidden" }>
                 <div className="tileopener" onClick={handleMenu}>
@@ -480,9 +485,9 @@ const EachAlbum = ({ item }) => {
                     <div className="homeartcover">
                         <div className="homedummyshadow"></div>
                         <div className={ (song.Album === item.Album) ? "homeplaybuttonfixed" : "homeplaybutton" }>
-                            <div className="innerhomeplaybutton" onClick={handlePlayPause}>
+                            <Button className="innerhomeplaybutton" onClick={handlePlayPause}>
                                 <img src={ (!songPausedLocal && song.Album === item.Album) ? Pause : Play} alt="" />
-                            </div>
+                            </Button>
                         </div>
                         <div className="libraryopener" onClick={handleMenu}>
                             <div className="libraryopener1"></div>
@@ -511,6 +516,7 @@ const NewActualHomeScreen = () => {
     const [picks, setPicks] = useState({});
     const list = ["tileopener","tileopener1","tileopener2","tileopener3"];
     const hist = useHistory();
+    actualIsOpen = openerDetails.open;
 
     const call = async () => {
         let res = await sendRequest({
@@ -568,7 +574,7 @@ const NewActualHomeScreen = () => {
     };
 
     const documentClick = e => {
-        if (!list.includes(e.target.className) && openerDetails.open) {
+        if (!list.includes(e.target.className) && actualIsOpen) {
             setOpenerDetails({
                 ...openerDetails,
                 open: false

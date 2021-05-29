@@ -27,6 +27,7 @@ import {
     prefix
 } from "../../../common";
 import Queue from "./Queue";
+import Button from "../../../Button";
 let topBar, isOpen = null;
 
 
@@ -206,13 +207,13 @@ const EachAlbum = ({ each, openerFunc }) => {
         <div className="eachinrow" ref={setElement}>
             { show ?
                 <div className="innerineach">
-                    <div className="eachartcover" onClick={display}>
+                    <div className="eachartcover" onClick={display} title={each.Album}>
                         <div className="eachshadow"></div>
                         <div className={ (song.Album === each.Album) ? "showplaybuttonfixed" : "showplaybutton" }>
-                            <div className="innerplaybutton" onClick={handlePlayPause}
+                            <Button className="innerplaybutton" onClick={handlePlayPause}
                             title={ (!songPausedLocal && song.Album === each.Album) ? "Pause" : "Play" } >
                                 <img src={ (!songPausedLocal && song.Album === each.Album) ? Pause : Play } alt="" />
-                            </div>
+                            </Button>
                         </div>
                         <div className="library-opener" onClick={handleMenu} title="More Options">
                             <div className="library-opener1"></div>
@@ -226,7 +227,7 @@ const EachAlbum = ({ each, openerFunc }) => {
                         <span>{each.AlbumArtist}</span>
                     </span>
                 </div> :
-                ""
+                null
             }
         </div>
     );

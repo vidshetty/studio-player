@@ -4,7 +4,7 @@
     height: auto;
     background-color: #030303;
     color: white;
-    padding: 30px 60px 50px 60px;
+    padding: 30px 50px 50px 50px;
 }
 
 .titlename{
@@ -66,7 +66,7 @@
     width: 100%;
     height: auto;
     margin-top: 15px;
-    font-size: 0.9em;
+    font-size: 1em;
     font-weight: 600;
     letter-spacing: -1px;
     color: white;
@@ -79,7 +79,7 @@
     width: 100%;
     height: auto;
     margin-top: 5px;
-    font-size: 0.8em;
+    font-size: 0.9em;
     letter-spacing: -1px;
     color: rgba(255,255,255,0.7);
     display: flex;
@@ -111,6 +111,8 @@
     width: 40px;
     height: 40px;
     display: flex;
+    border: none;
+    cursor: pointer;
     justify-content: center;
     align-items: center;
     background-color: rgba(0,0,0,0.7);
@@ -238,7 +240,7 @@
     justify-content: flex-start;
     align-items: center;
     border-radius: 3px;
-    /* background-color: rgba(255,255,255,0.05); */
+    /* background-color: rgba(255,255,255,0.1); */
 }
 .tile-art{
     width: 60px;
@@ -246,14 +248,15 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-right: 10px;
+    /* margin-right: 10px; */
+    margin-right: 5px;
     position: relative;
     /* background-color: aliceblue; */
 }
 .tile-art img{
-    width: 50px;
+    width: 45px;
     height: auto;
-    border-radius: 1px;
+    border-radius: 2px;
 }
 .tiledummyshadow{
     position: absolute;
@@ -294,10 +297,11 @@
     justify-content: flex-start;
     align-items: flex-end; */
     color: white;
-    font-size: 500;
-    font-size: 0.9em;
+    font-weight: 500;
+    font-size: 1em;
     letter-spacing: -1px;
     padding-right: 5px;
+    /* padding-top: 5px; */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -312,6 +316,11 @@
     font-size: 0.9em;
     letter-spacing: -1px;
     padding-right: 5px;
+    padding-top: 1px;
+    display: flex;
+    align-items: center;
+}
+.tile-artist p{
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
