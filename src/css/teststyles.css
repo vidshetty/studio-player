@@ -16,39 +16,41 @@
     overflow-y: overlay;
 }
 .main-outer-container::-webkit-scrollbar, .main-outer-container.scrolling::-webkit-scrollbar{
-    width: 10px;
+    width: 5px;
 }
 .main-outer-container::-webkit-scrollbar-thumb{
-    width: 10px;
+    width: 5px;
     background-color: gray;
     transition: background-color 0.5s ease-in-out;
 }
 .main-outer-container::-webkit-scrollbar-track{
-    width: 10px;
-    border-left: 1px solid rgba(128,128,128,0.2);
-    background-color: #202020;
+    width: 5px;
+    /* border-left: 1px solid rgba(128,128,128,0.2); */
+    /* background-color: #202020; */
 }
 .main-outer-container.scrolling::-webkit-scrollbar-thumb{
-    width: 10px;
+    width: 5px;
     background-color: gray;
 }
 
 .dummyleft{
     width: 100%;
     height: 75px;
-    position: relative;
+    /* position: relative; */
     background-color: black;
     /* border-bottom: 0.5px solid rgba(255,255,255,0.1); */
     overflow-y: overlay;
     display: flex;
-    justify-content: center;
+    /* justify-content: center; */
+    justify-content: space-between;
     align-items: center;
 }
 .dummymid{
     width: 1800px;
     height: auto;
     background-color: #030303;
-    padding: 0px 50px 70px 50px;
+    /* padding: 0px 50px 70px 50px; */
+    padding: 0px 60px 70px 60px;
 }
 
 .libraryname{
@@ -91,6 +93,7 @@
     /* height: 300px; */
     /* height: auto; */
     min-height: 280px;
+    /* min-height: 300px; */
     /* background-color: blue; */
     display: flex;
     justify-content: center;
@@ -183,9 +186,9 @@
 .logopart{
     width: 200px;
     height: 100%;
-    position: absolute;
+    /* position: absolute;
     top: 0;
-    left: 0;
+    left: 0; */
     /* background-color: aqua; */
 }
 .logopartdiv{
@@ -229,7 +232,8 @@
     height: 100%;
     width: 45%;
     display: flex;
-    justify-content: space-evenly;
+    /* justify-content: space-evenly; */
+    justify-content: center;
     align-items: center;
     /* background-color: blue; */
 }
@@ -245,6 +249,7 @@
     padding: 5px 10px;
     cursor: pointer;
     /* background-color: black; */
+    margin: 0px 15px;
 }
 .lighttabs{
     color: rgba(255,255,255,0.5);
@@ -260,11 +265,11 @@
     background-color: aliceblue;
 } */
 .profilepart{
-    width: 150px;
+    width: 200px;
     height: 100%;
-    position: absolute;
+    /* position: absolute;
     top: 0;
-    right: 0;
+    right: 0; */
     display: flex;
     justify-content: flex-end;
     align-items: center;
@@ -296,6 +301,8 @@
     height: auto;
     width: 100%;
     cursor: pointer;
+    border: none;
+    background-color: transparent;
 }
 .eachartcover:hover .eachshadow{
     opacity: 1;
@@ -383,6 +390,8 @@
     display: grid;
     grid-template-columns: repeat(7,12.7%);
     grid-column-gap: calc((100% - 88.9%) / 6);
+    /* grid-template-columns: repeat(8,11.5%); */
+    /* grid-column-gap: calc((100% - 92%) / 7); */
     /* background-color: aqua; */
 }
 @media screen and (min-width: 1600px) {
@@ -397,13 +406,27 @@
 
 
 
-span.ripple {
+/* span.ripple {
     position: absolute;
     border-radius: 50%;
     transform: scale(0);
     animation: ripple 600ms linear;
-    /* background-color: rgba(255, 255, 255, 0.7); */
-    background-color: #90909080;
+    background-color: rgba(255, 255, 255, 0.7);
+    background-color: #90909050;
+} */
+.ripple{
+    position: absolute;
+    border-radius: 50%;
+    transform: scale(0);
+    background-color: rgba(255,255,255,0.2);
+    /* background-color: #90909050; */
+    /* background-color: #50505080; */
+}
+.ripple.play{
+    animation: ripple 600ms linear;
+}
+.ripple.hidden{
+    display: none;
 }
 @keyframes ripple {
     to {

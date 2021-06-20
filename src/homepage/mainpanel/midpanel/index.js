@@ -1,6 +1,7 @@
 import "../../../css/homestyles.css";
 import "../../../css/teststyles.css";
 import "../../../css/albumview.css";
+import React from "react";
 import { Route, Switch, useHistory } from "react-router-dom";
 import HomeScreen from "./HomeScreen";
 import AlbumView from "./AlbumView";

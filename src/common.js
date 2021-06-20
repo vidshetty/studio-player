@@ -61,7 +61,7 @@ export const sendRequest = async config => {
         });
         const { data } = res;
         if (data.redirect) {
-            window.location.href = "/login";
+            window.location.href = data.to;
             return null;
         }
         return data;
@@ -163,9 +163,9 @@ export function Timer (delay, cb) {
 };
 
 export const httpCheck = () => {
-    if (window.location.protocol !== "http:") {
-        window.location.protocol = "https:";
-    }
+    // if (window.location.protocol !== "https:") {
+    //     window.location.protocol = "https:";
+    // }
 };
 
 export const wait = time => {
@@ -321,6 +321,7 @@ export let routesGlobal = new createGlobalState(["/home/homescreen"]);
 // export let topBgColor = new createGlobalState("transparent");
 export let topBarGlobal = new createGlobalState(topBarConfig);
 export let searchBarGlobal = new createGlobalState(searchConfig);
+export let searchInputGlobal = new createGlobalState("");
 export let fullScreenGlobal = new createGlobalState(fullScreenConfig);
 export let albumGlobal = new createGlobalState({});
 export let queueGlobal = new createGlobalState([]);
@@ -335,6 +336,8 @@ export let homeClass = new createGlobalState("homemain start");
 export let responseBar = new createGlobalState({ open: "", msg: "" });
 export let miniPlayerGlobal = new createGlobalState(false);
 export let topBgColorGlobal = new createGlobalState("#202020");
+export let lyricsGlobal = new createGlobalState([]);
+export let lyricTextGlobal = new createGlobalState({});
 export const global = {};
 
 // export const prefix = "/player";

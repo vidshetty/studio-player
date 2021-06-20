@@ -2,7 +2,7 @@ import "../../../css/homestyles.css";
 import "../../../css/teststyles.css";
 import "../../../css/hometeststyles.css";
 import { MidPanelLoader } from "./index";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Redirect, useHistory } from "react-router-dom";
 import playbutton from "../../../assets/playwhite.png";
 import pausebutton from "../../../assets/pausewhite.png";
@@ -25,7 +25,10 @@ import {
     modifyLibrary,
     checkX,
     checkY,
-    prefix
+    prefix,
+    global,
+    responseBar,
+    radioGlobal
 } from "../../../common";
 import Queue from "./Queue";
 import Button from "../../../Button";
@@ -412,7 +415,23 @@ const QuickPickRow = ({ row }) => {
 };
 
 
-const EachInQuickPick = ({ song, openerFunc }) => {
+const EachInQuickPick = ({
+    song,
+    openerFunc,
+    openerDetails,
+    setOpenerDetails,
+    playing,
+    setPlaying,
+    queue,
+    setQueue,
+    songIsPaused,
+    setSongIsPaused,
+    playingSong,
+    setPlayingSong,
+    radio,
+    setRadio,
+    setResObj
+}) => {
     const [hovered, setHovered] = useState(false);
 
     const handleMenu = e => {
@@ -422,19 +441,89 @@ const EachInQuickPick = ({ song, openerFunc }) => {
         openerFunc(e, { dimensions, windowDim, song });
     };
 
+    const determine = () => {
+        const nameOfSong = song.Title || song.Album;
+        const nameOfPlayingSong = playingSong.Title || playingSong.Album;
+        if (nameOfSong === nameOfPlayingSong) {
+            return true;
+        }
+        return false;
+    };
+
+    const handlePlayPause = async e => {
+        e.stopPropagation();
+        if (openerDetails.open) {
+            setOpenerDetails({ ...openerDetails, open: false });
+        }
+        if (determine()) {
+            pauseOrPlay();
+            return;
+        }
+        const main = { ...song };
+        if (!playing) setPlaying(true);
+        main.id = global.id = 0;
+        const newqueue = [main];
+        setQueue([main]);
+        setPlayingSong(main);
+        localStorage.setItem("queue",JSON.stringify([main]));
+        setSongIsPaused(true);
+        if (!radio) {
+            setResObj({ open: true, msg: "Starting radio...." });
+            setRadio(true);
+            const songList = await sendRequest({
+                method: "GET",
+                endpoint: `/startradio?exclude=${song.Title || song.Album}`
+            });
+            songList.forEach(each => {
+                each.id = ++global.id;
+            });
+            newqueue.push(...songList);
+            setQueue(newqueue);
+            localStorage.setItem("queue",JSON.stringify(newqueue));
+            setRadio(false);
+        }
+    };
+
     return(
         <div className="eachinquick" onMouseOver={() => setHovered(true)} onMouseOut={() => setHovered(false)}>
             <div className="tile-art">
                 <img src={song.Thumbnail || ""} alt="" />
                 <div className="tiledummyshadow">
-                    <img src={Play} alt="" />
+                    {/* <img src={Play} alt="" /> */}
+                    <Button className="tile-button" onClick={handlePlayPause}>
+                        {
+                            determine() ?
+                            <img src={ songIsPaused ? Play : Pause } alt="" /> :
+                            <img src={Play} alt="" />
+                        }
+                    </Button>
                 </div>
+                {
+                    !hovered && determine() ? 
+                    <div className="anim-cover">
+                        {
+                            !songIsPaused ?
+                            <div className="playinganim">
+                                <div className="div1"></div>
+                                <div className="div2"></div>
+                                <div className="div3"></div>
+                                <div className="div4"></div>
+                            </div> : 
+                            <div className="pausedanim">
+                                <div className="div5"></div>
+                                <div className="div6"></div>
+                                <div className="div7"></div>
+                                <div className="div8"></div>
+                            </div> 
+                        }
+                    </div> : null
+                }
             </div>
             <div className={ hovered ? "tile-details-short" : "tile-details" }>
                 <div className="tile-title">{song.Title || song.Album}</div>
                 <div className="tile-artist">
                     <p>{song.Artist}</p>
-                    <div className="separator"></div>
+                    <div className="home-separator"><div></div></div>
                     <p>{song.Album}</p>
                 </div>
             </div>
@@ -449,7 +538,9 @@ const EachInQuickPick = ({ song, openerFunc }) => {
     );
 };
 
-const StartRadio = ({ picks, openerFunc }) => {
+const StartRadio = (props) => {
+    const { picks } = props;
+
     return(
         <>
             <div className="hugetitlename">
@@ -460,7 +551,7 @@ const StartRadio = ({ picks, openerFunc }) => {
                 <div className="quickpick-grid">
                     {
                         picks.map(item => {
-                            return <EachInQuickPick song={item} openerFunc={openerFunc} />
+                            return <EachInQuickPick song={item} {...props} />
                         })
                     }
                 </div>
@@ -509,6 +600,12 @@ const EachAlbum = ({ item }) => {
 
 const NewActualHomeScreen = () => {
     const [openerDetails, setOpenerDetails] = CustomUseState(openerGlobal);
+    const [playingSong, setPlayingSong] = CustomUseState(albumGlobal);
+    const [queue, setQueue] = CustomUseState(queueGlobal);
+    const [playing, setPlaying] = CustomUseState(playingGlobal);
+    const [songIsPaused, setSongIsPaused] = CustomUseState(songIsPausedGlobal);
+    const [,setResObj] = CustomUseState(responseBar);
+    const [radio, setRadio] = CustomUseState(radioGlobal);
     // const [redirectTo, setRedirectTo] = useState("");
     // const [routes, setRoutes] = CustomUseState(routesGlobal);
     const [isLoading, setIsLoading] = useState(true);
@@ -524,7 +621,7 @@ const NewActualHomeScreen = () => {
             endpoint: `/getHomeAlbums`
         });
         if (res) {
-            res.albums = modifyLibrary(res.albums,6);
+            // res.albums = modifyLibrary(res.albums,6);
             setData(res.albums);
             setPicks(res.quickPicks);
             // setPlayed(res.mostPlayed);
@@ -536,40 +633,54 @@ const NewActualHomeScreen = () => {
     const goToAlbum = song => {
         // routes.push(`/home/album/${song.Album}`);
         // setRoutes(routes);
+        setOpenerDetails({ ...openerDetails, open: false });
         hist.push(`${prefix}/home/album/${song.Album}`);
         // hist.push(`/`);
         // setRedirectTo(`${song.Album}`);
     };
 
-    const sendTo = song => {
-        // ipcRenderer.send("response",song);
+    const addTrackToQueue = song => {
+        setOpenerDetails({ ...openerDetails, open: false });
+        const dummy = [ ...queue ];
+        const len = dummy.length;
+        if (len === 0) return;
+        dummy[len] = { ...song, id: ++global.id };
+        setQueue(dummy);
+        setResObj({ open: true, msg: `Added ${song.Title || song.Album} to queue` });
+    };
+
+    const playTrackNext = song => {
+        setOpenerDetails({ ...openerDetails, open: false });
+        if (queue.length === 0) return;
+        const curIndex = queue.indexOf(playingSong);
+        const dummy = [ ...queue ];
+        dummy.splice(curIndex+1, 0, { ...song, id: ++global.id });
+        setQueue(dummy);
+        setResObj({ open: true, msg: `Playing ${song.Title || song.Album} next` });
     };
 
     const handleMenu = (e, { dimensions, windowDim, song: album }) => {
+        const data = [
+            {
+                name: "Go to album",
+                func: () => goToAlbum(album)
+            },
+            {
+                name: "Add to queue",
+                func: () => addTrackToQueue(album)
+            },
+            {
+                name: "Play next",
+                func: () => playTrackNext(album)
+            }
+        ];
         e.stopPropagation();
         setOpenerDetails({
             ...openerDetails,
             open: true,
             xValue: checkX(dimensions.x, windowDim.width),
-            yValue: checkY(dimensions.y, windowDim.height, 3),
-            data: [
-                {
-                    name: "Go to album",
-                    func: () => goToAlbum(album)
-                },
-                {
-                    name: "Add to queue",
-                    func: () => sendTo(album)
-                },
-                {
-                    name: "Play next",
-                    func: () => sendTo(album)
-                },
-                {
-                    name: "Start radio",
-                    func: () => sendTo(album)
-                }
-            ]
+            yValue: checkY(dimensions.y, windowDim.height, data.length),
+            data
         });
     };
 
@@ -586,9 +697,9 @@ const NewActualHomeScreen = () => {
         if (isLoading) {
             call();
         }
-        document.addEventListener("click",documentClick);
+        // document.addEventListener("click",documentClick);
         return () => {
-            document.removeEventListener("click",documentClick);
+            // document.removeEventListener("click",documentClick);
         };
     },[isLoading]);
 
@@ -600,27 +711,42 @@ const NewActualHomeScreen = () => {
         <div className="newhome" style={{ overflowY: `${ openerDetails.open ? "hidden" : "overlay" }` }}>
             {
                 picks.length !== 0 ?
-                <StartRadio picks={picks} openerFunc={handleMenu} /> : ""
+                <StartRadio picks={picks} openerFunc={handleMenu} openerDetails={openerDetails} setOpenerDetails={setOpenerDetails}
+                playing={playing} setPlaying={setPlaying} playingSong={playingSong} setPlayingSong={setPlayingSong}
+                queue={queue} setQueue={setQueue} songIsPaused={songIsPaused} setSongIsPaused={setSongIsPaused}
+                radio={radio} setRadio={setRadio} setResObj={setResObj} /> : null
             }
             {
                 Object.keys(data).map(each => {
-                    return(
-                        <>
-                        <div className="titlename">{each}</div>
-                        <div className="homecontainer">
-                            {
-                                data[each].map((item,i) => {
-                                    if (i<6) {
-                                        return <EachAlbum item={item} />
-                                    }
-                                    return ""
-                                })
-                            }
-                        </div>
-                        </>
-                    );
+                    if (data[each].length !== 0) {
+                        return(
+                            <>
+                            <div className="titlename">{each}</div>
+                            <div className="homecontainer">
+                                {
+                                    data[each].map(item => {
+                                        return <EachAlbum item={item} />;
+                                    })
+                                }
+                            </div>
+                            </>
+                        );
+                    }
+                    return null;
                 })
             }
+        </div>
+    );
+};
+
+
+const Trial = () => {
+    return (
+        <div className="full">
+            <div className="holder">
+                <img src="https://lh3.googleusercontent.com/6QoxkfogQhGl7_QvGaOh1g5jqf5Y_3Vyo1wPMSJJMhHUxGgaSdsyLhiyGwyeZUo3c2P0045fn5eLza0n=w544-h544-l90-rj"
+                alt="" />
+            </div>
         </div>
     );
 };
@@ -633,6 +759,7 @@ const HomeScreen = () => {
     //     return <Queue/>
     // }
     return <NewActualHomeScreen/>
+    // return <Trial/>
 };
 
 export default HomeScreen;

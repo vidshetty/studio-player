@@ -2,7 +2,7 @@ import "../css/homestyles.css";
 import "../css/playerstyles.css";
 import "../css/albumview.css";
 import MainPanel from "./mainpanel";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 // import Play from "../assets/playwhite.png";
 import Play from "../assets/playbutton-white.svg";
 // import Pause from "../assets/pausewhite.png";
@@ -46,13 +46,17 @@ import {
     openerGlobal,
     homeClass,
     responseBar,
+    searchBarGlobal,
     topBarGlobal,
     sendRequest,
     Timer,
     fullScreenGlobal,
     miniPlayerGlobal,
     usePrevious,
-    profileOpener
+    profileOpener,
+    lyricsGlobal,
+    lyricTextGlobal,
+    global
 } from "../common";
 export const audio = new Audio();
 let mainVolume = 1;
@@ -64,7 +68,7 @@ let volumerange, elapsedTime, duration, range, percent = 0, style, bufferPercent
 export let pauseOrPlay;
 let goToNext, goToPrevious;
 let setVolume = 1, isBuffering, topBar, songPausedLocal, timeout = null;
-let trackingTimer, screenLocal;
+let trackingTimer, screenLocal, currentLyricIndex = null, lyricsLocal;
 // const { ipcRenderer } = window.electron;
 
 
@@ -72,13 +76,14 @@ const changeColor = (percent,bufferPercent) => {
     // return `linear-gradient(to right, #ff0000 ${percent}%, #303030 0%)`;
     // return `linear-gradient(to right, #066bff ${percent}%, #505050 0%)`;
     // return `linear-gradient(to right, #066bff ${percent}%, #303030 0%)`;
-    return `linear-gradient(to right, #066bff ${percent}%, #404040 ${percent}%, #404040 ${bufferPercent}%, #303030 0%)`;
-    // return `linear-gradient(to right, #3030ff ${percent}%, #404040 ${percent}%, #404040 ${bufferPercent}%, #303030 0%)`;
-    // return `linear-gradient(to right, #ffffff ${percent}%, #404040 ${percent}%, #404040 ${bufferPercent}%, #303030 0%)`;
+    // return `linear-gradient(to right, #066bff ${percent}%, #404040 ${percent}%, #404040 ${bufferPercent}%, #303030 0%)`;
+    // return `linear-gradient(to right, #909090 ${percent}%, #404040 ${percent}%, #404040 ${bufferPercent}%, #303030 0%)`;
+    return `linear-gradient(to right, #ffffff ${percent}%, #404040 ${percent}%, #404040 ${bufferPercent}%, #303030 0%)`;
 };
 
 const changeColorVolume = (value) => {
-    return `linear-gradient(to right, white ${value}%, rgba(255,255,255,0.1) 0%)`;
+    // return `linear-gradient(to right, white ${value}%, rgba(255,255,255,0.1) 0%)`;
+    return `linear-gradient(to right, #808080 ${value}%, rgba(255,255,255,0.1) 0%)`;
 };
 
 const fetchStream = async url => {
@@ -135,6 +140,8 @@ const Player = () => {
     const [topBarConfig, setTopBarConfig] = CustomUseState(topBarGlobal);
     const [screen, setScreen] = CustomUseState(fullScreenGlobal);
     const [openerDetails, setOpenerDetails] = CustomUseState(openerGlobal);
+    const [lyrics,] = CustomUseState(lyricsGlobal);
+    const [,setLyricText] = CustomUseState(lyricTextGlobal);
     const prevSong = usePrevious(song);
     screenLocal = screen;
     topBar = topBarConfig;
@@ -146,6 +153,7 @@ const Player = () => {
     isSongPlaying = isPlaying;
     isBuffering = buffering;
     songPausedLocal = songPaused;
+    lyricsLocal = lyrics;
     let playerOnLocal = playerOn;
 
 
@@ -387,6 +395,18 @@ const Player = () => {
     const timeupdate = (e) => {
         localStorage.setItem("time", audio.currentTime);
         elapsedTime.innerText = convertTime(audio.currentTime);
+
+        if (lyricsLocal.length !== 0) {
+            for (let i=0; i<lyricsLocal.length; i++) {
+                const each = lyricsLocal[i];
+                if ((audio.currentTime > each.from && audio.currentTime <= each.to) && currentLyricIndex !== i) {
+                    setLyricText(each);
+                    currentLyricIndex = i;
+                    break;
+                }
+            }
+        }
+
         if ((range === document.activeElement)) {
         } else {
             range.value = audio.currentTime;
@@ -426,7 +446,7 @@ const Player = () => {
             setIsPlaying(false);
             setSongPaused(true);
         } else {
-            if (queue.length === 1) {
+            if (actualQueue.length === 1) {
                 audio.play();
                 trackingTimer.stop();
                 trackingTimer = new Timer(30, addToRecentlyPlayed);
@@ -462,26 +482,30 @@ const Player = () => {
             ctrlKey = true;
         }
         // if (e.keyCode === 32 && ctrlKey && !isBuffering) {
-        if (e.keyCode === 32 && !isBuffering) {
+        if (e.keyCode === 32 && !isBuffering && !global.searchBarOpen) {
             e.preventDefault();
             pauseOrPlay();
         }
-        if (e.keyCode === 78 && ctrlKey) {
+        // if (e.keyCode === 78 && ctrlKey) {
+        if (e.keyCode === 78) {
             e.preventDefault();
             goToNext();
         }
-        if (e.keyCode === 80 && ctrlKey) {
+        // if (e.keyCode === 80 && ctrlKey) {
+        if (e.keyCode === 80) {
             e.preventDefault();
             goToPrevious();
         }
-        if (e.keyCode === 39 && ctrlKey) {
+        // if (e.keyCode === 39 && ctrlKey) {
+        if (e.keyCode === 39) {
             const duration = audio.duration;
             const time = audio.currentTime;
             if (time + 10 < duration) {
                 audio.currentTime = time + 10;
             }
         }
-        if (e.keyCode === 37 && ctrlKey) {
+        // if (e.keyCode === 37 && ctrlKey) {
+        if (e.keyCode === 37) {
             const time = audio.currentTime;
             if (time - 10 > 0) {
                 audio.currentTime = time - 10;
@@ -537,6 +561,8 @@ const Player = () => {
     };
 
     useEffect(() => {
+        currentLyricIndex = null;
+        setLyricText("");
         let shouldRemove = false;
         (() => {
             if (Object.keys(prevSong).length < 1) {
@@ -584,9 +610,9 @@ const Player = () => {
                 });
             }
         }
-        console.log("network",navigator?.connection?.downlink);
-        console.log("type",navigator?.connection?.type);
-        console.log("connection",navigator?.connection);
+        console.log("network",navigator.connection.downlink);
+        console.log("type",navigator.connection.type);
+        console.log("connection",navigator.connection);
         // return () => {
         //     if (trackingTimer !== null) {
         //         trackingTimer.stop();
@@ -766,26 +792,26 @@ const Player = () => {
                                                 song.Album.length > 30 ?
                                                 <>
                                                 <p className="songartists">{`${song.Artist.slice(0,30)}...`}</p>
-                                                <div className="separator"></div>
+                                                <div className="player-separator"><div></div></div>
                                                 <p className="songartists">{`${song.Album.slice(0,30)}...`}</p>
                                                 </>
                                                 :
                                                 song.Artist.length > 30 ?
                                                 <>
                                                 <p className="songartists">{`${song.Artist.slice(0,30)}...`}</p>
-                                                <div className="separator"></div>
+                                                <div className="player-separator"><div></div></div>
                                                 <p className="songartists">{`${song.Album}`}</p>
                                                 </>
                                                 :
                                                 <>
                                                 <p className="songartists">{`${song.Artist}`}</p>
-                                                <div className="separator"></div>
+                                                <div className="player-separator"><div></div></div>
                                                 <p className="songartists">{`${song.Album}`}</p>
                                                 </>
                                             }
-                                            <div className="separator"></div>
+                                            <div className="player-separator"><div></div></div>
                                             <p className="songartists">{song.Duration}</p>
-                                            <div className="separator"></div>
+                                            <div className="player-separator"><div></div></div>
                                             <p className="songartists">{song.Year}</p>
                                         </div>
                                     </div></> : ""
@@ -840,17 +866,28 @@ const Player = () => {
 };
 
 
-export const Opener = () => {
-    const [openerDetails,] = CustomUseState(openerGlobal);
-    const { open, xValue, yValue, data = [] } = openerDetails;
+export const Opener = ({ openerDetails, setOpenerDetails }) => {
+    const opener = useRef(null);
+    const { xValue, yValue, data = [] } = openerDetails;
     style = {
         top: `${yValue}px`,
         left: `${xValue}px`
     };
 
-    if (!open) {
-        return "";
-    }
+    const click = e => {
+        if (!(e.target === opener.current || opener.current.contains(e.target))) {
+            setOpenerDetails({ ...openerDetails, open: false });
+        }
+    };
+
+    useEffect(() => {
+        opener.current = document.querySelector(".opener");
+        document.addEventListener("click",click);
+        return () => {
+            document.removeEventListener("click",click);
+        };
+    }, []);
+
     return(
         <div className="opener" style={style}>
             { data.length !== 0 ?
@@ -911,16 +948,42 @@ const FullScreen = () => {
 const MiniPlayer = () => {
     const [mini, setMini] = CustomUseState(miniPlayerGlobal);
     const [song,] = CustomUseState(albumGlobal);
+    const [queue,] = CustomUseState(queueGlobal);
+    const [songIsPaused,] = CustomUseState(songIsPausedGlobal);
+    const anim = useRef(null);
+    if (queue.length === 0) {
+        setMini(false);
+    }
+
+    const close = e => {
+        e.stopPropagation();
+        setMini(false);
+    };
+
+    const handleClick = e => {
+        e.stopPropagation();
+        pauseOrPlay();
+        anim.current.classList.remove("hidden");
+        setTimeout(() => {
+            anim.current.classList.add("hidden");
+        },500);
+    };
 
     if (!mini) {
         return "";
     }
     return (
-        <div className="miniplayer">
+        <div className="miniplayer" onClick={handleClick}
+        style={{ backgroundImage: `url(${Placeholder})`, backgroundSize: "cover" }}
+        >
             <div style={{ position: "relative", width: "100%", height: "100%" }}>
                 <div className="minishadow">
-                    <div className="close-view" onClick={() => setMini(false)}>
+                    <div className="close-view" onClick={close}>
                         <img src={Close} alt="" />
+                    </div>
+                    <div className="playpause-anim hidden" ref={anim}>
+                        <img src={ songIsPaused ? Play : Pause } alt="" />
+                        <div></div>
                     </div>
                 </div>
                 <img src={song.Thumbnail || ""} alt="" />
@@ -954,18 +1017,7 @@ const ProfileOpener = ({ setProfileOpen }) => {
     const picture = localStorage.getItem("picture");
     const userName = localStorage.getItem("username").split(" ");
     const email = localStorage.getItem("email");
-    const list = [
-        "profile-opener",
-        "rowinmenu",
-        "rowtext",
-        "picture-container",
-        "account-section",
-        "account-picture",
-        "center-picture",
-        "dummy-class",
-        "account-name",
-        "account-email"
-    ];
+    const profileOpener = useRef(null);
     window.isLoading = isLoading;
 
     const openAccount = () => {
@@ -991,7 +1043,7 @@ const ProfileOpener = ({ setProfileOpen }) => {
     };
 
     const click = e => {
-        if (!list.includes(e.target.className) && !window.isLoading) {
+        if (!(e.target === profileOpener.current || profileOpener.current.contains(e.target))) {
             setProfileOpen(false);
         }
     };
@@ -1013,6 +1065,7 @@ const ProfileOpener = ({ setProfileOpen }) => {
     };
 
     useEffect(() => {
+        profileOpener.current = document.querySelector(".profile-opener");
         document.addEventListener("click", click);
         return () => {
             document.removeEventListener("click",click);
@@ -1029,7 +1082,7 @@ const ProfileOpener = ({ setProfileOpen }) => {
                             <img src={picture} alt="" className="dummy-class" />
                         </div> :
                         <div className="center-picture" style={{ backgroundColor: "violet", color: "black", fontSize: "2em" }}>
-                            {userName[0][0]?.toUpperCase()}{userName[1] && userName[1][0]?.toUpperCase()}
+                            {userName[0][0] && userName[0][0].toUpperCase()}{userName[1] && userName[1][0].toUpperCase()}
                         </div>
                     }
                 </div>
@@ -1061,12 +1114,13 @@ const ProfileOpener = ({ setProfileOpen }) => {
 const Home = () => {
     const [playing,] = CustomUseState(playingGlobal);
     const [profileOpen, setProfileOpen] = CustomUseState(profileOpener);
+    const [openerDetails, setOpenerDetails] = CustomUseState(openerGlobal);
     // const [name,] = CustomUseState(homeClass);
     const [screen,] = CustomUseState(fullScreenGlobal);
 
     return(
         <div className="homemain">
-            <Opener/>
+            { openerDetails.open ? <Opener openerDetails={openerDetails} setOpenerDetails={setOpenerDetails} /> : null }
             { profileOpen ? <ProfileOpener setProfileOpen={setProfileOpen} /> : null }
             <MiniPlayer/>
             <ResponseBar/>

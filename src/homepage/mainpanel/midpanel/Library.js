@@ -1,6 +1,6 @@
 // import "../../../css/library.css";
 import "../../../css/teststyles.css";
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Redirect, useHistory } from "react-router-dom";
 import { MidPanelLoader } from "./index";
 import { pauseOrPlay } from "../../../homepage";
@@ -24,7 +24,8 @@ import {
     checkX,
     checkY,
     responseBar,
-    prefix
+    prefix,
+    global
 } from "../../../common";
 import Queue from "./Queue";
 import Button from "../../../Button";
@@ -136,7 +137,7 @@ const EachAlbum = ({ each, openerFunc }) => {
     const [song, setAlbumForPlayer] = CustomUseState(albumGlobal);
     const [playing, setPlaying] = CustomUseState(playingGlobal);
     const [songPaused, setSongPaused] = CustomUseState(songIsPausedGlobal);
-    const [, setQueue] = CustomUseState(queueGlobal); 
+    const [queue, setQueue] = CustomUseState(queueGlobal); 
     let songPausedLocal = songPaused;
     const [element, setElement] = useState(null);
     const [show, setShow] = useState(true);
@@ -166,7 +167,9 @@ const EachAlbum = ({ each, openerFunc }) => {
         // routes.push(`/home/album/${each.Album}`);
         // window.history.pushState({},"",`/home/album/${each.Album}`);
         // setRoutes(routes);
-        hist.push(`${prefix}/home/album/${each.Album}`);
+        setTimeout(() => {
+            hist.push(`${prefix}/home/album/${each.Album}`);
+        },500);
         // setRedirectTo(`${each.Album}`);
     };
 
@@ -183,20 +186,23 @@ const EachAlbum = ({ each, openerFunc }) => {
             pauseOrPlay();
             return;
         }
-        const main = each.Type === "Album" ? each.Tracks : [each];
+        const main = each.Type === "Album" ? each.Tracks : each;
         if (!playing) setPlaying(true);
         if (each.Type === "Single") {
-            setQueue(main);
-            setAlbumForPlayer(main[0]);
+            main.id = global.id = 0;
+            setQueue([main]);
+            setAlbumForPlayer(main);
         } else {
-            main.forEach(song => {
+            const dummy = [ ...main ];
+            dummy.forEach((song,i) => {
+                song.id = global.id = i;
                 song.Album = each.Album;
                 song.Thumbnail = each.Thumbnail;
                 song.Color = each.Color;
                 song.Year = each.Year;
             });
-            setQueue(main);
-            setAlbumForPlayer(main[0]);
+            setQueue(dummy);
+            setAlbumForPlayer(dummy[0]);
         }
         localStorage.setItem("queue",JSON.stringify(main));
         setSongPaused(true);
@@ -207,7 +213,7 @@ const EachAlbum = ({ each, openerFunc }) => {
         <div className="eachinrow" ref={setElement}>
             { show ?
                 <div className="innerineach">
-                    <div className="eachartcover" onClick={display} title={each.Album}>
+                    <Button className="eachartcover" onClick={display} title={each.Album}>
                         <div className="eachshadow"></div>
                         <div className={ (song.Album === each.Album) ? "showplaybuttonfixed" : "showplaybutton" }>
                             <Button className="innerplaybutton" onClick={handlePlayPause}
@@ -221,7 +227,7 @@ const EachAlbum = ({ each, openerFunc }) => {
                             <div className="library-opener3"></div>
                         </div>
                         <img src={each.Thumbnail} alt="" className="eachalbumart" />
-                    </div>
+                    </Button>
                     <div className="eachalbumname" onClick={display}>{each.Album}</div>
                     <span className="eachbottom">
                         <span>{each.AlbumArtist}</span>
@@ -272,22 +278,26 @@ const NewActualLibrary = () => {
 
 
     const addAlbumToQueue = each => {
-        const main = each.Type === "Album" ? each.Tracks : [each];
-        const mainQueue = queue;
-        const index = mainQueue.indexOf(playingSong);
+        setOpenerDetails({ ...openerDetails, open: false });
+        const main = each.Type === "Album" ? each.Tracks : each;
+        if (queue.length === 0) return;
+        const index = queue.indexOf(playingSong);
         if (index === -1) return;
+
+        const mainQueue = [ ...queue ];
         if (each.Type === "Single") {
-            mainQueue.push(main[0]);
+            mainQueue.push({ ...main, id: ++global.id });
             localStorage.setItem("queue",JSON.stringify(mainQueue));
             setQueue(mainQueue);
             setResObj({ open: true, msg: `Added single to queue` });
         } else {
             main.forEach(song => {
+                song.id = ++global.id;
                 song.Album = each.Album;
                 song.Color = each.Color;
                 song.Thumbnail = each.Thumbnail;
                 song.Year = each.Year;
-                mainQueue.push(song);
+                mainQueue.push({ ...song });
             });
             localStorage.setItem("queue",JSON.stringify(mainQueue));
             setQueue(mainQueue);
@@ -296,21 +306,24 @@ const NewActualLibrary = () => {
     };
 
     const playAlbumNext = each => {
+        setOpenerDetails({ ...openerDetails, open: false });
         if (queue.length !== 0) {
             const index = queue.indexOf(playingSong);
+            const mainQueue = [ ...queue ];
             if (each.Type === "Single") {
-                queue.splice(index+1,0,each);
+                mainQueue.splice(index+1,0,{ ...each, id: ++global.id });
             } else {
                 each.Tracks.forEach((song,i) => {
+                    song.id = ++global.id;
                     song.Album = each.Album;
                     song.Color = each.Color;
                     song.Thumbnail = each.Thumbnail;
                     song.Year = each.Year;
-                    queue.splice(index+1+i,0,song);
+                    mainQueue.splice(index+1+i,0,{ ...song });
                 });
             }
-            localStorage.setItem("queue",JSON.stringify(queue));
-            setQueue(queue);
+            localStorage.setItem("queue",JSON.stringify(mainQueue));
+            setQueue(mainQueue);
             setResObj({ open: true, msg: `Playing ${each.Album} next` });
         }
     };
@@ -366,6 +379,7 @@ const NewActualLibrary = () => {
                 setIsLoading(false);
                 return;
             }
+            // await wait(1000);
             const res = await sendRequest({
                 method: "GET",
                 endpoint: `/getLibrary`
@@ -380,11 +394,11 @@ const NewActualLibrary = () => {
             call();
         }
         topDiv.current = document.querySelector(".dummymid");
-        topDiv.current && topDiv.current.addEventListener("scroll", documentScroll);
-        document.addEventListener("click", documentClick);
+        // topDiv.current && topDiv.current.addEventListener("scroll", documentScroll);
+        // document.addEventListener("click", documentClick);
         return () => {
-            topDiv.current && topDiv.current.removeEventListener("scroll", documentScroll);
-            document.removeEventListener("click", documentClick);
+            // topDiv.current && topDiv.current.removeEventListener("scroll", documentScroll);
+            // document.removeEventListener("click", documentClick);
         };
     }, [isLoading]);
 

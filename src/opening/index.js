@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Redirect } from "react-router-dom";
 // import "../css/openingstyles.css";
 import "../css/opening2styles.css";
@@ -8,6 +8,7 @@ import "../css/opening2styles.css";
 // import logo2 from "../assets/aquamarinelogo.svg";
 // import logo2 from "../assets/bluelogo.svg";
 import logo2 from "../assets/latest-whiteblack.svg";
+// import logo2 from "../assets/latest-bluewhite.svg";
 import logo from "../assets/blackandwhitelogo.svg";
 import {
     wait,

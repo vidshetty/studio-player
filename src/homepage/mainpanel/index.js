@@ -1,6 +1,6 @@
 import Mid, { MidPanelLoader } from "./midpanel";
 import { Link, useLocation, useHistory } from "react-router-dom";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 // import logo from "../../assets/bluelogo.svg";
 // import logo from "../../assets/latest-whiteblack.svg";
 import logo from "../../assets/latest-bluewhite.svg";
@@ -13,6 +13,9 @@ import homelight from "../../assets/homelight.svg";
 import searchlight from "../../assets/searchlight.svg";
 import librarylight from "../../assets/librarylight.svg";
 import radio from "../../assets/radio2.svg";
+// import BackButton from "../../assets/backbutton-white.svg";
+import BackButton from "../../assets/backbutton-909090.svg";
+import Close from "../../assets/delete-909090.svg";
 // import radio from "../../assets/mainshuffle.svg";
 import radiolight from "../../assets/radiolight2.svg";
 import dropdown from "../../assets/dropdown.png";
@@ -29,10 +32,13 @@ import {
     queueOpenedGlobal,
     topBarGlobal,
     searchBarGlobal,
+    searchInputGlobal,
     prefix,
-    profileOpener
+    profileOpener,
+    global
 } from "../../common";
-let topBar, tabLocal, queueOpenedLocal;
+import Button from "../../Button";
+let topBar, tabLocal, queueOpenedLocal, searchInputTimeout = null, noLocal, showListLocal;
 
 
 const Left = () => {
@@ -256,12 +262,156 @@ const Left = () => {
 
 
 const TopSearchBar = () => {
+    const [queueOpen, setQueueOpen] = CustomUseState(queueOpenedGlobal);
+    const [searchConfig, setSearchConfig] = CustomUseState(searchBarGlobal);
+    const [input, setInput] = CustomUseState(searchInputGlobal);
+    const [value, setValue] = useState("");
+    const [showList, setShowList] = useState(true);
+    const [no, setNo] = useState(-1);
+    const search = useRef(null);
+    const location = useLocation();
+    const hist = useHistory();
+    let list = localStorage.getItem("searches") || "[]";
+    list = JSON.parse(list).reverse();
+    noLocal = no;
+    showListLocal = showList;
+
+    const goBack = e => {
+        global.searchBarOpen = false;
+        setSearchConfig({
+            ...searchConfig,
+            open: false
+        });
+    };
+
+    const clear = e => {
+        e.stopPropagation();
+        setValue("");
+        document.querySelector(".search-input").focus();
+    };
+
+    const click = e => {
+        if (!(e.target === search.current || search.current.contains(e.target))) {
+            global.searchBarOpen = false;
+            setSearchConfig({
+                ...searchConfig,
+                open: false
+            });
+        }
+    };
+
+    const handleInput = e => {
+        setValue(e.target.value);
+        if (!showList) {
+            setShowList(true);
+        }
+    };
+
+    const handleSearch = e => {
+        e.preventDefault();
+
+        let list = localStorage.getItem("searches") || "[]";
+        list = JSON.parse(list);
+        value && list.push(value);
+        localStorage.setItem("searches", JSON.stringify(list));
+
+        if (queueOpen) setQueueOpen(false);
+        setInput(value);
+        setNo(-1);
+        setShowList(false);
+        if (location.pathname !== `${prefix}/home/search`) {
+            hist.push(`${prefix}/home/search`);
+        }
+    };
+
+    const setThis = (val,e) => {
+        e.stopPropagation();
+        setValue(val);
+        setShowList(false);
+        
+        if (queueOpen) setQueueOpen(false);
+        setInput(val);
+        if (location.pathname !== `${prefix}/home/search`) {
+            hist.push(`${prefix}/home/search`);
+        }
+    };
+
+    const keyDown = e => {
+        if (e.keyCode === 40 && showListLocal) {
+            if (noLocal+1 >= 8) {
+                noLocal = 0;
+                setNo(0);
+                return;
+            }
+            setNo(noLocal+1);
+        } else if (e.keyCode === 38 && showListLocal) {
+            if (noLocal === -1) {
+                return;
+            }
+            setNo(noLocal-1);
+        }
+    };
+
+    useEffect(() => {
+        if (no === -1) {
+            return;
+        }
+        setValue(list[noLocal]);
+    }, [no]);
+
+    useEffect(() => {
+        search.current = document.querySelector(".search-bar");
+        document.addEventListener("click",click);
+        // document.addEventListener("keydown",keyDown);
+        document.querySelector(".search-input").focus();
+        return () => {
+            document.removeEventListener("click",click);
+            // document.removeEventListener("keydown",keyDown);
+        };
+    }, []);
+
     return(
         <div className="top-search-bar-container">
             <div className="search-bar">
-                <div className="back-container"></div>
-                <div className="input-container"></div>
-                <div className="close-container"></div>
+                <div className="search-top-row">
+                    <div className="back-container">
+                        <button className="back-button" title="Back" onClick={goBack}>
+                            <img src={BackButton} alt="" />
+                        </button>
+                    </div>
+                    <div className="input-container">
+                        <form onSubmit={handleSearch}>
+                            <input type="text" className="search-input" placeholder="Search" align="middle"
+                            onChange={handleInput} value={value} spellCheck="false" />
+                        </form>
+                    </div>
+                    <div className="close-container">
+                        {
+                            value !== "" ?
+                            <button className="back-button" title="Clear" onClick={clear}>
+                                <img src={Close} alt="" />
+                            </button> : null
+                        }
+                    </div>
+                </div>
+                {
+                    list.length !== 0 && showList ?
+                    <div className="list-container">
+                        {
+                            list.map((each,i) => {
+                                if (i<8) {
+                                    return(
+                                        <div className={ i === noLocal ? "each-list-highlight" : "each-list" } onClick={(e) => setThis(each,e)}>
+                                            <div className="first-each-list">{each}</div>
+                                            <div className="last-each-list"></div>
+                                        </div> 
+                                    );
+                                }
+                                return null;
+                            })
+                        }
+                    </div> : null
+                }
             </div>
         </div>
     );
@@ -327,17 +477,18 @@ const TopNav = () => {
     };
 
     const setFuncs = (item, currentTab) => {
-        if (item === tabLocal) {
-            return;
-        }
         if (item === "Search") {
+            global.searchBarOpen = true;
             setSearchConfig({
                 ...searchConfig,
                 open: true,
                 prevTab: currentTab
             });
         }
-        if (queueOpenedLocal) {
+        if (item === tabLocal) {
+            return;
+        }
+        if (queueOpenedLocal && item !== "Search") {
             setQueueOpened(false);
         }
     };
@@ -354,7 +505,7 @@ const TopNav = () => {
 
     const setRouteFunc = item => {
         const route = getCorrespondingRoute(item);
-        hist.push(route);
+        if (route !== `${prefix}/home/search`) hist.push(route);
     };
 
     const openProfile = e => {
@@ -363,9 +514,11 @@ const TopNav = () => {
 
 
     return(
-        <div className="dummyleft">
+        <div className="dummyleft"
+        // style={{ borderBottom: `${ queueOpened ? "" : "0.5px solid rgba(255,255,255,0.1)" }` }}
+        >
             <div className="logopart" onClick={goToHome}>
-                <div className="logopartdiv" title="StudioMusic" >
+                <div className="logopartdiv" title="StudioMusic">
                     <img src={logo} alt="logo" />
                     <p>Studio</p>
                 </div>
@@ -373,7 +526,8 @@ const TopNav = () => {
             <div className="middlepart">
                 {
                     searchConfig.open ?
-                    <TopSearchBar/> :
+                    <TopSearchBar /> :
+                    // null :
                     <div className="centermiddlepart">
                         {
                             topList.map(each => {

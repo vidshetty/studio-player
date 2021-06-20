@@ -1,5 +1,5 @@
 import "../../../css/queuestyles.css";
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Redirect, useHistory } from "react-router-dom";
 import Close from "../../../assets/deletewhite.svg";
 import Placeholder from "../../../assets/placeholder.svg";
@@ -7,7 +7,7 @@ import Play from "../../../assets/playbutton-white.svg";
 import Pause from "../../../assets/pausebutton-white.svg";
 import Expand from "../../../assets/expand-white.svg";
 // import Expand from "../../../assets/fullscreen.png";
-import Minimize from "../../../assets/minimizeplayer-white.svg";
+import Minimize from "../../../assets/new-minimizeplayer-white.svg";
 import { MidPanelLoader } from "./index";
 import { pauseOrPlay } from "../../index";
 import {
@@ -24,12 +24,23 @@ import {
     checkX,
     checkY,
     prefix,
-    global
+    global,
+    lyricsGlobal,
+    sendRequest,
+    lyricTextGlobal
 } from "../../../common";
+import Button from "../../../Button";
 let finalQueue = [], queueLength, songIndex, smallArr;
 let actualQueue, firstpart, lastpart, topBar, miniLocal, isOpen, scrollInterval = null;
 
 
+const Loader = () => {
+    return(
+        <div className="fullcover">
+            <div className="bufferloader"/>
+        </div>
+    );
+};
 
 const SongInQueue = ({ nowPlaying = false, songIsPaused = null, song, number = null, openerFunc }) => {
     const [hovered, setHovered] = useState(false);
@@ -113,6 +124,51 @@ const SongInQueue = ({ nowPlaying = false, songIsPaused = null, song, number = n
         </div>
     );
 };
+
+
+const EachLyric = ({ each, lyricText }) => {
+    return(
+        <div className={`each-lyric ${each.key === lyricText.key ? "activetext" : ""}`}>
+            {each.text}
+        </div>
+    );
+};
+
+const LyricsPart = ({ song, lyricsLoading, lyrics, lyricText, setTab }) => {
+    const lyricsContainer = useRef(null);
+    const activeLyrics = useRef(null);
+
+    useEffect(() => {
+        console.log("lyrics",lyrics.length);
+        if (lyrics.length === 0) setTab(1);
+    }, [song, lyrics]);
+
+    useEffect(() => {
+        lyricsContainer.current = document.querySelector(".lyrics-part");
+        activeLyrics.current = document.querySelector(".each-lyric.activetext");
+        if (lyricsContainer.current && activeLyrics.current) {
+            lyricsContainer.current.scroll({ top: activeLyrics.current.offsetTop - 200, behavior: "smooth" });
+        }
+    }, [song, lyricText]);
+
+    if (lyricsLoading) {
+        return <Loader/>;
+    }
+    return(
+        <div className="lyrics-part">
+            {
+                lyrics.length === 0 ? 
+                <div className="no-lyrics">No lyrics found!</div> : null
+            }
+            {
+                lyrics.map(each => {
+                    return <EachLyric each={each} lyricText={lyricText} />;
+                })
+            }
+        </div>
+    );
+};
+
 
 const EachSong = ({ index, i, queue, each, songIsPaused, setSongIsPaused, setSong, openerFunc }) => {
     const [hovered, setHovered] = useState(false);
@@ -215,7 +271,10 @@ const NewRightQueue = ({ song, songIsPaused, setSongIsPaused, setSong, openerFun
     const [showScroll, setShowScroll] = useState(false);
     const [position, setPosition] = useState({ show: false, top: 0 });
     const [selected, setSelected] = useState(false);
-    const index = queue.indexOf(song);
+    // const index = queue.indexOf(song);
+    const index = queue.findIndex(each => {
+        return each.id === song.id;
+    });
     const container = useRef(null);
     actualQueue = queue;
 
@@ -362,6 +421,9 @@ const Queue = () => {
     const [,setResBar] = CustomUseState(responseBar);
     const [topBarConfig, setTopBarConfig] = CustomUseState(topBarGlobal);
     const [mini, setMini] = CustomUseState(miniPlayerGlobal);
+    const [lyrics, setLyrics] = CustomUseState(lyricsGlobal);
+    const [lyricText, setLyricText] = CustomUseState(lyricTextGlobal);
+    const [lyricsLoading, setLyricsLoading] = useState(false);
     // const [redirectTo, setRedirectTo] = useState("");
     // const [routes, setRoutes] = CustomUseState(routesGlobal);
     actualQueue = queue;
@@ -425,12 +487,12 @@ const Queue = () => {
     };
 
     const removeSong = each => {
-        const removeIndex = actualQueue.indexOf(each);
+        // const removeIndex = actualQueue.indexOf(each);
+        const removeIndex = actualQueue.findIndex(song => {
+            return song.id === each.id;
+        });
         if (removeIndex !== -1) {
             if (actualQueue.length === 1) {
-                // setSongIsPaused(true);
-                // setQueueOpened(false);
-                // setPlaying(false);
                 setSong({});
                 return;
             }
@@ -442,9 +504,7 @@ const Queue = () => {
                 open: true,
                 msg: `Removed ${each.Title || each.Album} from queue`
             });
-            const eachTitle = each.Title || each.Album;
-            const currTitle = song.Title || song.Album;
-            if (eachTitle === currTitle) {
+            if (each.id === song.id) {
                 const index = removeIndex === actualQueue.length ? 0 : removeIndex;
                 setSong(actualQueue[index]);
                 setSongIsPaused(true);
@@ -533,6 +593,21 @@ const Queue = () => {
         }
     };
 
+    const call = async () => {
+        if (!lyricsLoading) setLyricsLoading(true);
+        const res = await sendRequest({
+            method: "GET",
+            endpoint: `/getLyrics?name=${song.Title || song.Album}`
+        });
+        console.log("res",res);
+        setLyricsLoading(false);
+        setLyrics(res);
+    };
+
+
+    useEffect(() => {
+        call();
+    }, [song]);
 
     useEffect(() => {
         setIsLoading(false);
@@ -549,9 +624,6 @@ const Queue = () => {
     if (isLoading) {
         return <MidPanelLoader/>
     }
-    // if (!queueOpened) {
-    //     return "";
-    // }
     return(
         // <div className={ queueOpened ? "bottomqueue up" : queueOpened !== "" ? "bottomqueue down" : "bottomqueue start" }>
         <div className={ queueOpened ? "bottomqueue show" : queueOpened !== "" ? "bottomqueue hide" : "bottomqueue stay" }>
@@ -571,12 +643,20 @@ const Queue = () => {
                 <div className="new-right-queue">
                     <div className="right-inner-queue">
                         <div className="tab-bar">
-                            <div className={`each-tab ${tab === 1 ? "active-tab" : ""}`} onClick={() => setTab(1)}>UP NEXT</div>
-                            {/* <div className={`each-tab ${tab === 2 ? "active-tab" : ""}`} onClick={() => setTab(2)}>LYRICS</div> */}
+                            <Button className={`each-tab ${tab === 1 ? "active-tab" : ""}`} onClick={() => setTab(1)}>UP NEXT</Button>
+                            {
+                                lyrics.length !== 0 && !lyricsLoading ?
+                                <Button className={`each-tab ${tab === 2 ? "active-tab" : ""}`} onClick={() => setTab(2)}>LYRICS</Button> :
+                                <div className="each-tab light">LYRICS</div>
+                            }
                         </div>
                         { tab === 1 ?
                             <NewRightQueue song={song} songIsPaused={songIsPaused} setSongIsPaused={setSongIsPaused} setSong={setSong}
                             openerFunc={handleMenu} /> : null
+                        }
+                        { tab === 2 ?
+                            <LyricsPart song={song} lyricsLoading={lyricsLoading} lyrics={lyrics} lyricText={lyricText}
+                            setLyricText={setLyricText} setTab={setTab} /> : null 
                         }
                     </div>
                 </div>

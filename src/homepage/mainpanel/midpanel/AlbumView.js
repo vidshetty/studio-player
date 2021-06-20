@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "../../../css/albumview.css";
 import {
     CustomUseState,
@@ -15,7 +15,8 @@ import {
     responseBar,
     sendRequest,
     checkX,
-    checkY
+    checkY,
+    global
 } from "../../../common";
 import { MidPanelLoader } from "./index";
 import { HorizontalList } from "./HomeScreen";
@@ -660,31 +661,38 @@ const NewSongRow = ({ song, index, album, openerFunc }) => {
             return;
         }
         if (!playing) setPlaying(true);
-        let newQueue = [];
+        const newQueue = [];
+        let playingSong;
         if (album.Type === "Album") {
-            album.Tracks.forEach(each => {
+            album.Tracks.forEach((each,i) => {
+                each.id = global.id = i;
                 each.Album = album.Album;
                 each.Color = album.Color;
                 each.Year = album.Year;
                 each.Thumbnail = album.Thumbnail;
+                if (each.Title === song.Title) {
+                    playingSong = song;
+                }
+                newQueue.push(each);
             });
-            newQueue = album.Tracks;
         }
         if (album.Type === "Single") {
+            song.id = global.id = 0;
             song.Color = album.Color;
             song.Thumbnail = album.Thumbnail;
             song.Year = album.Year;
             newQueue.push(song);
+            playingSong = song;
         }
         setQueue(newQueue);
         localStorage.setItem("queue",JSON.stringify(newQueue));
-        if (currentSong !== song) setSongPaused(true);
-        setCurrentSong(song);
-        setResp({
-            ...resp,
-            open: true,
-            msg: `Playing '${song.Title || song.Album}' now`
-        });
+        if (currentSong !== playingSong) setSongPaused(true);
+        setCurrentSong(playingSong);
+        // setResp({
+        //     ...resp,
+        //     open: true,
+        //     msg: `Playing '${song.Title || song.Album}' now`
+        // });
     };
 
     const playButton = () => {
@@ -797,17 +805,19 @@ const NewActualAlbumView = () => {
     };
 
     const addAlbumToQueue = () => {
-        const main = album.Type === "Album" ? album.Tracks : [album];
-        const mainQueue = queue;
-        const index = mainQueue.indexOf(playingSong);
-        if (index === -1) return;
+        const main = album.Type === "Album" ? [ ...album.Tracks ] : { ...album };
+        const mainQueue = [ ...queue ];
+        const len = mainQueue.length;
+        if (len === 0) return;
         if (album.Type === "Single") {
-            mainQueue.push(main[0]);
+            main.id = ++global.id;
+            mainQueue.push(main);
             localStorage.setItem("queue",JSON.stringify(mainQueue));
             setQueue(mainQueue);
             setResObj({ open: true, msg: `Added single to queue` });
         } else {
             main.forEach(song => {
+                song.id = ++global.id;
                 song.Album = album.Album;
                 song.Color = album.Color;
                 song.Thumbnail = album.Thumbnail;
@@ -821,21 +831,25 @@ const NewActualAlbumView = () => {
     };
 
     const playAlbumNext = () => {
-        if (queue.length !== 0) {
+        const len = queue.length;
+        if (len !== 0) {
             const index = queue.indexOf(playingSong);
+            const mainQueue = [ ...queue ];
             if (album.Type === "Single") {
-                queue.splice(index+1,0,album);
+                album.id = ++global.id;
+                mainQueue.splice(index+1, 0, { ...album });
             } else {
                 album.Tracks.forEach((song,i) => {
+                    song.id = ++global.id;
                     song.Album = album.Album;
                     song.Color = album.Color;
                     song.Thumbnail = album.Thumbnail;
                     song.Year = album.Year;
-                    queue.splice(index+1+i,0,song);
+                    mainQueue.splice(index+1+i, 0, { ...song });
                 });
             }
-            localStorage.setItem("queue",JSON.stringify(queue));
-            setQueue(queue);
+            localStorage.setItem("queue",JSON.stringify(mainQueue));
+            setQueue(mainQueue);
             setResObj({ open: true, msg: `Playing ${album.Album} next` });
         }
     };
@@ -853,13 +867,16 @@ const NewActualAlbumView = () => {
         if (decidePlayOrPause()) {
             pauseOrPlay();
         } else {
-            const main = album.Type === "Album" ? album.Tracks : [album];
+            const main = album.Type === "Album" ? [ ...album.Tracks ] : { ...album };
             if (!playing) setPlaying(true);
             if (album.Type === "Single") {
-                setQueue(main);
-                setPlayingSong(main[0]);
+                main.id = 0;
+                global.id = 0;
+                setQueue([main]);
+                setPlayingSong(main);
             } else {
-                main.forEach(song => {
+                main.forEach((song,i) => {
+                    song.id = global.id = i;
                     song.Album = album.Album;
                     song.Thumbnail = album.Thumbnail;
                     song.Color = album.Color;
@@ -924,29 +941,33 @@ const NewActualAlbumView = () => {
     };
 
     const addTrackToQueue = each => {
-        const dummy = queue;
+        setOpenerDetails({ ...openerDetails, open: false });
+        const dummy = [ ...queue ];
         const len = dummy.length;
+        if (len === 0) return;
         if (album.Type === "Album") {
             each.Album = album.Album;
             each.Color = album.Color;
             each.Thumbnail = album.Thumbnail;
             each.Year = album.Year;
         }
-        dummy[len] = each;
+        dummy[len] = { ...each, id: ++global.id };
         setQueue(dummy);
         setResObj({ open: true, msg: `Added ${each.Title || each.Album} to queue` });
     };
 
     const playTrackNext = each => {
-        const dummy = queue;
-        const curIndex = dummy.indexOf(playingSong);
+        setOpenerDetails({ ...openerDetails, open: false });
+        if (queue.length === 0) return;
+        const curIndex = queue.indexOf(playingSong);
+        const dummy = [ ...queue ];
         if (album.Type === "Album") {
             each.Album = album.Album;
             each.Color = album.Color;
             each.Thumbnail = album.Thumbnail;
             each.Year = album.Year;
         }
-        dummy.splice(curIndex+1, 0, each);
+        dummy.splice(curIndex+1, 0, { ...each, id: ++global.id });
         setQueue(dummy);
         setResObj({ open: true, msg: `Playing ${each.Title || each.Album} next` });
     };
@@ -999,11 +1020,11 @@ const NewActualAlbumView = () => {
             call();
         }
         topDiv.current = document.querySelector(".newalbum");
-        document.addEventListener("click", documentClick);
-        topDiv.current && topDiv.current.addEventListener("scroll", documentScroll);
+        // document.addEventListener("click", documentClick);
+        // topDiv.current && topDiv.current.addEventListener("scroll", documentScroll);
         return () => {
-            document.removeEventListener("click", documentClick);
-            topDiv.current && topDiv.current.removeEventListener("scroll", documentScroll);
+            // document.removeEventListener("click", documentClick);
+            // topDiv.current && topDiv.current.removeEventListener("scroll", documentScroll);
         };
     }, [isLoading]);
 

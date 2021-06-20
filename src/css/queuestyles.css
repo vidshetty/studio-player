@@ -411,22 +411,27 @@
     position: absolute;
     opacity: 0;
     transition: opacity 0.2s ease-in-out;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0), rgba(0,0,0,0))
+    background: linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0), rgba(0,0,0,0))
 }
 .expander,.minimizer{
     position: absolute;
     top: 30px;
     right: 30px;
-    width: 15px;
-    height: auto;
+    /* width: 16px;
+    height: auto; */
+    height: 16px;
+    width: auto;
     opacity: 0;
     transition: opacity 0.2s ease-in-out;
 }
 .minimizer{
-    top: 25px;
+    top: 30px;
     right: 80px;
-    width: 30px;
-    height: auto;
+    /* right: 45px; */
+    /* width: 16px;
+    height: auto; */
+    height: 16px;
+    width: auto;
 }
 .leftalbumartcover{
     position: relative;
@@ -553,6 +558,9 @@
 .each-tab.active-tab{
     border-bottom: 1px solid white;
     padding-top: 1px;
+}
+.each-tab.light{
+    color: rgba(255,255,255,0.5);
 }
 .tab-container{
     width: 100%;
@@ -691,4 +699,54 @@
     font-weight: 500;
     color: rgba(255,255,255,0.6);
     letter-spacing: -0.5px;
+}
+
+
+.fullcover{
+    width: 100%;
+    height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.lyrics-part{
+    width: 100%;
+    height: 100%;
+    /* background-color: aqua; */
+    overflow: auto;
+    padding-top: 50px;
+    padding-bottom: 100px;
+}
+.lyrics-part::-webkit-scrollbar{
+    width: 0px;
+}
+.no-lyrics{
+    width: 100%;
+    height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #909090;
+    font-size: 1em;
+    font-weight: 600;
+}
+.each-lyric{
+    width: 100%;
+    height: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1em;
+    font-weight: 600;
+    color: #909090;
+    padding: 20px;
+    text-align: center;
+}
+.each-lyric.activetext{
+    color: white;
+    font-size: 1.5em;
+    font-weight: 700;
+    background-color: #151515;
+    /* border-radius: 10px; */
 }

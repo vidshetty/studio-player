@@ -1,20 +1,36 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { useHistory } from "react-router-dom";
 import "../../../css/searchstyles.css";
 import "../../../css/homestyles.css";
+import "../../../css/hometeststyles.css";
 import SearchIcon from "../../../assets/searchicon.svg";
 import Close from "../../../assets/blackclose.png";
-import Play from "../../../assets/playwhite.png";
+import Play from "../../../assets/playbutton-white.svg";
+import Pause from "../../../assets/pausebutton-white.svg";
 import {
     sendRequest,
     queueOpenedGlobal,
     CustomUseState,
     searchBarGlobal,
+    searchInputGlobal,
     topBarGlobal,
-    topBgColorGlobal
+    topBgColorGlobal,
+    albumGlobal,
+    songIsPausedGlobal,
+    openerGlobal,
+    checkX,
+    checkY,
+    prefix,
+    playingGlobal,
+    queueGlobal,
+    responseBar,
+    global
 } from "../../../common";
 import Queue from "./Queue";
+import Button from "../../../Button";
 import { MidPanelLoader } from "./index";
 import { HorizontalList } from "./HomeScreen";
+import { pauseOrPlay } from "../../index";
 let timeout = undefined, searchBar, topBar, topBgColorLocal, setcolor = false;
 
 
@@ -310,25 +326,499 @@ const ActualSearch = () => {
     );
 };
 
+
+
+const EachInSongList = ({
+    song,
+    playingSong,
+    setPlayingSong,
+    songIsPaused,
+    openerFunc,
+    playing,
+    setPlaying,
+    setSongIsPaused,
+    setQueue,
+    openerDetails,
+    setOpenerDetails
+}) => {
+    const [hovered, setHovered] = useState(false);
+
+    const determine = () => {
+        const nameOfSong = song.Title || song.Album;
+        const nameOfPlayingSong = playingSong.Title || playingSong.Album;
+        if (nameOfSong === nameOfPlayingSong) {
+            return true;
+        }
+        return false;
+    };
+
+    const handlePlayPause = e => {
+        e.stopPropagation();
+        if (openerDetails.open) {
+            setOpenerDetails({ ...openerDetails, open: false });
+        }
+        if (determine()) {
+            pauseOrPlay();
+            return;
+        }
+        const main = { ...song };
+        if (!playing) setPlaying(true);
+        main.id = global.id = 0;
+        setQueue([main]);
+        setPlayingSong(main);
+        localStorage.setItem("queue",JSON.stringify([main]));
+        setSongIsPaused(true);
+    };
+
+    const handleMenu = e => {
+        e.stopPropagation();
+        const dimensions = { x: e.clientX, y: e.clientY };
+        const windowDim = { width: document.documentElement.clientWidth, height: document.documentElement.clientHeight };
+        openerFunc(e, { dimensions, windowDim, song });
+    };
+
+    return(
+        <div className="each-list-song" onMouseOver={() => setHovered(true)} onMouseOut={() => setHovered(false)}
+        style={{ backgroundColor: `${ determine() ? "#202020" : "" }` }}
+        >
+            <div className="each-list-song-cover">
+                <div className="each-list-song-cover-inner">
+                    <img className="each-list-song-cover-inner-img" src={song.Thumbnail} alt="" />
+                    <div className="each-song-dummyshadow">
+                        <Button className="each-button" onClick={handlePlayPause}>
+                            {
+                                determine() ?
+                                <img src={ songIsPaused ? Play : Pause } alt="" /> :
+                                <img src={Play} alt="" />
+                            }
+                        </Button>
+                    </div>
+                    {
+                        !hovered && determine() ? 
+                        <div className="anim-cover">
+                            {
+                                !songIsPaused ?
+                                <div className="playinganim">
+                                    <div className="div1"></div>
+                                    <div className="div2"></div>
+                                    <div className="div3"></div>
+                                    <div className="div4"></div>
+                                </div> : 
+                                <div className="pausedanim">
+                                    <div className="div5"></div>
+                                    <div className="div6"></div>
+                                    <div className="div7"></div>
+                                    <div className="div8"></div>
+                                </div> 
+                            }
+                        </div> : null
+                    }
+                </div>
+            </div>
+            <div className={ hovered ? "each-list-song-details short" : "each-list-song-details" }>
+                <div className="each-list-song-title">{song.Title || song.Album}</div>
+                <div className="each-list-song-below">
+                    <p>Song</p>
+                    <div className="search-separator"><div></div></div>
+                    <p>{song.Artist}</p>
+                    <div className="search-separator"><div></div></div>
+                    <p>{song.Album}</p>
+                    <div className="search-separator"><div></div></div>
+                    <p>{song.Duration}</p>
+                </div>
+            </div>
+            <div className={ hovered ? "each-list-opener" : "each-list-opener hidden" }>
+                <div className="tileopener" onClick={handleMenu}>
+                    <div className="tileopener1"></div>
+                    <div className="tileopener2"></div>
+                    <div className="tileopener3"></div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const EachInAlbumList = ({
+    album,
+    playingSong,
+    songIsPaused,
+    setSongIsPaused,
+    openerFunc,
+    setPlayingSong,
+    playing,
+    setPlaying,
+    setQueue,
+    openerDetails,
+    setOpenerDetails
+}) => {
+    const hist = useHistory();
+    const [hovered, setHovered] = useState(false);
+
+    const display = e => {
+        setTimeout(() => {
+            hist.push(`${prefix}/home/album/${album.Album}`);
+        },500);
+    };
+
+    const handlePlayPause = e => {
+        e.stopPropagation();
+        if (openerDetails.open) {
+            setOpenerDetails({ ...openerDetails, open: false });
+        }
+        if (playingSong.Album === album.Album) {
+            pauseOrPlay();
+            return;
+        }
+        const main = album.Type === "Album" ? album.Tracks : album;
+        if (!playing) setPlaying(true);
+        if (album.Type === "Single") {
+            main.id = global.id = 0;
+            setQueue([main]);
+            setPlayingSong(main);
+        } else {
+            const dummy = [ ...main ];
+            dummy.forEach((song,i) => {
+                song.id = global.id = i;
+                song.Album = album.Album;
+                song.Thumbnail = album.Thumbnail;
+                song.Color = album.Color;
+                song.Year = album.Year;
+            });
+            setQueue(dummy);
+            setPlayingSong(dummy[0]);
+        }
+        localStorage.setItem("queue",JSON.stringify(main));
+        setSongIsPaused(true);
+    };
+
+    const handleMenu = e => {
+        e.stopPropagation();
+        const dimensions = { x: e.clientX, y: e.clientY };
+        const windowDim = { width: document.documentElement.clientWidth, height: document.documentElement.clientHeight };
+        openerFunc(e, { dimensions, windowDim, song: album });
+    };
+
+    const determine = () => {
+        const nameOfSong = album.Album;
+        const nameOfPlayingSong = playingSong.Album;
+        if (nameOfSong === nameOfPlayingSong) {
+            return true;
+        }
+        return false;
+    };
+
+    return(
+        <Button className="each-album-button" onClick={display}>
+        <div className="each-list-song" onMouseOver={() => setHovered(true)} onMouseOut={() => setHovered(false)}
+        // style={{ backgroundColor: `${ hovered ? "#202020" : "" }` }}
+        >
+            <div className="each-list-song-cover">
+                <div className="each-list-song-cover-inner">
+                    <img className="each-list-song-cover-inner-img" src={album.Thumbnail} alt="" />
+                    <div className="each-song-dummyshadow">
+                        <Button className="each-button" onClick={handlePlayPause}>
+                            {
+                                determine() ?
+                                <img src={ songIsPaused ? Play : Pause } alt="" /> :
+                                <img src={Play} alt="" />
+                            }
+                        </Button>
+                    </div>
+                </div>
+            </div>
+            <div className={ hovered ? "each-list-song-details short" : "each-list-song-details" }>
+                <div className="each-list-song-title">{album.Title || album.Album}</div>
+                <div className="each-list-song-below">
+                    <p>{album.Type}</p>
+                    <div className="search-separator"><div></div></div>
+                    <p>{album.AlbumArtist}</p>
+                    <div className="search-separator"><div></div></div>
+                    <p>{album.Year}</p>
+                </div>
+            </div>
+            <div className={ hovered ? "each-list-opener" : "each-list-opener hidden" }>
+                <div className="tileopener" onClick={handleMenu}>
+                    <div className="tileopener1"></div>
+                    <div className="tileopener2"></div>
+                    <div className="tileopener3"></div>
+                </div>
+            </div>
+        </div>
+        </Button>
+    );
+    // return(
+    //     <div className="each-list-album">
+    //         <div className="each-list-album-inner">
+    //             <Button className="eachartcover" onClick={display} title={album.Album}>
+    //                 <div className="eachshadow"></div>
+    //                 <div className={ (playingSong.Album === album.Album) ? "showplaybuttonfixed" : "showplaybutton" }>
+    //                     <Button className="innerplaybutton" onClick={handlePlayPause}
+    //                     title={ (!songIsPaused && playingSong.Album === album.Album) ? "Pause" : "Play" } >
+    //                         <img src={ (!songIsPaused && playingSong.Album === album.Album) ? Pause : Play } alt="" />
+    //                     </Button>
+    //                 </div>
+    //                 <div className="library-opener" onClick={handleMenu} title="More Options">
+    //                     <div className="library-opener1"></div>
+    //                     <div className="library-opener2"></div>
+    //                     <div className="library-opener3"></div>
+    //                 </div>
+    //                 <img src={album.Thumbnail} alt="" className="eachalbumart" />
+    //             </Button>
+    //             <div className="eachalbumname" onClick={display}>{album.Album}</div>
+    //             <span className="eachbottom">
+    //                 <span>{album.AlbumArtist}</span>
+    //             </span>
+    //         </div>
+    //     </div>
+    // );
+};
+
+const SongsList = ({ songs, openerFunc, openerDetails, setOpenerDetails }) => {
+    const [playingSong, setPlayingSong] = CustomUseState(albumGlobal);
+    const [songIsPaused, setSongIsPaused] = CustomUseState(songIsPausedGlobal);
+    const [playing, setPlaying] = CustomUseState(playingGlobal);
+    const [,setQueue] = CustomUseState(queueGlobal);
+
+    return(
+        <div className="songs-list">
+            <div className="songs-list-title">Songs</div>
+            <div className="songs-list-container">
+                {
+                    songs.map(each => {
+                        return <EachInSongList song={each} playingSong={playingSong} setPlayingSong={setPlayingSong}
+                                songIsPaused={songIsPaused} openerFunc={openerFunc} playing={playing} setPlaying={setPlaying}
+                                setSongIsPaused={setSongIsPaused} setQueue={setQueue}
+                                openerDetails={openerDetails} setOpenerDetails={setOpenerDetails} />;
+                    })
+                }
+            </div>
+        </div>
+    );
+};
+
+const AlbumsList = ({ albums, openerFunc, openerDetails, setOpenerDetails }) => {
+    const [playingSong, setPlayingSong] = CustomUseState(albumGlobal);
+    const [songIsPaused, setSongIsPaused] = CustomUseState(songIsPausedGlobal);
+    const [playing, setPlaying] = CustomUseState(playingGlobal);
+    const [,setQueue] = CustomUseState(queueGlobal);
+
+    return(
+        <div className="songs-list">
+            <div className="songs-list-title">Albums</div>
+            {/* <div className="albums-list-grid"> */}
+            <div className="albums-list-container">
+                {
+                    albums.map(each => {
+                        return <EachInAlbumList album={each} playingSong={playingSong} setPlayingSong={setPlayingSong}
+                                songIsPaused={songIsPaused} playing={playing} setPlaying={setPlaying}
+                                setSongIsPaused={setSongIsPaused} setQueue={setQueue} openerFunc={openerFunc}
+                                openerDetails={openerDetails} setOpenerDetails={setOpenerDetails} />;
+                    })
+                }
+            </div>
+        </div>
+    );
+};
+
+const NewSearch = () => {
+    const [playingSong, setPlayingSong] = CustomUseState(albumGlobal);
+    const [input,] = CustomUseState(searchInputGlobal);
+    const [openerDetails, setOpenerDetails] = CustomUseState(openerGlobal);
+    const [queue, setQueue] = CustomUseState(queueGlobal);
+    const [, setResObj] = CustomUseState(responseBar);
+    const [isLoading, setIsLoading] = useState(true);
+    const [songsList, setSongsList] = useState([]);
+    const [albumsList, setAlbumsList] = useState([]);
+    const hist = useHistory();
+
+    const call = async () => {
+        console.log("calling");
+        const res = await sendRequest({
+            method: "GET",
+            endpoint: `/search?name=${input}`
+        });
+        console.log("res",res);
+        setSongsList(res.songs);
+        setAlbumsList(res.albums);
+        setIsLoading(false);
+    };
+
+    const addTrackToQueue = (song) => {
+        setOpenerDetails({ ...openerDetails, open: false });
+        const dummy = [ ...queue ];
+        const len = dummy.length;
+        if (len === 0) return;
+        dummy[len] = { ...song, id: ++global.id };
+        setQueue(dummy);
+        setResObj({ open: true, msg: `Added ${song.Title || song.Album} to queue` });
+    };
+
+    const playTrackNext = (song) => {
+        setOpenerDetails({ ...openerDetails, open: false });
+        if (queue.length === 0) return;
+        const curIndex = queue.indexOf(playingSong);
+        const dummy = [ ...queue ];
+        dummy.splice(curIndex+1, 0, { ...song, id: ++global.id });
+        setQueue(dummy);
+        setResObj({ open: true, msg: `Playing ${song.Title || song.Album} next` });
+    };
+
+    const goToAlbum = (song) => {
+        setOpenerDetails({ ...openerDetails, open: false });
+        hist.push(`${prefix}/home/album/${song.Album}`);
+    };
+
+    const handleSongMenu = (e, { dimensions, windowDim, song: album }) => {
+        const data = [
+            {
+                name: "Add to queue",
+                func: () => addTrackToQueue(album)
+            },
+            {
+                name: "Play next",
+                func: () => playTrackNext(album)
+            },
+            {
+                name: "Go to album",
+                func: () => goToAlbum(album)
+            }
+            // {
+            //     name: "Start radio",
+            //     func: () => {}
+            // }
+        ];
+        e.stopPropagation();
+        setOpenerDetails({
+            ...openerDetails,
+            open: true,
+            xValue: checkX(dimensions.x, windowDim.width),
+            yValue: checkY(dimensions.y, windowDim.height, data.length),
+            data
+        });
+    };
+
+    const addAlbumToQueue = (album) => {
+        setOpenerDetails({ ...openerDetails, open: false });
+        const main = album.Type === "Album" ? album.Tracks : { ...album };
+        const mainQueue = [ ...queue ];
+        const len = mainQueue.length;
+        if (len === 0) return;
+        if (album.Type === "Single") {
+            main.id = ++global.id;
+            mainQueue.push(main);
+            localStorage.setItem("queue",JSON.stringify(mainQueue));
+            setQueue(mainQueue);
+            setResObj({ open: true, msg: `Added single to queue` });
+        } else {
+            const newmain = [ ...main ];
+            newmain.forEach(song => {
+                song.id = ++global.id;
+                song.Album = album.Album;
+                song.Color = album.Color;
+                song.Thumbnail = album.Thumbnail;
+                song.Year = album.Year;
+                mainQueue.push(song);
+            });
+            localStorage.setItem("queue",JSON.stringify(mainQueue));
+            setQueue(mainQueue);
+            setResObj({ open: true, msg: `Added album to queue` });
+        }
+    };
+
+    const playAlbumNext = (album) => {
+        setOpenerDetails({ ...openerDetails, open: false });
+        const len = queue.length;
+        if (len !== 0) {
+            const index = queue.indexOf(playingSong);
+            const mainQueue = [ ...queue ];
+            if (album.Type === "Single") {
+                album.id = ++global.id;
+                mainQueue.splice(index+1, 0, { ...album });
+            } else {
+                const tracks = album.Tracks || [];
+                [ ...tracks ].forEach((song,i) => {
+                    song.id = ++global.id;
+                    song.Album = album.Album;
+                    song.Color = album.Color;
+                    song.Thumbnail = album.Thumbnail;
+                    song.Year = album.Year;
+                    mainQueue.splice(index+1+i, 0, { ...song });
+                });
+            }
+            localStorage.setItem("queue",JSON.stringify(mainQueue));
+            setQueue(mainQueue);
+            setResObj({ open: true, msg: `Playing ${album.Album} next` });
+        }
+    };
+
+    const handleAlbumMenu = (e, { dimensions, windowDim, song: album }) => {
+        const data = [
+            {
+                name: "Add to queue",
+                func: () => addAlbumToQueue(album)
+            },
+            {
+                name: "Play next",
+                func: () => playAlbumNext(album)
+            }
+        ];
+        e.stopPropagation();
+        setOpenerDetails({
+            ...openerDetails,
+            open: true,
+            xValue: checkX(dimensions.x, windowDim.width),
+            yValue: checkY(dimensions.y, windowDim.height, data.length),
+            data
+        });
+    };
+
+    useEffect(() => {
+        setIsLoading(true);
+        call();
+    }, [input]);
+
+    if (isLoading) {
+        return <MidPanelLoader/>
+    }
+    return(
+        <div className="search-page">
+            <div className="inner-search-page">
+                {
+                    songsList.length !== 0 ?
+                    <SongsList songs={songsList} openerFunc={handleSongMenu}
+                    openerDetails={openerDetails} setOpenerDetails={setOpenerDetails} /> : null
+                }
+                <div style={{ width: "100%", height: "30px" }}></div>
+                {
+                    albumsList.length !== 0 ?
+                    <AlbumsList albums={albumsList} openerFunc={handleAlbumMenu}
+                    openerDetails={openerDetails} setOpenerDetails={setOpenerDetails} /> : null
+                }
+            </div>
+        </div>
+    );
+};
+
 const Search = () => {
     // const [queueOpened,] = CustomUseState(queueOpenedGlobal);
-    const [searchConfig, setSearchConfig] = CustomUseState(searchBarGlobal);
+    // const [searchConfig, setSearchConfig] = CustomUseState(searchBarGlobal);
 
     // if (queueOpened) {
     //     return <Queue/>
     // }
     // return <ActualSearch/>
-    useEffect(() => {
-        console.log("search page");
-        return () => {
-            setSearchConfig({
-                ...searchConfig,
-                open: false
-            });
-        };
-    }, []);
+    // useEffect(() => {
+    //     console.log("search page");
+    //     return () => {
+    //         setSearchConfig({
+    //             ...searchConfig,
+    //             open: false
+    //         });
+    //     };
+    // }, []);
 
-    return <></>
+    // return <></>
+    return <NewSearch/>
 };
 
 

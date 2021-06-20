@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import Opening from "./opening";
 import Home from "./homepage";
@@ -10,7 +10,8 @@ import {
     queueOpenedGlobal,
     openerGlobal,
     prefix,
-    httpCheck
+    httpCheck,
+    global
 } from "./common";
 import { BrowserRouter as Router, Route } from "react-router-dom";
 let queueOpenedLocal, intervalTimeout = null, playingLocal, screenLocal;
@@ -43,7 +44,7 @@ const App = () => {
         // if (e.keyCode === 122 || e.keyCode === 27) {
         //     e.preventDefault();
         // }
-        if (e.keyCode === 70) {
+        if (e.keyCode === 70 && !global.searchBarOpen) {
             e.preventDefault();
             if (playingLocal) {
                 // screenSet();
