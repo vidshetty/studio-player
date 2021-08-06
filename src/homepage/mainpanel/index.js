@@ -1,9 +1,11 @@
 import Mid, { MidPanelLoader } from "./midpanel";
 import { Link, useLocation, useHistory } from "react-router-dom";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 // import logo from "../../assets/bluelogo.svg";
 // import logo from "../../assets/latest-whiteblack.svg";
 import logo from "../../assets/latest-bluewhite.svg";
+// import logo from "../../assets/latest-blueblack.svg";
+// import logo from "../../assets/latest-bluetransparent.svg";
 // import logo from "../../assets/aquamarinelogo.svg";
 // import logo from "../../assets/blackandwhitelogo.svg";
 import home from "../../assets/homewhite.svg";
@@ -34,10 +36,20 @@ import {
     searchBarGlobal,
     searchInputGlobal,
     prefix,
+    basename,
     profileOpener,
-    global
+    global,
+    sendRequest
 } from "../../common";
 import Button from "../../Button";
+import {
+    PlayerContext,
+    ProfileContext,
+    QueueOpenedContext,
+    SearchContext,
+    SearchInputContext,
+    UserContext
+} from "../../index";
 let topBar, tabLocal, queueOpenedLocal, searchInputTimeout = null, noLocal, showListLocal;
 
 
@@ -130,7 +142,6 @@ const Left = () => {
         if (item === tabLocal) {
             return;
         }
-        console.log("clicked")
         setTopBarConfig({
             button: false,
             buttonFunc: () => {},
@@ -244,7 +255,6 @@ const Left = () => {
                     return(
                         <Link to={calc(item)} style={{ textDecoration: "none" }}>
                             <div onClick={() => {
-                                    console.log("item",item)
                                     setRouteFunc(item);
                                     setTab(item);
                                 }}
@@ -262,9 +272,9 @@ const Left = () => {
 
 
 const TopSearchBar = () => {
-    const [queueOpen, setQueueOpen] = CustomUseState(queueOpenedGlobal);
-    const [searchConfig, setSearchConfig] = CustomUseState(searchBarGlobal);
-    const [input, setInput] = CustomUseState(searchInputGlobal);
+    const [queueOpen, setQueueOpen] = useContext(QueueOpenedContext);
+    const [searchConfig, setSearchConfig] = useContext(SearchContext);
+    const [input, setInput] = useContext(SearchInputContext);
     const [value, setValue] = useState("");
     const [showList, setShowList] = useState(true);
     const [no, setNo] = useState(-1);
@@ -319,8 +329,8 @@ const TopSearchBar = () => {
         setInput(value);
         setNo(-1);
         setShowList(false);
-        if (location.pathname !== `${prefix}/home/search`) {
-            hist.push(`${prefix}/home/search`);
+        if (location.pathname !== `${prefix}${basename}/search`) {
+            hist.push(`${prefix}${basename}/search`);
         }
     };
 
@@ -331,8 +341,8 @@ const TopSearchBar = () => {
         
         if (queueOpen) setQueueOpen(false);
         setInput(val);
-        if (location.pathname !== `${prefix}/home/search`) {
-            hist.push(`${prefix}/home/search`);
+        if (location.pathname !== `${prefix}${basename}/search`) {
+            hist.push(`${prefix}${basename}/search`);
         }
     };
 
@@ -418,20 +428,21 @@ const TopSearchBar = () => {
 };
 
 const TopNav = () => {
-    const userName = localStorage.getItem("username");
-    const picture = localStorage.getItem("picture");
     const topList = ["Home", "Library", "Search"];
-    const [tab, setTab] = CustomUseState(tabGlobal);
-    const [queueOpened, setQueueOpened] = CustomUseState(queueOpenedGlobal);
-    const [searchConfig, setSearchConfig] = CustomUseState(searchBarGlobal);
-    const [,setProfileOpen] = CustomUseState(profileOpener);
+    // const [tab, setTab] = CustomUseState(tabGlobal);
+    const [tab, setTab] = useState("");
+    const [queueOpened, setQueueOpened] = useContext(QueueOpenedContext);
+    const [searchConfig, setSearchConfig] = useContext(SearchContext);
+    const [,setProfileOpen] = useContext(ProfileContext);
+    const [user, setUser] = useContext(UserContext);
     const currentLocation = useLocation();
     const hist = useHistory();
     tabLocal = tab;
     queueOpenedLocal = queueOpened;
 
     const initial = () => {
-        const loc = currentLocation.pathname.split("/")[2];
+        const split = currentLocation.pathname.split("/");
+        const loc = prefix === "" || basename === "" ? split[2] : split[3];
         if (queueOpened) {
             setTab("");
             return;
@@ -464,7 +475,7 @@ const TopNav = () => {
         }
     };
 
-    initial();
+    // initial();
 
     const goToHome = () => {
         if (queueOpenedLocal) {
@@ -472,7 +483,7 @@ const TopNav = () => {
         }
         if (tabLocal !== "Home") {
             setTab("Home");
-            hist.push(prefix+"/home/homescreen");
+            hist.push(`${prefix}${basename}/homescreen`);
         }
     };
 
@@ -494,34 +505,48 @@ const TopNav = () => {
     };
 
     const getCorrespondingRoute = item => {
-        if(item === "Home") return `${prefix}/home/homescreen`;
-        else if(item === "Search") return `${prefix}/home/search`;
-        else if(item === "New Releases") return `${prefix}/home/new-releases`;
-        else if(item === "Library") return `${prefix}/home/library`;
-        else if(item === "Radio") return `${prefix}/home/radio`;
-        else if(item === "Most Played") return `${prefix}/home/mostplayed`;
-        else return `${prefix}/home/homescreen`;
+        if(item === "Home") return `${prefix}${basename}/homescreen`;
+        else if(item === "Search") return `${prefix}${basename}/search`;
+        else if(item === "New Releases") return `${prefix}${basename}/new-releases`;
+        else if(item === "Library") return `${prefix}${basename}/library`;
+        else if(item === "Radio") return `${prefix}${basename}/radio`;
+        else if(item === "Most Played") return `${prefix}${basename}/mostplayed`;
+        else return `${prefix}${basename}/homescreen`;
     };
 
     const setRouteFunc = item => {
         const route = getCorrespondingRoute(item);
-        if (route !== `${prefix}/home/search`) hist.push(route);
+        if (item !== `Search`) hist.push(route);
     };
 
     const openProfile = e => {
         setProfileOpen(true);
     };
 
+    const call = async () => {
+        const res = await sendRequest({
+            method: "GET",
+            endpoint: "/whosthis"
+        });
+        if (res) {
+            setUser(res);
+        }
+    };
+
+
+    useEffect(() => {
+        initial();
+    }, [currentLocation.pathname, queueOpened]);
+
+    useEffect(() => {
+        call();
+    }, []);
 
     return(
-        <div className="dummyleft"
-        // style={{ borderBottom: `${ queueOpened ? "" : "0.5px solid rgba(255,255,255,0.1)" }` }}
-        >
-            <div className="logopart" onClick={goToHome}>
-                <div className="logopartdiv" title="StudioMusic">
-                    <img src={logo} alt="logo" />
-                    <p>Studio</p>
-                </div>
+        <div className="dummyleft">
+            <div className="logopart">
+                <img src={logo} alt="logo" onClick={goToHome} title="StudioMusic" />
+                <p onClick={goToHome} title="StudioMusic">Studio</p>
             </div>
             <div className="middlepart">
                 {
@@ -536,7 +561,6 @@ const TopNav = () => {
                                     onClick={() => {
                                         setFuncs(each, tabLocal);
                                         setRouteFunc(each);
-                                        setTab(each);
                                     }}>
                                         {each}
                                     </div>
@@ -547,25 +571,9 @@ const TopNav = () => {
                 }
             </div>
             <div className="profilepart">
-                {/* <div className="profilebardiv">
-                    <div className="name">{userName}</div>
-                    <div className="logoutbutton">
-                        <img src={dropdown} alt=""/>
-                    </div>
+                <div className="picture-container" onClick={openProfile}>
+                    <img className="center-picture-img" src={user.picture} alt="" title={user.name} />
                 </div>
-                <div className="topbuttons">
-                    <div className="minimize"></div>
-                    <div className="close"></div>
-                </div> */}
-                {
-                    picture ?
-                    <div className="picture-container" onClick={openProfile}>
-                        <img className="center-picture-img" src={picture} alt="" title={userName} />
-                    </div> :
-                    <div className="picture-container" onClick={openProfile} style={{ backgroundColor: "violet", color: "black", fontSize: "1em" }}>
-                        {userName[0].toUpperCase()}
-                    </div>
-                }
             </div>
         </div>
     );
@@ -574,7 +582,7 @@ const TopNav = () => {
 
 
 const MainPanel = () => {
-    const [isPlaying,] = CustomUseState(playingGlobal);
+    const [isPlaying,] = useContext(PlayerContext);
 
     return(
         // <div className={ isPlaying ? "mainpanel-with-player" : "mainpanel-without-player" }>

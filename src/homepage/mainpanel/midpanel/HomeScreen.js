@@ -2,7 +2,7 @@ import "../../../css/homestyles.css";
 import "../../../css/teststyles.css";
 import "../../../css/hometeststyles.css";
 import { MidPanelLoader } from "./index";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { Redirect, useHistory } from "react-router-dom";
 import playbutton from "../../../assets/playwhite.png";
 import pausebutton from "../../../assets/pausewhite.png";
@@ -26,13 +26,24 @@ import {
     checkX,
     checkY,
     prefix,
+    basename,
     global,
     responseBar,
-    radioGlobal
+    radioGlobal,
+    sharingBaseLink
 } from "../../../common";
 import Queue from "./Queue";
 import Button from "../../../Button";
 import { pauseOrPlay } from "../../../homepage";
+import {
+    AlbumContext,
+    MenuContext,
+    PlayerContext,
+    QueueContext,
+    RadioContext,
+    ResponseBarContext,
+    SongIsPausedContext
+} from "../../../index";
 let topBar, actualIsOpen;
 
 
@@ -184,7 +195,6 @@ const EachTile = ({ mouseOver, mouseOut, album }) => {
     
     const handlePlayPause = (e) => {
         e.stopPropagation();
-        // console.log("album",album,"song",song);
         if (song.Album === album.Album) {
             pauseOrPlay();
             return;
@@ -422,12 +432,11 @@ const EachInQuickPick = ({
     setOpenerDetails,
     playing,
     setPlaying,
-    queue,
+    playingSong,
+    setPlayingSong,
     setQueue,
     songIsPaused,
     setSongIsPaused,
-    playingSong,
-    setPlayingSong,
     radio,
     setRadio,
     setResObj
@@ -441,51 +450,50 @@ const EachInQuickPick = ({
         openerFunc(e, { dimensions, windowDim, song });
     };
 
-    const determine = () => {
-        const nameOfSong = song.Title || song.Album;
-        const nameOfPlayingSong = playingSong.Title || playingSong.Album;
-        if (nameOfSong === nameOfPlayingSong) {
-            return true;
-        }
-        return false;
-    };
+    const determine = () => playingSong._trackId === song._trackId;
 
     const handlePlayPause = async e => {
         e.stopPropagation();
         if (openerDetails.open) {
-            setOpenerDetails({ ...openerDetails, open: false });
+            setOpenerDetails(prev => {
+                return { ...prev, open: false };
+            });
         }
         if (determine()) {
             pauseOrPlay();
             return;
         }
         const main = { ...song };
-        if (!playing) setPlaying(true);
         main.id = global.id = 0;
         const newqueue = [main];
-        setQueue([main]);
+        setQueue(newqueue);
         setPlayingSong(main);
+        if (!playing) setPlaying(true);
         localStorage.setItem("queue",JSON.stringify([main]));
         setSongIsPaused(true);
         if (!radio) {
-            setResObj({ open: true, msg: "Starting radio...." });
+            setResObj(prev => {
+                return { ...prev, open: true, msg: "Starting radio...." };
+            });
             setRadio(true);
             const songList = await sendRequest({
                 method: "GET",
-                endpoint: `/startradio?exclude=${song.Title || song.Album}`
+                endpoint: `/startradio?exclude=${song._trackId}&type=qr`
             });
-            songList.forEach(each => {
-                each.id = ++global.id;
-            });
-            newqueue.push(...songList);
-            setQueue(newqueue);
-            localStorage.setItem("queue",JSON.stringify(newqueue));
+            if (songList) {
+                songList.forEach(each => {
+                    each.id = ++global.id;
+                });
+                newqueue.push(...songList);
+                setQueue(newqueue);
+                localStorage.setItem("queue",JSON.stringify(newqueue));
+            }
             setRadio(false);
         }
     };
 
     return(
-        <div className="eachinquick" onMouseOver={() => setHovered(true)} onMouseOut={() => setHovered(false)}>
+        <div className="eachinquick" onMouseOver={() => setHovered(true)} onMouseOut={() => setHovered(false)} title={song.Title || song.Album}>
             <div className="tile-art">
                 <img src={song.Thumbnail || ""} alt="" />
                 <div className="tiledummyshadow">
@@ -528,7 +536,7 @@ const EachInQuickPick = ({
                 </div>
             </div>
             <div className={ hovered ? "tile-last" : "tile-last-hidden" }>
-                <div className="tileopener" onClick={handleMenu}>
+                <div className="tileopener" onClick={handleMenu} title="More Options">
                     <div className="tileopener1"></div>
                     <div className="tileopener2"></div>
                     <div className="tileopener3"></div>
@@ -538,7 +546,7 @@ const EachInQuickPick = ({
     );
 };
 
-const StartRadio = (props) => {
+const StartRadio = props => {
     const { picks } = props;
 
     return(
@@ -560,34 +568,54 @@ const StartRadio = (props) => {
     );
 };
 
-const EachAlbum = ({ item }) => {
-    const [song,] = CustomUseState(albumGlobal);
-    const [songPaused,] = CustomUseState(songIsPausedGlobal);
+const EachAlbum = ({ item, openerFunc, playPauseFunc }) => {
+    const [song,] = useContext(AlbumContext);
+    const [songPaused,] = useContext(SongIsPausedContext);
     let songPausedLocal = songPaused;
+    const hist = useHistory();
 
-    const handleMenu = e => {};
+    const goToAlbum = () => {
+        setTimeout(() => {
+            hist.push(`${prefix}${basename}/album/${item._albumId}`);
+        },500);
+    };
 
-    const handlePlayPause = e => {};
+    const goToAlbumName = e => {
+        hist.push(`${prefix}${basename}/album/${item._albumId}`);
+    };
+
+    const handleMenu = e => {
+        e.stopPropagation();
+        const dimensions = { x: e.clientX, y: e.clientY };
+        const windowDim = { width: document.documentElement.clientWidth, height: document.documentElement.clientHeight };
+        openerFunc(e, { dimensions, windowDim, album: item });
+    };
+
+    const handlePlayPause = e => {
+        e.stopPropagation();
+        playPauseFunc(item);
+    };
 
     if (Object.keys(item).length > 0) {
         return(
             <div className="homealbum">
                 <div className="innerhomealbum">
-                    <div className="homeartcover">
+                    <Button className="homeartcover" onClick={goToAlbum} title={item.Album}>
                         <div className="homedummyshadow"></div>
                         <div className={ (song.Album === item.Album) ? "homeplaybuttonfixed" : "homeplaybutton" }>
-                            <Button className="innerhomeplaybutton" onClick={handlePlayPause}>
+                            <Button className="innerhomeplaybutton" onClick={handlePlayPause}
+                            title={ (!songPausedLocal && song.Album === item.Album) ? "Pause" : "Play" }>
                                 <img src={ (!songPausedLocal && song.Album === item.Album) ? Pause : Play} alt="" />
                             </Button>
                         </div>
-                        <div className="libraryopener" onClick={handleMenu}>
-                            <div className="libraryopener1"></div>
-                            <div className="libraryopener2"></div>
-                            <div className="libraryopener3"></div>
+                        <div className="homeopener" onClick={handleMenu} title="More Options">
+                            <div className="homeopener1"></div>
+                            <div className="homeopener2"></div>
+                            <div className="homeopener3"></div>
                         </div>
                         <img src={item.Thumbnail || ""} alt="" />
-                    </div>
-                    <div className="homealbumname">{item.Title || item.Album}</div>
+                    </Button>
+                    <div className="homealbumname" onClick={goToAlbumName}>{item.Title || item.Album}</div>
                     <span className="homeartistname">
                         <span>{item.AlbumArtist}</span>
                     </span>
@@ -598,19 +626,79 @@ const EachAlbum = ({ item }) => {
     return <div style={{ width: "15%", height: "100%" }}></div>
 };
 
+const EachAlbumInRP = ({ album, songIsPaused, song, openerFunc, handlePlayPause }) => {
+    const playPause = e => {
+        e.stopPropagation();
+        handlePlayPause(album);
+    };
+
+    const handleMenu = e => {
+        e.stopPropagation();
+        const dimensions = { x: e.clientX, y: e.clientY };
+        const windowDim = { width: document.documentElement.clientWidth, height: document.documentElement.clientHeight };
+        openerFunc(e, { dimensions, windowDim, album });
+    };
+
+    return(
+        <div className="homealbum">
+            <div className="innerhomealbum">
+                <div className="homeartcover" title={album.Album}>
+                    <div className={ (song.Album === album.Album) ? "rpdummyshadowfixed" : "rpdummyshadow" }></div>
+                    <div className={ (song.Album === album.Album) ? "rp-buttonfixed" : "rp-button" }>
+                        <Button className="innerrpbutton" onClick={playPause}
+                        title={ (!songIsPaused && song.Album === album.Album) ? "Pause" : "Play" }>
+                            <img src={ (!songIsPaused && song.Album === album.Album) ? Pause : Play} alt="" />
+                        </Button>
+                    </div>
+                    <div className="homeopener" onClick={handleMenu} title="More Options">
+                        <div className="homeopener1"></div>
+                        <div className="homeopener2"></div>
+                        <div className="homeopener3"></div>
+                    </div>
+                    <img src={album.Thumbnail || ""} alt="" />
+                </div>
+                <div className="rpalbumname">{album.Title || album.Album}</div>
+                <span className="homeartistname">
+                    <span>{album.AlbumArtist}</span>
+                </span>
+            </div>
+        </div>
+    );
+};
+
+const RecentlyPlayed = (props) => {
+    const { played } = props;
+
+    return(
+        <>
+        <div className="hugetitlename">
+            <div className="top-title">FROM YOUR HISTORY</div>
+            <div className="bottom-title">Listen Again</div>
+        </div>
+        <div style={{width: "100%", height: "10px"}}></div>
+        <div className="homecontainer">
+            {
+                played.map(each => {
+                    return <EachAlbumInRP album={each} {...props} />;
+                })
+            }
+        </div>
+        </>
+    );
+};
+
 const NewActualHomeScreen = () => {
-    const [openerDetails, setOpenerDetails] = CustomUseState(openerGlobal);
-    const [playingSong, setPlayingSong] = CustomUseState(albumGlobal);
-    const [queue, setQueue] = CustomUseState(queueGlobal);
-    const [playing, setPlaying] = CustomUseState(playingGlobal);
-    const [songIsPaused, setSongIsPaused] = CustomUseState(songIsPausedGlobal);
-    const [,setResObj] = CustomUseState(responseBar);
-    const [radio, setRadio] = CustomUseState(radioGlobal);
-    // const [redirectTo, setRedirectTo] = useState("");
-    // const [routes, setRoutes] = CustomUseState(routesGlobal);
+    const [openerDetails, setOpenerDetails] = useContext(MenuContext);
+    const [playing, setPlaying] = useContext(PlayerContext);
+    const [playingSong, setPlayingSong] = useContext(AlbumContext);
+    const [songIsPaused, setSongIsPaused] = useContext(SongIsPausedContext);
+    const [queue, setQueue] = useContext(QueueContext);
+    const [,setResObj] = useContext(ResponseBarContext);
+    const [radio, setRadio] = useContext(RadioContext);
     const [isLoading, setIsLoading] = useState(true);
     const [data, setData] = useState({});
     const [picks, setPicks] = useState({});
+    const [recentlyPlayed, setRecentlyPlayed] = useState([]);
     const list = ["tileopener","tileopener1","tileopener2","tileopener3"];
     const hist = useHistory();
     actualIsOpen = openerDetails.open;
@@ -621,45 +709,82 @@ const NewActualHomeScreen = () => {
             endpoint: `/getHomeAlbums`
         });
         if (res) {
-            // res.albums = modifyLibrary(res.albums,6);
             setData(res.albums);
             setPicks(res.quickPicks);
-            // setPlayed(res.mostPlayed);
-            // ipcRenderer.send("response",res.albums);
+            setRecentlyPlayed(res.mostPlayed);
             setIsLoading(false);
         }
     };
 
-    const goToAlbum = song => {
-        // routes.push(`/home/album/${song.Album}`);
-        // setRoutes(routes);
-        setOpenerDetails({ ...openerDetails, open: false });
-        hist.push(`${prefix}/home/album/${song.Album}`);
-        // hist.push(`/`);
-        // setRedirectTo(`${song.Album}`);
+    const goToAlbum = album => {
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
+        hist.push(`${prefix}${basename}/album/${album._albumId}`);
     };
 
     const addTrackToQueue = song => {
-        setOpenerDetails({ ...openerDetails, open: false });
-        const dummy = [ ...queue ];
-        const len = dummy.length;
-        if (len === 0) return;
-        dummy[len] = { ...song, id: ++global.id };
-        setQueue(dummy);
-        setResObj({ open: true, msg: `Added ${song.Title || song.Album} to queue` });
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
+        setQueue(prev => {
+            if (prev.length === 0) return prev;
+            prev.push({ ...song, id: ++global.id });
+            return prev;
+        });
+        setResObj(prev => {
+            return {
+                ...prev,
+                open: true,
+                msg: `Added ${song.Title || song.Album} to queue`
+            };
+        });
     };
 
     const playTrackNext = song => {
-        setOpenerDetails({ ...openerDetails, open: false });
-        if (queue.length === 0) return;
-        const curIndex = queue.indexOf(playingSong);
-        const dummy = [ ...queue ];
-        dummy.splice(curIndex+1, 0, { ...song, id: ++global.id });
-        setQueue(dummy);
-        setResObj({ open: true, msg: `Playing ${song.Title || song.Album} next` });
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
+        setQueue(prev => {
+            if (prev.length === 0) return prev;
+            const curIndex = prev.findIndex(each => each.id === playingSong.id);
+            prev.splice(curIndex+1, 0, { ...song, id: ++global.id });
+            return prev;
+        });
+        setResObj(prev => {
+            return { ...prev, open: true, msg: `Playing ${song.Title || song.Album} next` };
+        });
     };
 
-    const handleMenu = (e, { dimensions, windowDim, song: album }) => {
+    const shareAlbum = item => {
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
+        setResObj(prev => {
+            return {
+                ...prev,
+                open: true,
+                msg: "Album link copied to clipboard"
+            };
+        });
+        navigator.clipboard.writeText(`${sharingBaseLink}/album/${item._albumId}`);
+    };
+
+    const shareTrack = item => {
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
+        setResObj(prev => {
+            return {
+                ...prev,
+                open: true,
+                msg: "Track link copied to clipboard"
+            };
+        });
+        navigator.clipboard.writeText(`${sharingBaseLink}/track/${item._albumId}/${item._trackId}`);
+    };
+
+    const handleMenuForPicks = (e, { dimensions, windowDim, song: album }) => {
         const data = [
             {
                 name: "Go to album",
@@ -672,16 +797,175 @@ const NewActualHomeScreen = () => {
             {
                 name: "Play next",
                 func: () => playTrackNext(album)
+            },
+            {
+                name: "Share track",
+                func: () => shareTrack(album)
             }
         ];
         e.stopPropagation();
-        setOpenerDetails({
-            ...openerDetails,
-            open: true,
-            xValue: checkX(dimensions.x, windowDim.width),
-            yValue: checkY(dimensions.y, windowDim.height, data.length),
-            data
+        setOpenerDetails(prev => {
+            return {
+                ...prev,
+                open: true,
+                xValue: checkX(dimensions.x, windowDim.width),
+                yValue: checkY(dimensions.y, windowDim.height, data.length),
+                data
+            }
         });
+    };
+
+    const addAlbumToQueue = item => {
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
+        if (queue.length === 0) return;
+
+        const album = { ...item };
+        const main = [];
+        if (album.Type === "Single") {
+            album.id = ++global.id;
+            main.push(album);
+        } else if (album.Type === "Album") {
+            album.Tracks.forEach(each => {
+                const obj = { ...album, ...each, id: ++global.id };
+                delete obj.Tracks;
+                main.push(obj);
+            });
+        }
+        setQueue(prev => {
+            return [ ...prev, ...main ];
+        });
+        setResObj(prev => {
+            return { ...prev, open: true, msg: `Added ${album.Type.toLowerCase()} to queue` };
+        });
+    };
+
+    const playAlbumNext = item => {
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
+        if (queue.length === 0) return;
+        
+        const album = { ...item };
+        const main = [];
+        if (album.Type === "Single") {
+            album.id = ++global.id;
+            main.push(album);
+        } else if (album.Type === "Album") {
+            album.Tracks.forEach(each => {
+                const obj = { ...album, ...each, id: ++global.id };
+                delete obj.Tracks;
+                main.push(obj);
+            });
+        }
+        setQueue(prev => {
+            const playingSongIndex = prev.findIndex(s => s.id === playingSong.id);
+            prev.splice(playingSongIndex+1, 0, ...main);
+            return prev;
+        });
+        setResObj(prev => {
+            return { ...prev, open: true, msg: `Playing ${album.Title || album.Album} next` };
+        });
+    };
+
+    const handleMenuForAlbums = (e, { dimensions, windowDim, album }) => {
+        const data = [
+            {
+                name: "Add to queue",
+                func: () => addAlbumToQueue(album)
+            },
+            {
+                name: "Play next",
+                func: () => playAlbumNext(album)
+            },
+            {
+                name: "Share album",
+                func: () => shareAlbum(album)
+            }
+        ];
+        setOpenerDetails(prev => {
+            return {
+                ...prev,
+                open: true,
+                xValue: checkX(dimensions.x, windowDim.width),
+                yValue: checkY(dimensions.y, windowDim.height, data.length),
+                data
+            }
+        });
+    };
+
+    const handlePlayPause = item => {
+        if (playingSong._albumId === item._albumId) {
+            pauseOrPlay();
+            return;
+        }
+        if (!playing) setPlaying(true);
+        const album = { ...item };
+        const main = [];
+        if (album.Type === "Single") {
+            album.id = global.id = 0;
+            main.push(album);
+        } else if (album.Type === "Album") {
+            album.Tracks.forEach((each,i) => {
+                const obj = { ...album, ...each };
+                obj.id = global.id = i;
+                delete obj.Tracks;
+                main.push(obj);
+            });
+        }
+        setQueue(main);
+        setPlayingSong(main[0]);
+        setSongIsPaused(true);
+    };
+
+    const handlePlayPauseForRP = async album => {
+        if (openerDetails.open) {
+            setOpenerDetails(prev => {
+                return { ...prev, open: false };
+            });
+        }
+        if (playingSong._albumId === album._albumId) {
+            pauseOrPlay();
+            return;
+        }
+
+        const main = [];
+        if (album.Type === "Single") {
+            const obj = { ...album };
+            obj.id = global.id = 0;
+            main.push(obj);
+        } else if (album.Type === "Album") {
+            album.Tracks.forEach((each,i) => {
+                const obj = { ...album, ...each };
+                obj.id = global.id = i;
+                delete obj.Tracks;
+                main.push(obj);
+            });
+        }
+
+        setQueue(main);
+        setPlayingSong(main[0]);
+        if (!playing) setPlaying(true);
+        localStorage.setItem("queue",JSON.stringify(main));
+        setSongIsPaused(true);
+        if (!radio) {
+            setResObj(prev => {
+                return { ...prev, open: true, msg: "Playing from your history...." };
+            });
+            setRadio(true);
+            const songList = await sendRequest({
+                method: "GET",
+                endpoint: `/startradio?exclude=${album._albumId}&type=rp`
+            });
+            songList.forEach(each => {
+                each.id = ++global.id;
+            });
+            main.push(...songList);
+            setQueue(main);
+            localStorage.setItem("queue",JSON.stringify(main));
+            setRadio(false);
+        }
     };
 
     const documentClick = e => {
@@ -691,6 +975,37 @@ const NewActualHomeScreen = () => {
                 open: false
             });
         }
+    };
+
+    const handleMenuForRP = (e, { dimensions, windowDim, album }) => {
+        const data = [
+            {
+                name: "Go to album",
+                func: () => goToAlbum(album)
+            },
+            {
+                name: "Add to queue",
+                func: () => addAlbumToQueue(album)
+            },
+            {
+                name: "Play next",
+                func: () => playAlbumNext(album)
+            },
+            {
+                name: "Share album",
+                func: () => shareAlbum(album)
+            }
+        ];
+        e.stopPropagation();
+        setOpenerDetails(prev => {
+            return {
+                ...prev,
+                open: true,
+                xValue: checkX(dimensions.x, windowDim.width),
+                yValue: checkY(dimensions.y, windowDim.height, data.length),
+                data
+            }
+        });
     };
 
     useEffect(() => {
@@ -710,10 +1025,15 @@ const NewActualHomeScreen = () => {
     return(
         <div className="newhome" style={{ overflowY: `${ openerDetails.open ? "hidden" : "overlay" }` }}>
             {
+                recentlyPlayed.length !== 0 ?
+                <RecentlyPlayed played={recentlyPlayed} songIsPaused={songIsPaused} song={playingSong}
+                openerFunc={handleMenuForRP} handlePlayPause={handlePlayPauseForRP} /> : null
+            }
+            {
                 picks.length !== 0 ?
-                <StartRadio picks={picks} openerFunc={handleMenu} openerDetails={openerDetails} setOpenerDetails={setOpenerDetails}
+                <StartRadio picks={picks} openerFunc={handleMenuForPicks} openerDetails={openerDetails} setOpenerDetails={setOpenerDetails}
                 playing={playing} setPlaying={setPlaying} playingSong={playingSong} setPlayingSong={setPlayingSong}
-                queue={queue} setQueue={setQueue} songIsPaused={songIsPaused} setSongIsPaused={setSongIsPaused}
+                setQueue={setQueue} songIsPaused={songIsPaused} setSongIsPaused={setSongIsPaused}
                 radio={radio} setRadio={setRadio} setResObj={setResObj} /> : null
             }
             {
@@ -725,7 +1045,8 @@ const NewActualHomeScreen = () => {
                             <div className="homecontainer">
                                 {
                                     data[each].map(item => {
-                                        return <EachAlbum item={item} />;
+                                        return <EachAlbum item={item} openerFunc={handleMenuForAlbums}
+                                        playPauseFunc={handlePlayPause} />;
                                     })
                                 }
                             </div>
@@ -740,26 +1061,5 @@ const NewActualHomeScreen = () => {
 };
 
 
-const Trial = () => {
-    return (
-        <div className="full">
-            <div className="holder">
-                <img src="https://lh3.googleusercontent.com/6QoxkfogQhGl7_QvGaOh1g5jqf5Y_3Vyo1wPMSJJMhHUxGgaSdsyLhiyGwyeZUo3c2P0045fn5eLza0n=w544-h544-l90-rj"
-                alt="" />
-            </div>
-        </div>
-    );
-};
 
-
-const HomeScreen = () => {
-    // const [queueOpened,] = CustomUseState(queueOpenedGlobal);
-
-    // if (queueOpened) {
-    //     return <Queue/>
-    // }
-    return <NewActualHomeScreen/>
-    // return <Trial/>
-};
-
-export default HomeScreen;
+export default NewActualHomeScreen;

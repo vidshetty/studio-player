@@ -1,5 +1,5 @@
 import "../../../css/queuestyles.css";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import { Redirect, useHistory } from "react-router-dom";
 import Close from "../../../assets/deletewhite.svg";
 import Placeholder from "../../../assets/placeholder.svg";
@@ -8,6 +8,7 @@ import Pause from "../../../assets/pausebutton-white.svg";
 import Expand from "../../../assets/expand-white.svg";
 // import Expand from "../../../assets/fullscreen.png";
 import Minimize from "../../../assets/new-minimizeplayer-white.svg";
+import LyricsIcon from "../../../assets/lyrics-white.svg";
 import { MidPanelLoader } from "./index";
 import { pauseOrPlay } from "../../index";
 import {
@@ -24,14 +25,29 @@ import {
     checkX,
     checkY,
     prefix,
+    basename,
     global,
     lyricsGlobal,
     sendRequest,
-    lyricTextGlobal
+    lyricTextGlobal,
+    sharingBaseLink
 } from "../../../common";
 import Button from "../../../Button";
+import {
+    AlbumContext,
+    LyricsContext,
+    LyricsTextContext,
+    MenuContext,
+    MiniPlayerContext,
+    PlayerContext,
+    QueueContext,
+    QueueOpenedContext,
+    ResponseBarContext,
+    SongIsPausedContext
+} from "../../../index";
 let finalQueue = [], queueLength, songIndex, smallArr;
 let actualQueue, firstpart, lastpart, topBar, miniLocal, isOpen, scrollInterval = null;
+let lyricTimeout = null;
 
 
 const Loader = () => {
@@ -134,20 +150,55 @@ const EachLyric = ({ each, lyricText }) => {
     );
 };
 
-const LyricsPart = ({ song, lyricsLoading, lyrics, lyricText, setTab }) => {
+const LyricsPart = ({ song, setTab }) => {
     const lyricsContainer = useRef(null);
     const activeLyrics = useRef(null);
+    const [lyrics, setLyrics] = useContext(LyricsContext);
+    const [lyricText,] = useContext(LyricsTextContext);
+    const [lyricsLoading, setLyricsLoading] = useState(false);
+
+    const call = async () => {
+        if (!lyricsLoading) setLyricsLoading(true);
+        const res = await sendRequest({
+            method: "GET",
+            endpoint: `/getLyrics?name=${song.Title || song.Album}`
+        });
+        if (res) {
+            setLyricsLoading(false);
+            setLyrics(res);
+            if (res.length === 0) {
+                setTimeout(() => setTab(1), 500);
+            }
+        }
+    };
 
     useEffect(() => {
-        console.log("lyrics",lyrics.length);
-        if (lyrics.length === 0) setTab(1);
-    }, [song, lyrics]);
+        if (!song.lyrics) {
+            setTab(1);
+            return;
+        }
+        call();
+    }, [song]);
 
     useEffect(() => {
         lyricsContainer.current = document.querySelector(".lyrics-part");
         activeLyrics.current = document.querySelector(".each-lyric.activetext");
         if (lyricsContainer.current && activeLyrics.current) {
-            lyricsContainer.current.scroll({ top: activeLyrics.current.offsetTop - 200, behavior: "smooth" });
+            lyricsContainer.current.scroll({
+                top: activeLyrics.current.offsetTop - (lyricsContainer.current.offsetHeight / 2.3) + 100,
+                behavior: "smooth"
+            });
+        }
+    }, [lyricsLoading]);
+
+    useEffect(() => {
+        lyricsContainer.current = document.querySelector(".lyrics-part");
+        activeLyrics.current = document.querySelector(".each-lyric.activetext");
+        if (lyricsContainer.current && activeLyrics.current) {
+            lyricsContainer.current.scroll({
+                top: activeLyrics.current.offsetTop - (lyricsContainer.current.offsetHeight / 2.3) + 100,
+                behavior: "smooth"
+            });
         }
     }, [song, lyricText]);
 
@@ -170,7 +221,109 @@ const LyricsPart = ({ song, lyricsLoading, lyrics, lyricText, setTab }) => {
 };
 
 
-const EachSong = ({ index, i, queue, each, songIsPaused, setSongIsPaused, setSong, openerFunc }) => {
+const ArtEachLyric = ({ each, lyricText, song }) => {
+    // const setColor = () => {
+    //     const { Color = "" } = song;
+    //     if (each.key === lyricText.key) return Color ? `${Color}` : "white";
+    //     return "#505050";
+    // };
+
+    return(
+        <div className={`art-each-lyric ${each.key === lyricText.key ? "activetext" : each.key < lyricText.key ? "disappear" : ""}`}
+        // style={{ color: setColor() }}
+        >
+            {each.text}
+        </div>
+    );
+};
+
+const ArtLyrics = ({ song, setArtLyricsOpen }) => {
+    const lyricsContainer = useRef(null);
+    const activeLyrics = useRef(null);
+    const [lyrics, setLyrics] = useContext(LyricsContext);
+    const [lyricText,] = useContext(LyricsTextContext);
+    const [lyricsLoading, setLyricsLoading] = useState(false);
+    const [hovered, setHovered] = useState("");
+
+    const close = () => {
+        setArtLyricsOpen(false);
+    };
+
+    const call = async () => {
+        if (!lyricsLoading) setLyricsLoading(true);
+        const res = await sendRequest({
+            method: "GET",
+            endpoint: `/getLyrics?name=${song.Title || song.Album}`
+        });
+        if (res) {
+            setLyricsLoading(false);
+            setLyrics(res);
+            if (res.length === 0) {
+                lyricTimeout = setTimeout(close, 1000);
+            }
+        }
+    };
+
+    useEffect(() => {
+        clearTimeout(lyricTimeout);
+        call();
+    }, [song]);
+
+    useEffect(() => {
+        lyricsContainer.current = document.querySelector(".lyrics-part");
+        activeLyrics.current = document.querySelector(".art-each-lyric.activetext");
+        if (lyricsContainer.current && activeLyrics.current) {
+            lyricsContainer.current.scroll({
+                top: activeLyrics.current.offsetTop - (lyricsContainer.current.offsetHeight / 2) + 100,
+                behavior: "smooth"
+            });
+        }
+    }, [lyricsLoading]);
+
+    useEffect(() => {
+        lyricsContainer.current = document.querySelector(".lyrics-part");
+        activeLyrics.current = document.querySelector(".art-each-lyric.activetext");
+        if (lyricsContainer.current && activeLyrics.current) {
+            lyricsContainer.current.scroll({
+                top: activeLyrics.current.offsetTop - (lyricsContainer.current.offsetHeight / 2) + 100,
+                behavior: "smooth"
+            });
+        }
+    }, [song, lyricText]);
+
+    return(
+        <div className="art-lyrics"
+        onMouseOver={() => setHovered(true)}
+        onMouseOut={() => setHovered(false)}
+        >
+            {
+                lyricsLoading ?
+                <Loader/> :
+                <div className="lyrics-part">
+                    {
+                        lyrics.length === 0 ? 
+                        <div className="no-lyrics" style={{color:"white"}}>No lyrics found!</div> : null
+                    }
+                    {
+                        lyrics.map(each => {
+                            return <ArtEachLyric each={each} lyricText={lyricText} song={song} />;
+                        })
+                    }
+                </div>
+            }
+            {
+                lyrics.length !== 0 ?
+                <div className={`close-lyrics ${ hovered ? "come-down" : hovered === "" ? "stay" : "go-up" }`}  onClick={close} title="Close Lyrics">
+                    <img src={Close} alt="" />
+                </div>
+                : null
+            }
+        </div>
+    );
+};
+
+
+const EachSong = ({ index, i, queue, each, songIsPaused, setSongIsPaused, setSong, openerFunc, playingSong }) => {
     const [hovered, setHovered] = useState(false);
 
     const handleMouse = e => e.stopPropagation();
@@ -187,7 +340,15 @@ const EachSong = ({ index, i, queue, each, songIsPaused, setSongIsPaused, setSon
         e.stopPropagation();
         const dimensions = { x: e.clientX, y: e.clientY };
         const windowDim = { width: document.documentElement.clientWidth, height: document.documentElement.clientHeight };
-        openerFunc(e, { dimensions, windowDim, song: each });
+        const isPlayingSong = each.id === playingSong.id;
+        const playingSongIndex = queue.findIndex(song => song.id === playingSong.id);
+        const thisSongIndex = queue.findIndex(song => song.id === each.id);
+        openerFunc(e, {
+            dimensions,
+            windowDim,
+            song: each,
+            shouldNotGiveOption: isPlayingSong || (playingSongIndex+1 === thisSongIndex)
+        });
     };
 
     const mousedown = e => {
@@ -266,15 +427,12 @@ const EachSong = ({ index, i, queue, each, songIsPaused, setSongIsPaused, setSon
     );
 };
 
-const NewRightQueue = ({ song, songIsPaused, setSongIsPaused, setSong, openerFunc }) => {
-    const [queue, setQueue] = CustomUseState(queueGlobal);
+const NewRightQueue = ({ song, songIsPaused, setSongIsPaused, setSong, openerFunc, openerDetails }) => {
+    const [queue, setQueue] = useContext(QueueContext);
     const [showScroll, setShowScroll] = useState(false);
     const [position, setPosition] = useState({ show: false, top: 0 });
     const [selected, setSelected] = useState(false);
-    // const index = queue.indexOf(song);
-    const index = queue.findIndex(each => {
-        return each.id === song.id;
-    });
+    const index = queue.findIndex(each => each.id === song.id);
     const container = useRef(null);
     actualQueue = queue;
 
@@ -288,11 +446,6 @@ const NewRightQueue = ({ song, songIsPaused, setSongIsPaused, setSong, openerFun
             global.selectedElement.style.top = top + "px";
             const nearest = Math.floor(top / 60);
             setPosition({ ...position, show: true, top: nearest * 60 });
-
-            // const { selectedSong } = global;
-            // const index = actualQueue.indexOf(selectedSong);
-            // actualQueue.splice(index+1,0,{ id: index });
-            // setQueue(actualQueue);
         }
     };
 
@@ -301,19 +454,17 @@ const NewRightQueue = ({ song, songIsPaused, setSongIsPaused, setSong, openerFun
             setPosition({ ...position, show: false });
             setSelected(false);
 
-            const nearestIndex = Math.floor(position.top / 60);
-            actualQueue.splice(global.selectedSongIndex, 1);
-            actualQueue.splice(nearestIndex, 0, global.selectedSong);
+            // const nearestIndex = Math.floor(position.top / 60);
+            // actualQueue.splice(global.selectedSongIndex, 1);
+            // actualQueue.splice(nearestIndex, 0, global.selectedSong);
 
-            // const index = actualQueue.findIndex(each => {
-            //     if (Object.keys(each).length === 1) {
-            //         return true;
-            //     }
-            //     return false;
-            // });
-            // actualQueue.splice(index,1);
-
-            setQueue(actualQueue);
+            // setQueue(actualQueue);
+            setQueue(prev => {
+                const nearestIndex = Math.floor(position.top / 60);
+                prev.splice(global.selectedSongIndex, 1);
+                prev.splice(nearestIndex, 0, global.selectedSong);
+                return prev;
+            });
 
             global.selectedElement.classList.remove("absolute");
             global.selectedElement = null;
@@ -335,13 +486,6 @@ const NewRightQueue = ({ song, songIsPaused, setSongIsPaused, setSong, openerFun
             global.selectedElement.style.top = top + "px";
             const nearest = Math.floor(top / 60);
             setPosition({ ...position, top: nearest * 60 });
-            // if (e.clientY > global.containerDimensions.bottom - 100) {
-            //     !scrollInterval && keepScrollDown();
-            // }
-            // if (e.clientY < global.containerDimensions.bottom - 100) {
-            //     clearInterval(scrollInterval);
-            //     scrollInterval = null;
-            // }
         }
     };
 
@@ -373,6 +517,7 @@ const NewRightQueue = ({ song, songIsPaused, setSongIsPaused, setSong, openerFun
 
     return(
         <div className={`tab-container${showScroll ? " show" : ""}`}
+        style={{ overflowY: `${openerDetails.open ? "" : "overlay"}` }}
         onMouseOver={mouseover}
         onMouseOut={mouseout}
         onMouseMove={mousemove}
@@ -383,7 +528,7 @@ const NewRightQueue = ({ song, songIsPaused, setSongIsPaused, setSong, openerFun
             {
                 queue.map((each,i) => {
                     return <EachSong index={index} i={i} each={each} queue={queue} songIsPaused={songIsPaused} setSongIsPaused={setSongIsPaused}
-                    setSong={setSong} openerFunc={openerFunc} />;
+                    setSong={setSong} openerFunc={openerFunc} playingSong={song} />;
                 })
             }
             {
@@ -410,22 +555,20 @@ const NewRightQueue = ({ song, songIsPaused, setSongIsPaused, setSong, openerFun
 
 const Queue = () => {
     const [tab, setTab] = useState(1);
-    const [queueOpened, setQueueOpened] = CustomUseState(queueOpenedGlobal);
-    const [,setPlaying] = CustomUseState(playingGlobal);
-    const [songIsPaused, setSongIsPaused] = CustomUseState(songIsPausedGlobal);
-    const [song, setSong] = CustomUseState(albumGlobal);
-    const [queue, setQueue] = CustomUseState(queueGlobal);
-    const [openerDetails, setOpenerDetails] = CustomUseState(openerGlobal);
+    const [queueOpened, setQueueOpened] = useContext(QueueOpenedContext);
+    const [,setPlaying] = useContext(PlayerContext);
+    const [songIsPaused, setSongIsPaused] = useContext(SongIsPausedContext);
+    const [song, setSong] = useContext(AlbumContext);
+    const [queue, setQueue] = useContext(QueueContext);
+    const [openerDetails, setOpenerDetails] = useContext(MenuContext);
     const [update, setUpdate] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
-    const [,setResBar] = CustomUseState(responseBar);
+    const [,setResBar] = useContext(ResponseBarContext);
     const [topBarConfig, setTopBarConfig] = CustomUseState(topBarGlobal);
-    const [mini, setMini] = CustomUseState(miniPlayerGlobal);
-    const [lyrics, setLyrics] = CustomUseState(lyricsGlobal);
-    const [lyricText, setLyricText] = CustomUseState(lyricTextGlobal);
-    const [lyricsLoading, setLyricsLoading] = useState(false);
-    // const [redirectTo, setRedirectTo] = useState("");
-    // const [routes, setRoutes] = CustomUseState(routesGlobal);
+    const [mini, setMini] = useContext(MiniPlayerContext);
+    const [element, setElement] = useState(null);
+    const [show, setShow] = useState(false);
+    const [artLyricsOpen, setArtLyricsOpen] = useState(false);
     actualQueue = queue;
     topBar = topBarConfig;
     queueLength = queue.length;
@@ -448,12 +591,9 @@ const Queue = () => {
         setUpdate(!update);
     };
 
-    const goToAlbum = each => {
+    const goToAlbum = item => {
         setQueueOpened(false);
-        // routes.push(`/home/album/${each.Album}`);
-        // setRoutes(routes);
-        hist.push(`${prefix}/home/album/${each.Album}`);
-        // setRedirectTo(`${each.Album}`);
+        hist.push(`${prefix}${basename}/album/${item._albumId}`);
     };
     
     const initial = () => {
@@ -487,29 +627,40 @@ const Queue = () => {
     };
 
     const removeSong = each => {
-        // const removeIndex = actualQueue.indexOf(each);
         const removeIndex = actualQueue.findIndex(song => {
             return song.id === each.id;
         });
-        if (removeIndex !== -1) {
-            if (actualQueue.length === 1) {
-                setSong({});
-                return;
-            }
-            actualQueue.splice(removeIndex, 1);
-            localStorage.setItem("queue",JSON.stringify(actualQueue));
-            setQueue(actualQueue);
-            setUpdate(!update);
-            setResBar({
-                open: true,
-                msg: `Removed ${each.Title || each.Album} from queue`
-            });
-            if (each.id === song.id) {
-                const index = removeIndex === actualQueue.length ? 0 : removeIndex;
-                setSong(actualQueue[index]);
-                setSongIsPaused(true);
-            }
+        if (removeIndex === -1) return;
+
+        if (actualQueue.length === 1) {
+            setSong({});
+            return;
         }
+        actualQueue.splice(removeIndex, 1);
+        localStorage.setItem("queue",JSON.stringify(actualQueue));
+        setQueue(actualQueue);
+        setUpdate(!update);
+        setResBar(prev => {
+            return { ...prev, open: true, msg: `Removed ${each.Title || each.Album} from queue` };
+        });
+        if (each.id === song.id) {
+            const index = removeIndex === actualQueue.length ? 0 : removeIndex;
+            setSong(actualQueue[index]);
+            setSongIsPaused(true);
+        }
+    };
+
+    const playSongNext = each => {
+        setQueue(prev => {
+            const currSongIndex = prev.findIndex(s => s.id === each.id);
+            prev.splice(currSongIndex,1);
+            const playingSongIndex = prev.findIndex(s => s.id === song.id);
+            prev.splice(playingSongIndex+1, 0, each);
+            return prev;
+        });
+        setResBar(prev => {
+            return { ...prev, open: true, msg: `Playing ${each.Title || each.Album} next` };
+        });
     };
 
     const albumName = () => {
@@ -530,31 +681,67 @@ const Queue = () => {
     };
 
     const minimizer = () => {
-        setMini({
-            ...miniLocal,
-            show: true,
-            cover: song.Thumbnail
+        setMini(prev => {
+            return { ...prev, show: true, cover: song.Thumbnail };
         });
         setQueueOpened(false);
     };
 
-    const handleMenu = (e, { dimensions, windowDim, song: selectedSong }) => {
+    const shareTrack = item => {
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
+        setResBar(prev => {
+            return {
+                ...prev,
+                open: true,
+                msg: "Track link copied to clipboard"
+            };
+        });
+        navigator.clipboard.writeText(`${sharingBaseLink}/track/${item._albumId}/${item._trackId}`);
+    };
+
+    const handleMenu = (e, { dimensions, windowDim, song: selectedSong, shouldNotGiveOption }) => {
         e.stopPropagation();
-        setOpenerDetails({
-            ...openerDetails,
-            open: true,
-            xValue: checkX(dimensions.x, windowDim.width),
-            yValue: checkY(dimensions.y, windowDim.height, 2),
-            data: [
-                {
-                    name: "Remove",
-                    func: () => removeSong(selectedSong)
-                },
-                {
-                    name: "Go to album",
-                    func: () => goToAlbum(selectedSong)
-                }
-            ]
+        const data = shouldNotGiveOption ? [
+            {
+                name: "Remove",
+                func: () => removeSong(selectedSong)
+            },
+            {
+                name: "Go to album",
+                func: () => goToAlbum(selectedSong)
+            },
+            {
+                name: "Share track",
+                func: () => shareTrack(selectedSong)
+            }
+        ] : [
+            {
+                name: "Remove",
+                func: () => removeSong(selectedSong)
+            },
+            {
+                name: "Play next",
+                func: () => playSongNext(selectedSong)
+            },
+            {
+                name: "Go to album",
+                func: () => goToAlbum(selectedSong)
+            },
+            {
+                name: "Share track",
+                func: () => shareTrack(selectedSong)
+            }
+        ];
+        setOpenerDetails(prev => {
+            return {
+                ...prev,
+                open: true,
+                xValue: checkX(dimensions.x, windowDim.width),
+                yValue: checkY(dimensions.y, windowDim.height, data.length),
+                data
+            };
         });
     };
 
@@ -577,37 +764,41 @@ const Queue = () => {
     const documentClick = e => {
         const list = ["openercontrol","opener1","opener2","opener3"];
         if (!list.includes(e.target.className)) {
-            setOpenerDetails({
-                ...openerDetails,
-                open: false
+            setOpenerDetails(prev => {
+                return { ...prev, open: false };
             });
         }
     };
 
     const documentScroll = e => {
         if (isOpen) {
-            setOpenerDetails({
-                ...openerDetails,
-                open: false
+            setOpenerDetails(prev => {
+                return { ...prev, open: false };
             });
         }
     };
 
-    const call = async () => {
-        if (!lyricsLoading) setLyricsLoading(true);
-        const res = await sendRequest({
-            method: "GET",
-            endpoint: `/getLyrics?name=${song.Title || song.Album}`
-        });
-        console.log("res",res);
-        setLyricsLoading(false);
-        setLyrics(res);
+    const openLyrics = e => {
+        setArtLyricsOpen(true);
     };
 
+    const observer = new IntersectionObserver(([entry]) => {
+        const { isIntersecting } = entry;
+        setShow(isIntersecting);
+    }, { threshold: 0.1 });
 
     useEffect(() => {
-        call();
-    }, [song]);
+        const currentElement = element;
+        const currentObserver = observer;
+        if (currentElement) {
+            currentObserver.observe(currentElement);
+        }
+        return () => {
+            if (currentElement) {
+                currentObserver.unobserve(currentElement);
+            }
+        };
+    }, [element]);
 
     useEffect(() => {
         setIsLoading(false);
@@ -625,73 +816,49 @@ const Queue = () => {
         return <MidPanelLoader/>
     }
     return(
-        // <div className={ queueOpened ? "bottomqueue up" : queueOpened !== "" ? "bottomqueue down" : "bottomqueue start" }>
-        <div className={ queueOpened ? "bottomqueue show" : queueOpened !== "" ? "bottomqueue hide" : "bottomqueue stay" }>
-        {/* <div className="bottomqueue"> */}
+        <div className={ queueOpened ? "bottomqueue show" : queueOpened !== "" ? "bottomqueue hide" : "bottomqueue stay" } ref={setElement}>
+            { show ?
             <div className="innerbottomqueue">
                 <div className="leftqueuepart">
                     <div className="leftalbumartcover-container">
                         <div className="leftalbumartcover">
-                            <div className="dummyforshadow"></div>
-                            <img className="expander" src={Expand} alt="" />
-                            <img className="minimizer" onClick={minimizer} src={Minimize} alt="" title="Minimize Player" />
+                            {
+                                !artLyricsOpen ?
+                                <>
+                                    <div className="dummyforshadow"></div>
+                                    <div className="icons">
+                                        <img className="minimizer" onClick={minimizer} src={Minimize} alt="" title="Minimize Player" />
+                                        {/* <img className="expander" src={LyricsIcon} onClick={openLyrics} alt="" title="Lyrics" /> */}
+                                        {/* <img className="minimizer" onClick={minimizer} src={Minimize} alt="" title="Minimize Player" /> */}
+                                    </div>
+                                </> : null
+                            }
                             <img src={song.Thumbnail} alt="" className="leftqueuealbumart" />
                         </div>
                     </div>
+                    { artLyricsOpen ? <ArtLyrics song={song} setArtLyricsOpen={setArtLyricsOpen} /> : null }
                 </div>
-
                 <div className="new-right-queue">
                     <div className="right-inner-queue">
                         <div className="tab-bar">
+                            {/* <div className={`each-tab ${tab === 1 ? "active-tab" : ""}`} style={{cursor:"default"}}>UP NEXT</div> */}
                             <Button className={`each-tab ${tab === 1 ? "active-tab" : ""}`} onClick={() => setTab(1)}>UP NEXT</Button>
-                            {
-                                lyrics.length !== 0 && !lyricsLoading ?
+                            { song.lyrics ?
                                 <Button className={`each-tab ${tab === 2 ? "active-tab" : ""}`} onClick={() => setTab(2)}>LYRICS</Button> :
-                                <div className="each-tab light">LYRICS</div>
+                                <div className={`each-tab ${tab === 2 ? "active-tab" : ""}`}
+                                style={{ cursor:"default", color: "#909090" }}>LYRICS</div>
                             }
                         </div>
                         { tab === 1 ?
                             <NewRightQueue song={song} songIsPaused={songIsPaused} setSongIsPaused={setSongIsPaused} setSong={setSong}
-                            openerFunc={handleMenu} /> : null
+                            openerFunc={handleMenu} openerDetails={openerDetails} /> : null
                         }
                         { tab === 2 ?
-                            <LyricsPart song={song} lyricsLoading={lyricsLoading} lyrics={lyrics} lyricText={lyricText}
-                            setLyricText={setLyricText} setTab={setTab} /> : null 
+                            <LyricsPart song={song} setTab={setTab} /> : null 
                         }
                     </div>
                 </div>
-
-                {/* <div className="rightqueuepart">
-                    <div className="innerrightqueue">
-                        <div className="nowplayingtitle">Now Playing</div>
-                        <SongInQueue nowPlaying={true} songIsPaused={songIsPaused} song={song} openerFunc={handlePlayingMenu} />
-                        { actualQueue.length !== 1 ?
-                            <div className="nowplayingtitle" style={{marginBottom: "8px"}}>
-                                <div className="frontblock">Next from: {albumName()}</div>
-                                <div className="backblock" onClick={clearQueue}>Clear</div>
-                            </div> : ""
-                        }
-                        <div className="scrollcontainer" style={{ overflowY: `${ isOpen ? "hidden" : "overlay" }` }}>
-                            {
-                                lastpart.length !== 0 ?
-                                lastpart.map((each,i) => {
-                                    return <SongInQueue nowPlaying={false} song={each} number={songIndex+i+2} openerFunc={handleMenu} />
-                                }) : ""
-                            }
-                            {
-                                songIndex !== queueLength-1 && songIndex !== 0 ?
-                                <div style={{ width: "100%", height: "30px" }}></div> : ""
-                            }
-                            {
-                                firstpart.length !== 0 ?
-                                firstpart.map((each,i) => {
-                                    return <SongInQueue nowPlaying={false} song={each} number={i+1} openerFunc={handleMenu} />
-                                }) : ""
-                            }
-                        </div>
-                    </div>
-                </div> */}
-            </div>
+            </div> : null }
         </div>
     );
 };

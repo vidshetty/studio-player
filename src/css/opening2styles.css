@@ -13,6 +13,7 @@
     height: 100vh;
     /* background-color: #121212; */
     background-color: #030303;
+    /* background-color: aliceblue; */
     opacity: 1;
 }
 .mainwindow-end{
@@ -37,7 +38,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    /* background-color: white; */
+    background-color: white;
     opacity: 0;
     animation: logofade 0.5s ease-in-out 1s 1 normal forwards;
 }

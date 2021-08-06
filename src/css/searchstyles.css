@@ -658,3 +658,27 @@
         min-height: 320px;
     }
 }
+
+
+.no-results{
+    width: 100%;
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    /* background-color: aqua; */
+}
+.no-results span{
+    color: #909090;
+    font-size: 1.5em;
+    font-family: "montserrat";
+    font-weight: 500;
+}
+.no-results p{
+    font-size: 1.8em;
+    font-family: "montserrat";
+    font-weight: 600;
+    color: white;
+    margin-top: 10px;
+}

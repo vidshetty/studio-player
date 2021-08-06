@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import { Redirect } from "react-router-dom";
 // import "../css/openingstyles.css";
 import "../css/opening2styles.css";
@@ -7,8 +7,9 @@ import "../css/opening2styles.css";
 // import logo2 from "../assets/colouredlogo.svg";
 // import logo2 from "../assets/aquamarinelogo.svg";
 // import logo2 from "../assets/bluelogo.svg";
-import logo2 from "../assets/latest-whiteblack.svg";
+// import logo2 from "../assets/latest-whiteblack.svg";
 // import logo2 from "../assets/latest-bluewhite.svg";
+import logo2 from "../assets/latest-bluetransparent.svg";
 import logo from "../assets/blackandwhitelogo.svg";
 import {
     wait,
@@ -19,11 +20,16 @@ import {
     albumGlobal,
     queueGlobal,
     sendRequest,
-    keepServersActive,
     // keepButtonGlobal
     topBarGlobal,
-    prefix
+    prefix,
+    basename
 } from "../common";
+import {
+    PlayerContext,
+    AlbumContext,
+    QueueContext
+} from "../index";
 let topBar, setup;
 
 
@@ -612,14 +618,10 @@ const SignUp2 = ({ setGoToLogin, setGoToSignUp }) => {
 
 const Opening2 = () => {
     const [redirectValue, setRedirectValue] = useState(false);
-    // const [mainClass, setMainClass] = useState("mainwindow-start");
-    const [loaderClass, setLoaderClass] = useState("openingloader hidden");
-    // const [goToLogin, setGoToLogin] = useState(false);
-    // const [goToSignUp, setGoToSignUp] = useState(false);
-    // const [,setClass] = CustomUseState(homeClass);
-    const [,setIsPlaying] = CustomUseState(playingGlobal);
-    const [,setSong] = CustomUseState(albumGlobal);
-    const [,setQueue] = CustomUseState(queueGlobal);
+    const [loaderClass, setLoaderClass] = useState("opening-loader hidden");
+    const [,setIsPlaying] = useContext(PlayerContext);
+    const [,setSong] = useContext(AlbumContext);
+    const [,setQueue] = useContext(QueueContext);
 
     setup = async () => {
         const queue = JSON.parse(localStorage.getItem("queue"));
@@ -662,10 +664,9 @@ const Opening2 = () => {
     };
 
     const call = async () => {
-        await wait(2000);
-        setLoaderClass("openingloader");
+        await wait(1000);
+        setLoaderClass("opening-loader");
         let res;
-        keepServersActive();
         res = await sendRequest({
             method: "GET",
             endpoint: "/activateCheck"
@@ -675,13 +676,7 @@ const Opening2 = () => {
                 method: "GET",
                 endpoint: "/recordTime"
             });
-            // setClass("homemain start");
-            // await wait(500);
-            // await setup();
-            // setLoaderClass("openingloader hidden");
             await wait(500);
-            // setMainClass("mainwindow-end");
-            // await wait(500);
             setRedirectValue(true);
         }
     };
@@ -691,32 +686,32 @@ const Opening2 = () => {
     }, []);
 
     if (redirectValue) {
-        return <Redirect to={prefix+"/home/homescreen"} />;
+        return <Redirect to={`${prefix}${basename}/homescreen`} />;
     }
     return(
-        // <div className={mainClass}>
         <div className="mainwindow">
-            {/* {
-                !goToLogin && !goToSignUp ?
-                <> */}
-                    <div className="logoholder">
-                        <img src={logo2} alt="Studio" />
-                    </div>
-                    <div className={loaderClass}>
-                        <div className="firstcircle"></div>
-                        <div className="secondcircle"></div>
-                        <div className="thirdcircle"></div>
-                        <div className="fourthcircle"></div>
-                    </div>
-                {/* </> : ""
-            } */}
-            {/* {
-                goToLogin ? <Login2 setGoToLogin={setGoToLogin} setGoToSignUp={setGoToSignUp}
-                    setMainClass={setMainClass} setRedirectValue={setRedirectValue}/> : ""
-            }
-            {
-                goToSignUp ? <SignUp2 setGoToLogin={setGoToLogin} setGoToSignUp={setGoToSignUp}/> : ""
-            } */}
+            {/* <div className="logoholder">
+                <img src={logo2} alt="Studio" />
+            </div>
+            <div className={loaderClass}>
+                <div className="firstcircle"></div>
+                <div className="secondcircle"></div>
+                <div className="thirdcircle"></div>
+                <div className="fourthcircle"></div>
+            </div> */}
+            <div className="logo-container">
+                <div className="logo">
+                    <img src={logo2} alt="StudioMusic" />
+                    {/* <p>Studio</p> */}
+                </div>
+                <div style={{ width: "100%", height: "15px" }}></div>
+                {/* <div className={loaderClass}>
+                    <div className="firstcircle"></div>
+                    <div className="secondcircle"></div>
+                    <div className="thirdcircle"></div>
+                    <div className="fourthcircle"></div>
+                </div> */}
+            </div>
         </div>
     );
 };

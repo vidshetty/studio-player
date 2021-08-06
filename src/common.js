@@ -1,22 +1,21 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 let songservers = [];
-// let baseLink = "";
 
-
-// export const baseHeaders = {
-//     "Connection": "Keep-Alive",
-//     "Keep-Alive": "timeout=20000,max=1000"
-// };
 
 export const keepServersActive = async () => {
-    console.log("activate call");
-
     if (songservers.length === 0) {
+        const res = await axios({
+            method: "GET",
+            // url: "http://localhost:5000/api/activateCheck"
+            url: "/api/activateCheck"
+        });
         songservers = await axios({
             method: "GET",
-            url: "https://fervent-meninsky-931668.netlify.app/.netlify/functions/serverUrls"
+            url: `https://fervent-meninsky-931668.netlify.app/.netlify/functions/serverUrls?server=${res.data.server}`
         }).then(res => res.data.archives);
+        // songservers.push("http://localhost:5000/api/activateCheck");
+        songservers.push("/api/activateCheck");
     }
 
     await Promise.all(
@@ -25,7 +24,7 @@ export const keepServersActive = async () => {
                 const res = await axios.get(server);
                 return res;
             } catch(e) {
-                console.log("ERROR---------------",e.message);
+                // console.log("ERROR---------------",e.message);
                 if (e) return;
             }
         })
@@ -49,13 +48,13 @@ export const sendRequest = async config => {
     const baseHeaders = {
         USER: localStorage.getItem("userId") || ""
     };
-    let res;
 
+    let res;
     try {
         res = await axios({
             method: config.method,
-            url: `${baseLink}/api${config.endpoint}`,
-            // url: `/api${config.endpoint}`,
+            // url: `http://localhost:5000/api${config.endpoint}`,
+            url: `/api${config.endpoint}`,
             data: config.data || {},
             headers: baseHeaders
         });
@@ -66,7 +65,7 @@ export const sendRequest = async config => {
         }
         return data;
     } catch (e) {
-        console.log("ERROR----",e.message);
+        // console.log("ERROR----",e.message);
         return null;
     }
 };
@@ -175,20 +174,24 @@ export const wait = time => {
 };
 
 export const checkX = (cursorX, sWidth) => {
-    const atRight = (cursorX + 250 + 5) < sWidth;
+    const x = 10;
+
+    const atRight = (cursorX + 250 + x) < sWidth;
     if (atRight) {
-        return cursorX + 5;
+        return cursorX + x;
     }
-    return cursorX - 250 - 5;
+    return cursorX - 250 - x;
 };
 
 export const checkY = (cursorY, sHeight, num) => {
+    const y = 10;
+
     const heightOfBody = (50 * num) + 10;
-    const atBottom = (heightOfBody + cursorY + 5) < sHeight;
+    const atBottom = (heightOfBody + cursorY + y) < sHeight;
     if (atBottom) {
-        return cursorY + 5;
+        return cursorY + y;
     }
-    return cursorY - heightOfBody - 5;
+    return cursorY - heightOfBody - y;
 };
 
 export const modifyLibrary = (res, decidingNumber) => {
@@ -311,9 +314,31 @@ export const usePrevious = value => {
     return ref.current;
 }
 
+export const dateToString = dateValue => {
+    const date = new Date(dateValue);
+    let month = "";
+    switch(date.getMonth()) {
+        case 0: month = "January"; break;
+        case 1: month = "February"; break;
+        case 2: month = "March"; break;
+        case 3: month = "April"; break;
+        case 4: month = "May"; break;
+        case 5: month = "June"; break;
+        case 6: month = "July"; break;
+        case 7: month = "August"; break;
+        case 8: month = "September"; break;
+        case 9: month = "October"; break;
+        case 10: month = "November"; break;
+        case 11: month = "December"; break;
+    };
+    const day = date.getDate();
+    const year = date.getFullYear();
+    return `${month} ${day}, ${year}`;
+};
+
 export let playingGlobal = new createGlobalState(false);
 export let colorGlobal = new createGlobalState("");
-export let tabGlobal = new createGlobalState("Home");
+export let tabGlobal = new createGlobalState("");
 export let routesGlobal = new createGlobalState(["/home/homescreen"]);
 // export let keepButtonGlobal = new createGlobalState(false);
 // export let onClickFuncGlobal = new createGlobalState(() => {});
@@ -340,5 +365,12 @@ export let lyricsGlobal = new createGlobalState([]);
 export let lyricTextGlobal = new createGlobalState({});
 export const global = {};
 
-// export const prefix = "/player";
-export const prefix = "";
+
+
+export const skipSecs = 5;
+export const prefix = "/player";
+export const basename = "";
+export const sharingBaseLink = `https://studiomusic.herokuapp.com${prefix}${basename}`;
+// export const sharingBaseLink = `http://localhost:3000${prefix}${basename}`;
+// export const basename = "/player";
+// export const prefix = "";

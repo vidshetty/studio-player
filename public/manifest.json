@@ -1,0 +1,16 @@
+{
+    "short_name": "StudioMusic",
+    "name": "StudioMusic",
+    "icons": [
+      {
+        "src": "latest-blueblack.png",
+        "type": "image/png",
+        "sizes": "512x512"
+      }
+    ],
+    "start_url": ".",
+    "background_color": "#030303",
+    "display": "minimal-ui",
+    "theme_color": "#030303",
+    "description": "Music For Everyone"
+}

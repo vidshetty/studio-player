@@ -1,10 +1,11 @@
 import "../../../css/homestyles.css";
 import "../../../css/teststyles.css";
 import "../../../css/albumview.css";
-import React from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { Route, Switch, useHistory } from "react-router-dom";
 import HomeScreen from "./HomeScreen";
 import AlbumView from "./AlbumView";
+import TrackView from "./TrackView";
 import Library from "./Library";
 import Radio from "./Radio";
 import Search from "./Search";
@@ -22,13 +23,17 @@ import {
     topBarGlobal,
     searchBarGlobal,
     playingGlobal,
-    prefix
+    prefix,
+    basename
 } from "../../../common";
-import { useEffect, useRef, useState } from "react";
+import {
+    MenuContext,
+    PlayerContext,
+    QueueOpenedContext
+} from "../../../index";
 import Queue from "./Queue";
 let actualIsOpen, topBar, timeout = undefined, searchBar, openLocal;
 let scrollTimeout = null;
-// const { ipcRenderer } =  window.electron;
 
 
 export const MidPanelLoader = () => {
@@ -259,9 +264,19 @@ const ProfileBar = () => {
     );
 };
 
+const OpenQueue = () => {
+    const [queueOpen, setQueueOpen] = useContext(QueueOpenedContext);
+
+    useEffect(() => {
+        setQueueOpen(true);
+    }, []);
+
+    return null;
+};
+
 const Mid = () => {
-    const [openerDetails,] = CustomUseState(openerGlobal);
-    const [playing,] = CustomUseState(playingGlobal);
+    const [openerDetails,] = useContext(MenuContext);
+    const [playing,] = useContext(PlayerContext);
     openLocal = openerDetails.open;
     const scrollRef = useRef(null);
 
@@ -293,12 +308,14 @@ const Mid = () => {
             style={{ overflowY: `${ openLocal ? "hidden" : "overlay" }` }}
             >
                 <Switch>
-                    <Route path={`${prefix}/home/homescreen`}><HomeScreen/></Route>
-                    <Route path={`${prefix}/home/search`}><Search/></Route>
-                    <Route path={`${prefix}/home/new-releases`}><NewReleases/></Route>
-                    <Route path={`${prefix}/home/album/:name`}><AlbumView/></Route>
-                    <Route path={`${prefix}/home/library`}><Library/></Route>
-                    <Route path={`${prefix}/home/radio`}><Radio/></Route>
+                    <Route path={`${prefix}${basename}/homescreen`}><HomeScreen/></Route>
+                    <Route path={`${prefix}${basename}/search`}><Search/></Route>
+                    <Route path={`${prefix}${basename}/new-releases`}><NewReleases/></Route>
+                    <Route path={`${prefix}${basename}/album/:albumId`}><AlbumView/></Route>
+                    <Route path={`${prefix}${basename}/track/:albumId/:trackId`}><TrackView/></Route>
+                    <Route path={`${prefix}${basename}/library`}><Library/></Route>
+                    <Route path={`${prefix}${basename}/radio`}><Radio/></Route>
+                    {/* <Route path={`${prefix}${basename}/queue`}><OpenQueue/></Route> */}
                 </Switch>
             </div>
         </div>

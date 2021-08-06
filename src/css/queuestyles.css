@@ -1,5 +1,6 @@
 *{
     font-family: "montserrat";
+    /* font-family: sans-serif; */
 }
 
 .queue{
@@ -396,9 +397,9 @@
     /* padding-bottom: 45px; */
     /* box-shadow: inset 0px 0px 500px white; */
 }
-.leftalbumartcover-container{
-    width: 68vh;
-    height: 68vh;
+.leftalbumartcover-container,.art-lyrics{
+    width: calc(68vh + 1px);
+    height: calc(68vh + 1px);
     position: absolute;
     top: 50%;
     right: 4%;
@@ -411,14 +412,32 @@
     position: absolute;
     opacity: 0;
     transition: opacity 0.2s ease-in-out;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0), rgba(0,0,0,0))
+    background: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0), rgba(0,0,0,0))
+}
+.icons{
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: auto;
+    height: 80px;
+    /* background-color: aqua; */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-right: 15px;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
 }
 .expander,.minimizer{
+    width: auto;
+    height: 16px;
+    margin: 0px 15px;
+    cursor: pointer;
+}
+/* .expander,.minimizer{
     position: absolute;
     top: 30px;
     right: 30px;
-    /* width: 16px;
-    height: auto; */
     height: 16px;
     width: auto;
     opacity: 0;
@@ -427,25 +446,31 @@
 .minimizer{
     top: 30px;
     right: 80px;
-    /* right: 45px; */
-    /* width: 16px;
-    height: auto; */
     height: 16px;
     width: auto;
-}
+} */
 .leftalbumartcover{
     position: relative;
     /* height: 500px;
     width: 500px; */
     width: 100%;
     height: 100%;
-    cursor: pointer;
+    /* cursor: pointer; */
     /* margin-right: 20px; */
+}
+.art-lyrics{
+    width: 69vh;
+    height: 69vh;
+    padding: 10px;
+    background-color: rgba(0,0,0,0.85);
 }
 .leftalbumartcover:hover .dummyforshadow{
     opacity: 1;
 }
-.leftalbumartcover:hover .expander,.leftalbumartcover:hover .minimizer{
+/* .leftalbumartcover:hover .expander,.leftalbumartcover:hover .minimizer{
+    opacity: 1;
+} */
+.leftalbumartcover:hover .icons{
     opacity: 1;
 }
 .leftqueuealbumart{
@@ -566,7 +591,7 @@
     width: 100%;
     height: calc(100% - 50px);
     /* background-color: #909090; */
-    overflow-y: overlay;
+    /* overflow-y: overlay; */
     position: relative;
 }
 .tab-container::-webkit-scrollbar{
@@ -664,7 +689,7 @@
     /* background-color: blue; */
     color: white;
     font-size: 0.9em;
-    font-weight: 600;
+    font-weight: 500;
     display: flex;
     align-items: flex-end;
     /* letter-spacing: -0.5px; */
@@ -711,12 +736,15 @@
 }
 
 .lyrics-part{
+    position: relative;
     width: 100%;
     height: 100%;
     /* background-color: aqua; */
     overflow: auto;
-    padding-top: 50px;
-    padding-bottom: 100px;
+    /* padding-top: 50px;
+    padding-bottom: 100px; */
+    padding-top: 30%;
+    padding-bottom: 40%;
 }
 .lyrics-part::-webkit-scrollbar{
     width: 0px;
@@ -739,14 +767,92 @@
     align-items: center;
     font-size: 1em;
     font-weight: 600;
-    color: #909090;
+    /* color: #909090; */
+    color: #505050;
     padding: 20px;
     text-align: center;
 }
-.each-lyric.activetext{
+.art-each-lyric{
+    width: 100%;
+    height: auto;
+    display: flex;
+    /* justify-content: center; */
+    align-items: center;
+    font-size: 1em;
+    font-weight: 600;
+    /* color: #909090; */
+    color: #505050;
+    padding: 20px;
+    text-align: left;
+    /* text-align: center; */
+}
+.each-lyric.activetext,.art-each-lyric.activetext{
     color: white;
     font-size: 1.5em;
     font-weight: 700;
+    margin: 30px 0px;
     background-color: #151515;
     /* border-radius: 10px; */
+}
+.art-each-lyric{
+    font-size: 1.1em;
+    padding: 15px 20px;
+}
+.art-each-lyric.activetext{
+    font-size: 2.5em;
+    /* padding: 80px 20x; */
+    margin: 40px 0px;
+    background-color: transparent;
+}
+.art-each-lyric.disappear{
+    /* color: rgba(0,0,0,0.8); */
+    /* color: transparent; */
+    color: #505050;
+}
+
+.close-lyrics{
+    position: absolute;
+    /* top: -100px; */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 40px;
+    /* background-color: white; */
+    background-color: black;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+.close-lyrics img{
+    width: 50%;
+    height: auto;
+}
+.close-lyrics.stay{
+    top: -50px;
+}
+.close-lyrics.come-down{
+    top: -50px;
+    animation: come-down 0.2s ease-in-out 0s 1 normal forwards;
+}
+@keyframes come-down{
+    0%{
+        top: -50px;
+    }
+    100%{
+        top: 20px;
+    }
+}
+.close-lyrics.go-up{
+    top: 20px;
+    animation: go-up 0.2s ease-in-out 0s 1 normal forwards;
+}
+@keyframes go-up{
+    0%{
+        top: 20px;
+    }
+    100%{
+        top: -50px;
+    }
 }

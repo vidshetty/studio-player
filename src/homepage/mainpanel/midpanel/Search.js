@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useHistory } from "react-router-dom";
 import "../../../css/searchstyles.css";
 import "../../../css/homestyles.css";
@@ -21,16 +21,27 @@ import {
     checkX,
     checkY,
     prefix,
+    basename,
     playingGlobal,
     queueGlobal,
     responseBar,
-    global
+    global,
+    sharingBaseLink
 } from "../../../common";
 import Queue from "./Queue";
 import Button from "../../../Button";
 import { MidPanelLoader } from "./index";
 import { HorizontalList } from "./HomeScreen";
 import { pauseOrPlay } from "../../index";
+import {
+    AlbumContext,
+    MenuContext,
+    PlayerContext,
+    QueueContext,
+    ResponseBarContext,
+    SearchInputContext,
+    SongIsPausedContext
+} from "../../../index";
 let timeout = undefined, searchBar, topBar, topBgColorLocal, setcolor = false;
 
 
@@ -162,7 +173,6 @@ const ActualSearch = () => {
     };
 
     const closeFunc = async (item) => {
-        // console.log("item",item);
         const res = await sendRequest({
             method: "POST",
             endpoint: "/removeFromRecents",
@@ -170,7 +180,6 @@ const ActualSearch = () => {
                 item
             }
         });
-        console.log("res",res);
     };
 
     const scrollHandler = (e) => {
@@ -343,14 +352,7 @@ const EachInSongList = ({
 }) => {
     const [hovered, setHovered] = useState(false);
 
-    const determine = () => {
-        const nameOfSong = song.Title || song.Album;
-        const nameOfPlayingSong = playingSong.Title || playingSong.Album;
-        if (nameOfSong === nameOfPlayingSong) {
-            return true;
-        }
-        return false;
-    };
+    const determine = () => playingSong._trackId === song._trackId;
 
     const handlePlayPause = e => {
         e.stopPropagation();
@@ -441,10 +443,10 @@ const EachInSongList = ({
 const EachInAlbumList = ({
     album,
     playingSong,
+    setPlayingSong,
     songIsPaused,
     setSongIsPaused,
     openerFunc,
-    setPlayingSong,
     playing,
     setPlaying,
     setQueue,
@@ -456,36 +458,36 @@ const EachInAlbumList = ({
 
     const display = e => {
         setTimeout(() => {
-            hist.push(`${prefix}/home/album/${album.Album}`);
+            hist.push(`${prefix}${basename}/album/${album._albumId}`);
         },500);
     };
+
+    const determine = () => playingSong._albumId === album._albumId;
 
     const handlePlayPause = e => {
         e.stopPropagation();
         if (openerDetails.open) {
             setOpenerDetails({ ...openerDetails, open: false });
         }
-        if (playingSong.Album === album.Album) {
+        if (determine()) {
             pauseOrPlay();
             return;
         }
-        const main = album.Type === "Album" ? album.Tracks : album;
+        const main = album.Type === "Album" ? [ ...album.Tracks ] : { ...album };
         if (!playing) setPlaying(true);
         if (album.Type === "Single") {
             main.id = global.id = 0;
             setQueue([main]);
             setPlayingSong(main);
         } else {
-            const dummy = [ ...main ];
-            dummy.forEach((song,i) => {
-                song.id = global.id = i;
-                song.Album = album.Album;
-                song.Thumbnail = album.Thumbnail;
-                song.Color = album.Color;
-                song.Year = album.Year;
-            });
-            setQueue(dummy);
-            setPlayingSong(dummy[0]);
+            for (let i=0; i<main.length; i++) {
+                const obj = { ...main[i], ...album };
+                obj.id = global.id = i;
+                delete obj.Tracks;
+                main[i] = obj;
+            }
+            setQueue(main);
+            setPlayingSong(main[0]);
         }
         localStorage.setItem("queue",JSON.stringify(main));
         setSongIsPaused(true);
@@ -496,15 +498,6 @@ const EachInAlbumList = ({
         const dimensions = { x: e.clientX, y: e.clientY };
         const windowDim = { width: document.documentElement.clientWidth, height: document.documentElement.clientHeight };
         openerFunc(e, { dimensions, windowDim, song: album });
-    };
-
-    const determine = () => {
-        const nameOfSong = album.Album;
-        const nameOfPlayingSong = playingSong.Album;
-        if (nameOfSong === nameOfPlayingSong) {
-            return true;
-        }
-        return false;
     };
 
     return(
@@ -574,10 +567,10 @@ const EachInAlbumList = ({
 };
 
 const SongsList = ({ songs, openerFunc, openerDetails, setOpenerDetails }) => {
-    const [playingSong, setPlayingSong] = CustomUseState(albumGlobal);
-    const [songIsPaused, setSongIsPaused] = CustomUseState(songIsPausedGlobal);
-    const [playing, setPlaying] = CustomUseState(playingGlobal);
-    const [,setQueue] = CustomUseState(queueGlobal);
+    const [playingSong, setPlayingSong] = useContext(AlbumContext);
+    const [songIsPaused, setSongIsPaused] = useContext(SongIsPausedContext);
+    const [playing, setPlaying] = useContext(PlayerContext);
+    const [,setQueue] = useContext(QueueContext);
 
     return(
         <div className="songs-list">
@@ -597,10 +590,10 @@ const SongsList = ({ songs, openerFunc, openerDetails, setOpenerDetails }) => {
 };
 
 const AlbumsList = ({ albums, openerFunc, openerDetails, setOpenerDetails }) => {
-    const [playingSong, setPlayingSong] = CustomUseState(albumGlobal);
-    const [songIsPaused, setSongIsPaused] = CustomUseState(songIsPausedGlobal);
-    const [playing, setPlaying] = CustomUseState(playingGlobal);
-    const [,setQueue] = CustomUseState(queueGlobal);
+    const [playingSong, setPlayingSong] = useContext(AlbumContext);
+    const [songIsPaused, setSongIsPaused] = useContext(SongIsPausedContext);
+    const [playing, setPlaying] = useContext(PlayerContext);
+    const [,setQueue] = useContext(QueueContext);
 
     return(
         <div className="songs-list">
@@ -621,41 +614,47 @@ const AlbumsList = ({ albums, openerFunc, openerDetails, setOpenerDetails }) => 
 };
 
 const NewSearch = () => {
-    const [playingSong, setPlayingSong] = CustomUseState(albumGlobal);
-    const [input,] = CustomUseState(searchInputGlobal);
-    const [openerDetails, setOpenerDetails] = CustomUseState(openerGlobal);
-    const [queue, setQueue] = CustomUseState(queueGlobal);
-    const [, setResObj] = CustomUseState(responseBar);
+    const [playingSong, setPlayingSong] = useContext(AlbumContext);
+    const [input,] = useContext(SearchInputContext);
+    const [openerDetails, setOpenerDetails] = useContext(MenuContext);
+    const [queue, setQueue] = useContext(QueueContext);
+    const [, setResObj] = useContext(ResponseBarContext);
     const [isLoading, setIsLoading] = useState(true);
     const [songsList, setSongsList] = useState([]);
     const [albumsList, setAlbumsList] = useState([]);
     const hist = useHistory();
 
     const call = async () => {
-        console.log("calling");
         const res = await sendRequest({
             method: "GET",
             endpoint: `/search?name=${input}`
         });
-        console.log("res",res);
         setSongsList(res.songs);
         setAlbumsList(res.albums);
         setIsLoading(false);
     };
 
     const addTrackToQueue = (song) => {
-        setOpenerDetails({ ...openerDetails, open: false });
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
         const dummy = [ ...queue ];
         const len = dummy.length;
         if (len === 0) return;
+
         dummy[len] = { ...song, id: ++global.id };
         setQueue(dummy);
-        setResObj({ open: true, msg: `Added ${song.Title || song.Album} to queue` });
+        setResObj(prev => {
+            return { ...prev, open: true, msg: `Added ${song.Title || song.Album} to queue` };
+        });
     };
 
     const playTrackNext = (song) => {
-        setOpenerDetails({ ...openerDetails, open: false });
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
         if (queue.length === 0) return;
+
         const curIndex = queue.indexOf(playingSong);
         const dummy = [ ...queue ];
         dummy.splice(curIndex+1, 0, { ...song, id: ++global.id });
@@ -665,7 +664,21 @@ const NewSearch = () => {
 
     const goToAlbum = (song) => {
         setOpenerDetails({ ...openerDetails, open: false });
-        hist.push(`${prefix}/home/album/${song.Album}`);
+        hist.push(`${prefix}${basename}/album/${song._albumId}`);
+    };
+
+    const shareTrack = song => {
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
+        setResObj(prev => {
+            return {
+                ...prev,
+                open: true,
+                msg: "Track link copied to clipboard"
+            };
+        });
+        navigator.clipboard.writeText(`${sharingBaseLink}/track/${song._albumId}/${song._trackId}`);
     };
 
     const handleSongMenu = (e, { dimensions, windowDim, song: album }) => {
@@ -681,6 +694,10 @@ const NewSearch = () => {
             {
                 name: "Go to album",
                 func: () => goToAlbum(album)
+            },
+            {
+                name: "Share track",
+                func: () => shareTrack(album)
             }
             // {
             //     name: "Start radio",
@@ -698,11 +715,14 @@ const NewSearch = () => {
     };
 
     const addAlbumToQueue = (album) => {
-        setOpenerDetails({ ...openerDetails, open: false });
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
         const main = album.Type === "Album" ? album.Tracks : { ...album };
         const mainQueue = [ ...queue ];
         const len = mainQueue.length;
         if (len === 0) return;
+
         if (album.Type === "Single") {
             main.id = ++global.id;
             mainQueue.push(main);
@@ -712,12 +732,9 @@ const NewSearch = () => {
         } else {
             const newmain = [ ...main ];
             newmain.forEach(song => {
-                song.id = ++global.id;
-                song.Album = album.Album;
-                song.Color = album.Color;
-                song.Thumbnail = album.Thumbnail;
-                song.Year = album.Year;
-                mainQueue.push(song);
+                const obj = { ...song, ...album, id: ++global.id };
+                delete obj.Tracks;
+                mainQueue.push(obj);
             });
             localStorage.setItem("queue",JSON.stringify(mainQueue));
             setQueue(mainQueue);
@@ -726,29 +743,42 @@ const NewSearch = () => {
     };
 
     const playAlbumNext = (album) => {
-        setOpenerDetails({ ...openerDetails, open: false });
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
         const len = queue.length;
-        if (len !== 0) {
-            const index = queue.indexOf(playingSong);
-            const mainQueue = [ ...queue ];
-            if (album.Type === "Single") {
-                album.id = ++global.id;
-                mainQueue.splice(index+1, 0, { ...album });
-            } else {
-                const tracks = album.Tracks || [];
-                [ ...tracks ].forEach((song,i) => {
-                    song.id = ++global.id;
-                    song.Album = album.Album;
-                    song.Color = album.Color;
-                    song.Thumbnail = album.Thumbnail;
-                    song.Year = album.Year;
-                    mainQueue.splice(index+1+i, 0, { ...song });
-                });
-            }
-            localStorage.setItem("queue",JSON.stringify(mainQueue));
-            setQueue(mainQueue);
-            setResObj({ open: true, msg: `Playing ${album.Album} next` });
+        if (len === 0) return;
+
+        const index = queue.indexOf(playingSong);
+        const mainQueue = [ ...queue ];
+        if (album.Type === "Single") {
+            album.id = ++global.id;
+            mainQueue.splice(index+1, 0, { ...album });
+        } else {
+            const tracks = album.Tracks || [];
+            [ ...tracks ].forEach((song,i) => {
+                const obj = { ...song, ...album, id: ++global.id };
+                delete obj.Tracks;
+                mainQueue.splice(index+1+i, 0, obj);
+            });
         }
+        localStorage.setItem("queue",JSON.stringify(mainQueue));
+        setQueue(mainQueue);
+        setResObj({ open: true, msg: `Playing ${album.Album} next` });
+    };
+
+    const shareAlbum = item => {
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
+        setResObj(prev => {
+            return {
+                ...prev,
+                open: true,
+                msg: "Album link copied to clipboard"
+            };
+        });
+        navigator.clipboard.writeText(`${sharingBaseLink}/album/${item._albumId}`);
     };
 
     const handleAlbumMenu = (e, { dimensions, windowDim, song: album }) => {
@@ -760,6 +790,10 @@ const NewSearch = () => {
             {
                 name: "Play next",
                 func: () => playAlbumNext(album)
+            },
+            {
+                name: "Share album",
+                func: () => shareAlbum(album)
             }
         ];
         e.stopPropagation();
@@ -784,42 +818,30 @@ const NewSearch = () => {
         <div className="search-page">
             <div className="inner-search-page">
                 {
-                    songsList.length !== 0 ?
-                    <SongsList songs={songsList} openerFunc={handleSongMenu}
-                    openerDetails={openerDetails} setOpenerDetails={setOpenerDetails} /> : null
-                }
-                <div style={{ width: "100%", height: "30px" }}></div>
-                {
-                    albumsList.length !== 0 ?
-                    <AlbumsList albums={albumsList} openerFunc={handleAlbumMenu}
-                    openerDetails={openerDetails} setOpenerDetails={setOpenerDetails} /> : null
+                    songsList.length !== 0 || albumsList.length !== 0 ?
+                    <>
+                    {
+                        songsList.length !== 0 ?
+                        <SongsList songs={songsList} openerFunc={handleSongMenu}
+                        openerDetails={openerDetails} setOpenerDetails={setOpenerDetails} /> : null
+                    }
+                    <div style={{ width: "100%", height: "30px" }}></div>
+                    {
+                        albumsList.length !== 0 ?
+                        <AlbumsList albums={albumsList} openerFunc={handleAlbumMenu}
+                        openerDetails={openerDetails} setOpenerDetails={setOpenerDetails} /> : null
+                    }
+                    </> :
+                    <div className="no-results">
+                        <span>No results found for</span>
+                        <p>'{input}'</p>
+                    </div>
                 }
             </div>
         </div>
     );
 };
 
-const Search = () => {
-    // const [queueOpened,] = CustomUseState(queueOpenedGlobal);
-    // const [searchConfig, setSearchConfig] = CustomUseState(searchBarGlobal);
-
-    // if (queueOpened) {
-    //     return <Queue/>
-    // }
-    // return <ActualSearch/>
-    // useEffect(() => {
-    //     console.log("search page");
-    //     return () => {
-    //         setSearchConfig({
-    //             ...searchConfig,
-    //             open: false
-    //         });
-    //     };
-    // }, []);
-
-    // return <></>
-    return <NewSearch/>
-};
 
 
-export default Search;
+export default NewSearch;
