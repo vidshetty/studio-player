@@ -1,21 +1,20 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 let songservers = [];
+const PRODUCTION = true;
 
 
 export const keepServersActive = async () => {
     if (songservers.length === 0) {
         const res = await axios({
             method: "GET",
-            // url: "http://localhost:5000/api/activateCheck"
-            url: "/api/activateCheck"
+            url: PRODUCTION ? "/api/activateCheck" : "http://localhost:5000/api/activateCheck"
         });
         songservers = await axios({
             method: "GET",
             url: `https://fervent-meninsky-931668.netlify.app/.netlify/functions/serverUrls?server=${res.data.server}`
         }).then(res => res.data.archives);
-        // songservers.push("http://localhost:5000/api/activateCheck");
-        songservers.push("/api/activateCheck");
+        songservers.push(PRODUCTION ? "/api/activateCheck" : "http://localhost:5000/api/activateCheck");
     }
 
     await Promise.all(
@@ -53,8 +52,7 @@ export const sendRequest = async config => {
     try {
         res = await axios({
             method: config.method,
-            // url: `http://localhost:5000/api${config.endpoint}`,
-            url: `/api${config.endpoint}`,
+            url: PRODUCTION ? `/api${config.endpoint}` : `http://localhost:5000/api${config.endpoint}`,
             data: config.data || {},
             headers: baseHeaders
         });

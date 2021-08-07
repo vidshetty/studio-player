@@ -48,10 +48,12 @@ const Trackview = () => {
         }
 
         if (!playing) setPlaying(true);
-        setQueue([ track ]);
-        localStorage.setItem("queue",JSON.stringify([track]));
+        const item = { ...track };
+        item.id = global.id = 0;
+        setQueue([ item ]);
+        localStorage.setItem("queue",JSON.stringify([item]));
         setSongPaused(true);
-        setPlayingSong(track);
+        setPlayingSong(item);
     };
 
     const addTrackToQueue = e => {
@@ -133,6 +135,13 @@ const Trackview = () => {
         });
     };
 
+    const addAndDisplay = () => {
+        const div = track.Duration.split(": ");
+        const min = parseFloat(div[0]);
+        const sec = parseFloat(div[1]);
+        return `${min} minutes${ sec !== 0 ? ` ${sec} seconds` : `` }`;
+    };
+
     const call = async () => {
         const res = await sendRequest({
             method: "GET",
@@ -190,7 +199,7 @@ const Trackview = () => {
                                 {"1 Song"}
                             </div>
                             <div className="content-separator"><div></div></div>
-                            <div className="albumtype">{track.Duration}</div>
+                            <div className="albumtype">{addAndDisplay()}</div>
                         </div>
                         <div style={{width: "100%", height: "10px"}}></div>
                         <div className="detailsoneview">

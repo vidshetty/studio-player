@@ -422,7 +422,6 @@ const Player = () => {
     const timeupdate = (e) => {
         localStorage.setItem("time", audio.currentTime);
         elapsedTime.innerText = convertTime(audio.currentTime);
-        // console.log(audio.currentTime);
 
         if (lyricsLocal.length !== 0) {
             for (let i=0; i<lyricsLocal.length; i++) {

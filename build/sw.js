@@ -1,5 +1,5 @@
-const cacheName = "v7";
-const oldCaches = ["v1","v2","v3","v4","v5","v6"];
+const cacheName = "v8";
+const oldCaches = ["v1","v2","v3","v4","v5","v6","v7"];
 
 
 self.addEventListener("install", e => {
