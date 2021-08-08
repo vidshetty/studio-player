@@ -93,7 +93,7 @@ let currentSongIndex = 0, isSongPlaying, actualQueue;
 let volumerange, elapsedTime, duration, range, percent = 0, style, bufferPercent = 0;
 export let pauseOrPlay;
 let goToNext, goToPrevious;
-let setVolume = 1, isBuffering, topBar, songPausedLocal, timeout = null;
+let setVolume = 1, isBuffering, manuallyPausedLocal, songPausedLocal, timeout = null;
 let trackingTimer, screenLocal, currentLyricIndex = null, lyricsLocal, preLoadedLocal;
 
 
@@ -156,6 +156,7 @@ const Player = () => {
     const [queue, setQueue] = useContext(QueueContext);
     const [buffering, setBuffering] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [manuallyPaused, setManuallyPaused] = useState(false);
     // const [buttonshow, setButtonshow] = useState(false);
     const [repeatType, setRepeatType] = useContext(RepeatTypeContext);
     const [shuffle, setShuffle] = useState(false);
@@ -177,6 +178,7 @@ const Player = () => {
     currentSongIndex = queue.findIndex(each => {
         return each.id === song.id;
     });
+    manuallyPausedLocal = manuallyPaused;
     preLoadedLocal = preLoaded;
     isSongPlaying = isPlaying;
     isBuffering = buffering;
@@ -212,10 +214,12 @@ const Player = () => {
             // },50);
             // await wait(800);
             // clearInterval(reduce);
+            setManuallyPaused(true);
             audio.pause();
         } else {
             // setSongPaused(false);
             // setIsPlaying(true);
+            setManuallyPaused(false);
             audio.play();
             // const increase = setInterval(() => {
             //     audio.volume = audio.volume + 0.2 <= mainVolume ? audio.volume + 0.2 : mainVolume;
@@ -269,7 +273,7 @@ const Player = () => {
             audio.currentTime = 0;
             trackingTimer.stop();
             trackingTimer = new Timer(30, addToRecentlyPlayed);
-            if (!trackingTimer.hasStarted()) trackingTimer.start();
+            if (!trackingTimer.hasStarted() && !audio.paused) trackingTimer.start();
         } else {
             const findPreviousIndex = () => {
                 let found = false;
@@ -434,24 +438,27 @@ const Player = () => {
             }
         }
 
-        if ((range === document.activeElement)) {
-        } else {
-            range.value = audio.currentTime;
-            percent = range.value/range.max * 100;
-            let value;
-            try {
-                value = (audio.buffered && audio.buffered.end(audio.buffered.length - 1));
-            } catch(e) {
-                value = 0;
-            }
-            bufferPercent = (value/range.max) * 100;
-            range.style.background = changeColor(percent,bufferPercent);
+        if (range === document.activeElement) {
+            return;
         }
+
+        range.value = audio.currentTime;
+        percent = range.value/range.max * 100;
+        let value;
+        try {
+            value = (audio.buffered && audio.buffered.end(audio.buffered.length - 1));
+        } catch(e) {
+            value = 0;
+        }
+        bufferPercent = (value/range.max) * 100;
+        range.style.background = changeColor(percent,bufferPercent);
     };
     const canplay = (e) => {
-        setBuffering(false);
-        setSongPaused(false);
-        if (trackingTimer.canContinue()) trackingTimer.continue();
+        if (!manuallyPausedLocal) {
+            setBuffering(false);
+            setSongPaused(false);
+            if (trackingTimer.canContinue()) trackingTimer.continue();
+        }
     };
     const onplay = (e) => {
         setIsPlaying(true);
@@ -482,6 +489,7 @@ const Player = () => {
         }
     };
     const onpaused = async (e) => {
+        setManuallyPaused(true);
         setSongPaused(true);
         setIsPlaying(false);
         if (trackingTimer.canPause()) trackingTimer.pause();
@@ -491,6 +499,7 @@ const Player = () => {
         // audio.volume = 0;
     };
     const onplaying = async (e) => {
+        setManuallyPaused(false);
         setSongPaused(false);
         setIsPlaying(true);
         if (trackingTimer.canContinue()) trackingTimer.continue();
@@ -637,7 +646,7 @@ const Player = () => {
             method: "POST",
             endpoint: "/addToRecentlyPlayed",
             data: {
-                album: song.Album
+                albumId: song._albumId
             }
         });
         if (shouldCache) {

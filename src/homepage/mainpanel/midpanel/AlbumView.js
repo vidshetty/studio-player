@@ -1013,7 +1013,7 @@ const NewActualAlbumView = () => {
                 ...prev,
                 open: true,
                 xValue: checkX(dimensions.x, windowDim.width),
-                yValue: checkY(dimensions.y, windowDim.height, 2),
+                yValue: checkY(dimensions.y, windowDim.height, data.length),
                 data
             };
         });
