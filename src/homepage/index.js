@@ -1014,7 +1014,6 @@ const Opener = ({ openerDetails, setOpenerDetails }) => {
 
     const click = e => {
         if (!((e.target === opener.current) || opener.current.contains(e.target))) {
-            console.log("close opener");
             setOpenerDetails(prev => {
                 return { ...prev, open: false };
             });

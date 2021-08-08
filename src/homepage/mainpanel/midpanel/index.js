@@ -70,7 +70,6 @@ const SearchBar = () => {
                 method: "GET",
                 endpoint: `/search?name=${searchBar.input}`
             });
-            console.log("res",res);
             setSearchConfig({
                 ...searchBar,
                 result: res,

@@ -195,7 +195,6 @@ const LyricsPart = ({ song, setTab }) => {
         lyricsContainer.current = document.querySelector(".lyrics-part");
         activeLyrics.current = document.querySelector(".each-lyric.activetext");
         if (lyricsContainer.current && activeLyrics.current) {
-            console.log(activeLyrics.current.offsetTop, lyricsContainer.current.offsetHeight, activeLyrics.current.offsetHeight);
             lyricsContainer.current.scroll({
                 top: activeLyrics.current.offsetTop - (lyricsContainer.current.offsetHeight / 4),
                 behavior: "smooth"
