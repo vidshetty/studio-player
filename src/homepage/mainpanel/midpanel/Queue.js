@@ -206,16 +206,29 @@ const LyricsPart = ({ song, setTab }) => {
         return <Loader/>;
     }
     return(
-        <div className="lyrics-part">
+        <div className="outer-lyrics-part">
             {
-                lyrics.length === 0 ? 
-                <div className="no-lyrics">No lyrics found!</div> : null
+                lyrics.length > 0 ?
+                <div className="sync-definer">
+                    { song.sync ? "Lyrics are time synced" : "Lyrics are not time synced" }
+                </div> : null
             }
-            {
-                lyrics.map(each => {
-                    return <EachLyric each={each} lyricText={lyricText} />;
-                })
-            }
+            <div className="lyrics-part">
+                {
+                    lyrics.length === 0 ? 
+                    <div className="no-lyrics">No lyrics found!</div> : null
+                }
+                {
+                    lyrics.length > 0 ?
+                    <>    
+                        {
+                            lyrics.map(each => {
+                                return <EachLyric each={each} lyricText={lyricText} />;
+                            })
+                        }
+                    </> : null
+                }
+            </div>
         </div>
     );
 };
