@@ -1,5 +1,5 @@
 {
-  "main.css": "./static/css/main.eefb7ef3.chunk.css",
+  "main.css": "./static/css/main.4d9973cb.chunk.css",
   "main.js": "./static/js/main.5bbfa486.chunk.js",
   "main.js.map": "./static/js/main.5bbfa486.chunk.js.map",
   "runtime~main.js": "./static/js/runtime~main.d653cc00.js",
@@ -7,9 +7,9 @@
   "static/js/2.16e51a65.chunk.js": "./static/js/2.16e51a65.chunk.js",
   "static/js/2.16e51a65.chunk.js.map": "./static/js/2.16e51a65.chunk.js.map",
   "index.html": "./index.html",
-  "precache-manifest.1ca705f57b29b3f7df689a2962c889a9.js": "./precache-manifest.1ca705f57b29b3f7df689a2962c889a9.js",
+  "precache-manifest.a0551a987b0faf90e6f7c6edf9502bad.js": "./precache-manifest.a0551a987b0faf90e6f7c6edf9502bad.js",
   "service-worker.js": "./service-worker.js",
-  "static/css/main.eefb7ef3.chunk.css.map": "./static/css/main.eefb7ef3.chunk.css.map",
+  "static/css/main.4d9973cb.chunk.css.map": "./static/css/main.4d9973cb.chunk.css.map",
   "static/media/addbutton-black.svg": "./static/media/addbutton-black.332c2ed6.svg",
   "static/media/backbutton-909090.svg": "./static/media/backbutton-909090.c160678a.svg",
   "static/media/backbutton-white.svg": "./static/media/backbutton-white.2ae7dad5.svg",
