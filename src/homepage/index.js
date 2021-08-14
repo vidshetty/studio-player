@@ -94,7 +94,7 @@ let volumerange, elapsedTime, duration, range, percent = 0, style, bufferPercent
 export let pauseOrPlay;
 let goToNext, goToPrevious;
 let setVolume = 1, isBuffering, manuallyPausedLocal, songPausedLocal, timeout = null;
-let trackingTimer, screenLocal, currentLyricIndex = null, lyricsLocal, preLoadedLocal;
+let trackingTimer, screenLocal, currentLyricIndex = null, lyricsLocal, lyricTextLocal, preLoadedLocal;
 
 
 const changeColor = (percent,bufferPercent) => {
@@ -167,7 +167,7 @@ const Player = () => {
     const [openerDetails, setOpenerDetails] = useContext(MenuContext);
     const [resBar, setResBar] = useContext(ResponseBarContext);
     const [lyrics,] = useContext(LyricsContext);
-    const [,setLyricText] = useContext(LyricsTextContext);
+    const [lyricText ,setLyricText] = useContext(LyricsTextContext);
     const prevSong = usePrevious(song);
     screenLocal = screen;
     // topBar = topBarConfig;
@@ -184,6 +184,7 @@ const Player = () => {
     isBuffering = buffering;
     songPausedLocal = songPaused;
     lyricsLocal = lyrics;
+    lyricTextLocal = lyricText;
     let playerOnLocal = playerOn;
 
 
@@ -427,15 +428,21 @@ const Player = () => {
         localStorage.setItem("time", audio.currentTime);
         elapsedTime.innerText = convertTime(audio.currentTime);
 
-        if (lyricsLocal.length !== 0) {
+        if (lyricsLocal.length > 0 && song.lyrics && song.sync) {
+            let found = false;
             for (let i=0; i<lyricsLocal.length; i++) {
                 const each = lyricsLocal[i];
-                if ((audio.currentTime > each.from && audio.currentTime <= each.to) && currentLyricIndex !== i) {
-                    setLyricText(each);
-                    currentLyricIndex = i;
+                if (audio.currentTime < each.from) break;
+                if (audio.currentTime <= each.to) {
+                    found = true;
+                    if (currentLyricIndex !== i) {
+                        setLyricText(each);
+                        currentLyricIndex = i;
+                    }
                     break;
                 }
             }
+            if (Object.keys(lyricTextLocal).length > 0 && !found) setLyricText({});
         }
 
         if (range === document.activeElement) {

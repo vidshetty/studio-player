@@ -65,9 +65,17 @@ const App = () => {
         });
     }
 
+    function unload(e) {
+        if (playingLocal) {
+            e.preventDefault();
+            e.returnValue = "";
+        }
+    }
+
     useEffect(() => {
         document.addEventListener("keydown",keyDown);
         window.addEventListener("popstate",check);
+        window.addEventListener("beforeunload",unload);
         return () => {
             document.removeEventListener("keydown",keyDown);
             window.removeEventListener("popstate",check);

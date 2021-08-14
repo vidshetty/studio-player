@@ -90,7 +90,7 @@
     margin-top: 15px;
     font-size: 0.9em;
     font-weight: 500;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.1px;
     color: white;
     padding-right: 10px;
 }
@@ -101,8 +101,8 @@
     width: 100%;
     height: auto;
     margin-top: 5px;
-    font-size: 0.9em;
-    letter-spacing: -1px;
+    font-size: 0.8em;
+    /* letter-spacing: -0.5px; */
     color: rgba(255,255,255,0.7);
     display: flex;
 }
@@ -319,6 +319,7 @@
 .tile-title{
     width: 100%;
     height: 35%;
+    /* height: 40%; */
     /* background-color: aqua; */
     /* display: flex;
     justify-content: flex-start;
@@ -326,7 +327,7 @@
     color: white;
     font-weight: 500;
     font-size: 0.9em;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.1px;
     padding-right: 5px;
     /* padding-top: 5px; */
     white-space: nowrap;
@@ -336,14 +337,15 @@
 .tile-artist{
     width: 100%;
     height: 35%;
+    /* height: 40%; */
     /* background-color: aliceblue; */
     /* padding-top: 3px; */
     color: #909090;
-    font-size: 500;
-    font-size: 0.9em;
-    letter-spacing: -0.5px;
+    font-weight: 500;
+    font-size: 0.8em;
+    /* letter-spacing: -0.5px; */
     padding-right: 5px;
-    padding-top: 1px;
+    padding-top: 2px;
     display: flex;
     align-items: center;
 }

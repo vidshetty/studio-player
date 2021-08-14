@@ -282,7 +282,7 @@ const TopSearchBar = () => {
     const location = useLocation();
     const hist = useHistory();
     let list = localStorage.getItem("searches") || "[]";
-    list = JSON.parse(list).reverse();
+    list = JSON.parse(list).reverse().slice(0,8);
     noLocal = no;
     showListLocal = showList;
 
@@ -303,9 +303,8 @@ const TopSearchBar = () => {
     const click = e => {
         if (!(e.target === search.current || search.current.contains(e.target))) {
             global.searchBarOpen = false;
-            setSearchConfig({
-                ...searchConfig,
-                open: false
+            setSearchConfig(prev => {
+                return { ...prev, open: false };
             });
         }
     };
@@ -322,7 +321,7 @@ const TopSearchBar = () => {
 
         let list = localStorage.getItem("searches") || "[]";
         list = JSON.parse(list);
-        value && list.push(value);
+        value && !list.includes(value) && list.push(value);
         localStorage.setItem("searches", JSON.stringify(list));
 
         if (queueOpen) setQueueOpen(false);
@@ -338,6 +337,7 @@ const TopSearchBar = () => {
         e.stopPropagation();
         setValue(val);
         setShowList(false);
+        setNo(-1);
         
         if (queueOpen) setQueueOpen(false);
         setInput(val);
@@ -348,7 +348,7 @@ const TopSearchBar = () => {
 
     const keyDown = e => {
         if (e.keyCode === 40 && showListLocal) {
-            if (noLocal+1 >= 8) {
+            if (noLocal+1 > 8) {
                 noLocal = 0;
                 setNo(0);
                 return;
@@ -356,6 +356,8 @@ const TopSearchBar = () => {
             setNo(noLocal+1);
         } else if (e.keyCode === 38 && showListLocal) {
             if (noLocal === -1) {
+                noLocal = 7;
+                setNo(7);
                 return;
             }
             setNo(noLocal-1);
@@ -372,11 +374,11 @@ const TopSearchBar = () => {
     useEffect(() => {
         search.current = document.querySelector(".search-bar");
         document.addEventListener("click",click);
-        // document.addEventListener("keydown",keyDown);
+        document.addEventListener("keydown",keyDown);
         document.querySelector(".search-input").focus();
         return () => {
             document.removeEventListener("click",click);
-            // document.removeEventListener("keydown",keyDown);
+            document.removeEventListener("keydown",keyDown);
         };
     }, []);
 

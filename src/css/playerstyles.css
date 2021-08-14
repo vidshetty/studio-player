@@ -112,10 +112,10 @@
 .songtitle{
     /* display: flex;
     align-items: flex-end; */
-    padding-bottom: 1px;
+    /* padding-bottom: 1px; */
     color: white;
     font-size: 0.9em;
-    font-weight: 400;
+    font-weight: 500;
     height: 50%;
     white-space: nowrap;
     overflow: hidden;
@@ -124,8 +124,8 @@
 }
 .songartists p{
     color: rgba(255,255,255,0.5);
-    font-size: 0.9em;
-    letter-spacing: -0.5px;
+    font-size: 0.8em;
+    /* letter-spacing: -0.5px; */
     padding-right: 4px;
 }
 

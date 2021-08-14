@@ -154,7 +154,7 @@ const LyricsPart = ({ song, setTab }) => {
     const lyricsContainer = useRef(null);
     const activeLyrics = useRef(null);
     const [lyrics, setLyrics] = useContext(LyricsContext);
-    const [lyricText,] = useContext(LyricsTextContext);
+    const [lyricText, setLyricsText] = useContext(LyricsTextContext);
     const [lyricsLoading, setLyricsLoading] = useState(false);
 
     const call = async () => {
@@ -177,6 +177,7 @@ const LyricsPart = ({ song, setTab }) => {
             setTab(1);
             return;
         }
+        if (!song.sync) setLyricsText({});
         call();
     }, [song]);
 

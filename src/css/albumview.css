@@ -673,7 +673,8 @@
     font-weight: 700;
     color: white;
     padding: 5px 5px 10px 5px;
-    letter-spacing: -2px;
+    /* letter-spacing: -2px; */
+    letter-spacing: -1px;
 }
 .detailsoneview{
     width: 100%;
