@@ -477,7 +477,8 @@ const Player = () => {
         trackingTimer.stop();
         range.style.background = changeColor(0,0);
         if (whichRepeat === 2) {
-            audio.play();
+            audio.currentTime = 0;
+            setTimeout(() => audio.play(), 300);
             trackingTimer.stop();
             trackingTimer = new Timer(30, addToRecentlyPlayed);
             if (!trackingTimer.hasStarted()) trackingTimer.start();
@@ -486,7 +487,8 @@ const Player = () => {
             setSongPaused(true);
         } else {
             if (actualQueue.length === 1) {
-                audio.play();
+                audio.currentTime = 0;
+                setTimeout(() => audio.play(), 300);
                 trackingTimer.stop();
                 trackingTimer = new Timer(30, addToRecentlyPlayed);
                 if (!trackingTimer.hasStarted()) trackingTimer.start();

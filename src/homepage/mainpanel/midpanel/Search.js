@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { useHistory } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import "../../../css/searchstyles.css";
 import "../../../css/homestyles.css";
 import "../../../css/hometeststyles.css";
@@ -623,11 +623,14 @@ const NewSearch = () => {
     const [songsList, setSongsList] = useState([]);
     const [albumsList, setAlbumsList] = useState([]);
     const hist = useHistory();
+    const location = useLocation();
 
     const call = async () => {
+        const searchValue = location.search.replace("q","name");
         const res = await sendRequest({
             method: "GET",
-            endpoint: `/search?name=${input}`
+            // endpoint: `/search?name=${input}`
+            endpoint: `/search${searchValue}`
         });
         setSongsList(res.songs);
         setAlbumsList(res.albums);
@@ -806,10 +809,14 @@ const NewSearch = () => {
         });
     };
 
+    // useEffect(() => {
+    //     setIsLoading(true);
+    //     call();
+    // }, [input]);
     useEffect(() => {
         setIsLoading(true);
         call();
-    }, [input]);
+    }, [location.search]);
 
     if (isLoading) {
         return <MidPanelLoader/>

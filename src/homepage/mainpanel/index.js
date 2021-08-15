@@ -328,8 +328,11 @@ const TopSearchBar = () => {
         setInput(value);
         setNo(-1);
         setShowList(false);
-        if (location.pathname !== `${prefix}${basename}/search`) {
-            hist.push(`${prefix}${basename}/search`);
+        // if (location.pathname !== `${prefix}${basename}/search`) {
+        //     hist.push(`${prefix}${basename}/search`);
+        // }
+        if (location.search !== `?q=${value}`) {
+            hist.push(`${prefix}${basename}/search?q=${value}`);
         }
     };
 
@@ -341,8 +344,8 @@ const TopSearchBar = () => {
         
         if (queueOpen) setQueueOpen(false);
         setInput(val);
-        if (location.pathname !== `${prefix}${basename}/search`) {
-            hist.push(`${prefix}${basename}/search`);
+        if (location.search !== `?q=${val}`) {
+            hist.push(`${prefix}${basename}/search?q=${val}`);
         }
     };
 
