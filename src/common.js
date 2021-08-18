@@ -6,14 +6,14 @@ const PRODUCTION = true;
 
 export const keepServersActive = async () => {
     if (songservers.length === 0) {
-        const res = await axios({
+        songservers = await axios({
             method: "GET",
             url: PRODUCTION ? "/api/activateCheck" : "http://localhost:5000/api/activateCheck"
         });
-        songservers = await axios({
-            method: "GET",
-            url: `https://fervent-meninsky-931668.netlify.app/.netlify/functions/serverUrls?server=${res.data.server}`
-        }).then(res => res.data.archives);
+        // songservers = await axios({
+        //     method: "GET",
+        //     url: `https://fervent-meninsky-931668.netlify.app/.netlify/functions/serverUrls?server=${res.data.server}`
+        // }).then(res => res.data.archives);
         songservers.push(PRODUCTION ? "/api/activateCheck" : "http://localhost:5000/api/activateCheck");
     }
 

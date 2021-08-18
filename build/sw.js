@@ -1,5 +1,5 @@
-const cacheName = "v14";
-const oldCaches = ["v1","v2","v3","v4","v5","v6","v7","v8","v9","v10","v11","v12","v13"];
+const cacheName = "v15";
+const oldCaches = ["v1","v2","v3","v4","v5","v6","v7","v8","v9","v10","v11","v12","v13","v14"];
 
 
 self.addEventListener("install", e => {
@@ -47,7 +47,10 @@ self.addEventListener("fetch", e => {
         url.includes("font") ||
         url === "https://studiomusic.herokuapp.com" ||
         url === "https://studiomusic.herokuapp.com/" ||
-        url === "https://studiomusic.herokuapp.com/player"
+        url === "https://studiomusic.herokuapp.com/player" ||
+        url.includes("/player/album") ||
+        url.includes("/player/track") ||
+        url.includes("/player/search")
     ) {
         e.respondWith(callCache(e));
     }
