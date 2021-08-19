@@ -9,7 +9,7 @@ export const keepServersActive = async () => {
         songservers = await axios({
             method: "GET",
             url: PRODUCTION ? "/api/activateCheck" : "http://localhost:5000/api/activateCheck"
-        });
+        }).then(res => res.data.server);
         // songservers = await axios({
         //     method: "GET",
         //     url: `https://fervent-meninsky-931668.netlify.app/.netlify/functions/serverUrls?server=${res.data.server}`

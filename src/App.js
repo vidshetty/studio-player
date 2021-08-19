@@ -34,11 +34,17 @@ const App = () => {
     playingLocal = playing;
     queueOpenedLocal = queueOpened;
 
-    if (intervalTimeout === null) {
-        intervalTimeout = setInterval(() => {
+    // if (intervalTimeout === null) {
+    //     intervalTimeout = setInterval(() => {
+    //         keepServersActive();
+    //     }, 3*60*1000);
+    // }
+
+    const callServersInterval = () => {
+        setInterval(() => {
             keepServersActive();
         }, 3*60*1000);
-    }
+    };
 
     const screenSet = () => {
         setScreen({ ...screen, show: !screen.show });
@@ -73,6 +79,8 @@ const App = () => {
     }
 
     useEffect(() => {
+        keepServersActive();
+        callServersInterval();
         document.addEventListener("keydown",keyDown);
         window.addEventListener("popstate",check);
         window.addEventListener("beforeunload",unload);
