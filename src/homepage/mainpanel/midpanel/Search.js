@@ -396,6 +396,18 @@ const EachInSongList = ({
                         </Button>
                     </div>
                     {
+                        !hovered && determine() ?
+                        <div className="keep-each-song-dummyshadow">
+                            <Button className="each-button" onClick={handlePlayPause}>
+                                {
+                                    determine() ?
+                                    <img src={ songIsPaused ? Play : Pause } alt="" /> :
+                                    <img src={Play} alt="" />
+                                }
+                            </Button>
+                        </div> : null
+                    }
+                    {/* {
                         !hovered && determine() ? 
                         <div className="anim-cover">
                             {
@@ -414,7 +426,7 @@ const EachInSongList = ({
                                 </div> 
                             }
                         </div> : null
-                    }
+                    } */}
                 </div>
             </div>
             <div className={ hovered ? "each-list-song-details short" : "each-list-song-details" }>
@@ -566,15 +578,31 @@ const EachInAlbumList = ({
     // );
 };
 
-const SongsList = ({ songs, openerFunc, openerDetails, setOpenerDetails }) => {
+const SongsList = ({ songs, openerFunc, openerDetails, setOpenerDetails, songsOpenerFunc }) => {
     const [playingSong, setPlayingSong] = useContext(AlbumContext);
     const [songIsPaused, setSongIsPaused] = useContext(SongIsPausedContext);
     const [playing, setPlaying] = useContext(PlayerContext);
     const [,setQueue] = useContext(QueueContext);
 
+    const handleMenu = e => {
+        e.stopPropagation();
+        const dimensions = { x: e.clientX, y: e.clientY };
+        const windowDim = { width: document.documentElement.clientWidth, height: document.documentElement.clientHeight };
+        songsOpenerFunc(e, { dimensions, windowDim });
+    };
+
     return(
         <div className="songs-list">
-            <div className="songs-list-title">Songs</div>
+            <div className="songs-list-title">
+                <p>Songs</p>
+                <div className="each-list-opener">
+                    <div className="tileopener" onClick={handleMenu}>
+                        <div className="tileopener1"></div>
+                        <div className="tileopener2"></div>
+                        <div className="tileopener3"></div>
+                    </div>
+                </div>
+            </div>
             <div className="songs-list-container">
                 {
                     songs.map(each => {
@@ -597,7 +625,9 @@ const AlbumsList = ({ albums, openerFunc, openerDetails, setOpenerDetails }) => 
 
     return(
         <div className="songs-list">
-            <div className="songs-list-title">Albums</div>
+            <div className="songs-list-title">
+                <p>Albums</p>
+            </div>
             {/* <div className="albums-list-grid"> */}
             <div className="albums-list-container">
                 {
@@ -617,6 +647,7 @@ const NewSearch = () => {
     const [playingSong, setPlayingSong] = useContext(AlbumContext);
     const [input,] = useContext(SearchInputContext);
     const [openerDetails, setOpenerDetails] = useContext(MenuContext);
+    const [player, setPlayer] = useContext(PlayerContext);
     const [queue, setQueue] = useContext(QueueContext);
     const [, setResObj] = useContext(ResponseBarContext);
     const [isLoading, setIsLoading] = useState(true);
@@ -809,6 +840,94 @@ const NewSearch = () => {
         });
     };
 
+    const playList = e => {
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
+
+        const list = [];
+        songsList.forEach((each,i) => {
+            const obj = { ...each };
+            obj.id = global.id = i;
+            list.push(obj);
+        });
+        if (!player) setPlayer(true);
+        setPlayingSong(list[0]);
+        setQueue(list);
+        setResObj(prev => {
+            return { ...prev, open: true, msg: "Playing all tracks" };
+        });
+    };
+
+    const addToList = e => {
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
+        if (!player) return;
+
+        const list = [];
+        songsList.forEach(each => {
+            const obj = { ...each };
+            obj.id = ++global.id;
+            list.push(obj);
+        });
+        setQueue(prev => {
+            return [ ...prev, ...list ];
+        });
+        setResObj(prev => {
+            return { ...prev, open: true, msg: "Added all tracks to queue" };
+        });
+    };
+
+    const playNextInList = e => {
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
+        if (!player) return;
+
+        const list = [];
+        songsList.forEach(each => {
+            const obj = { ...each };
+            obj.id = ++global.id;
+            list.push(obj);
+        });
+        setQueue(prev => {
+            const currentPlayingIndex = prev.findIndex(each => {
+                return each.id === playingSong.id;
+            });
+            if (currentPlayingIndex === -1) return prev;
+            prev.splice(currentPlayingIndex+1, 0, ...list);
+            return prev;
+        });
+        setResObj(prev => {
+            return { ...prev, open: true, msg: "Playing all tracks next" };
+        });
+    };
+
+    const handleRootSongsMenu = (e, { dimensions, windowDim }) => {
+        const data = [
+            {
+                name: "Play this list",
+                func: playList
+            },
+            {
+                name: "Add this list to queue",
+                func: addToList
+            },
+            {
+                name: "Play this list next",
+                func: playNextInList
+            }
+        ];
+        setOpenerDetails({
+            ...openerDetails,
+            open: true,
+            xValue: checkX(dimensions.x, windowDim.width),
+            yValue: checkY(dimensions.y, windowDim.height, data.length),
+            data
+        });
+    };
+
     // useEffect(() => {
     //     setIsLoading(true);
     //     call();
@@ -830,7 +949,8 @@ const NewSearch = () => {
                     {
                         songsList.length !== 0 ?
                         <SongsList songs={songsList} openerFunc={handleSongMenu}
-                        openerDetails={openerDetails} setOpenerDetails={setOpenerDetails} /> : null
+                        openerDetails={openerDetails} setOpenerDetails={setOpenerDetails}
+                        songsOpenerFunc={handleRootSongsMenu} /> : null
                     }
                     <div style={{ width: "100%", height: "30px" }}></div>
                     {

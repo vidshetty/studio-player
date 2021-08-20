@@ -508,6 +508,18 @@ const EachInQuickPick = ({
                 </div>
                 {
                     !hovered && determine() ? 
+                    <div className="keepdummyshadow">
+                        <Button className="tile-button" onClick={handlePlayPause}>
+                            {
+                                determine() ?
+                                <img src={ songIsPaused ? Play : Pause } alt="" /> :
+                                <img src={Play} alt="" />
+                            }
+                        </Button>
+                    </div> : null
+                }
+                {/* {
+                    !hovered && determine() ? 
                     <div className="anim-cover">
                         {
                             !songIsPaused ?
@@ -525,7 +537,7 @@ const EachInQuickPick = ({
                             </div> 
                         }
                     </div> : null
-                }
+                } */}
             </div>
             <div className={ hovered ? "tile-details-short" : "tile-details" }>
                 <div className="tile-title">{song.Title || song.Album}</div>

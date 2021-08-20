@@ -83,7 +83,7 @@ const App = () => {
         callServersInterval();
         document.addEventListener("keydown",keyDown);
         window.addEventListener("popstate",check);
-        window.addEventListener("beforeunload",unload);
+        // window.addEventListener("beforeunload",unload);
         return () => {
             document.removeEventListener("keydown",keyDown);
             window.removeEventListener("popstate",check);

@@ -658,7 +658,7 @@
     height: auto;
     margin: 15px;
 }
-.song-album-cover, .song-album-cover-hidden{
+.song-album-cover, .song-album-cover-hidden, .song-album-cover-nothidden{
     position: absolute;
     left: 15px;
     top: 15px;
@@ -677,6 +677,9 @@
 }
 .song-album-cover-hidden{
     opacity: 0;
+}
+.song-album-cover-nothidden{
+    opacity: 1;
 }
 .each-song:hover .song-album-cover-hidden{
     opacity: 1;

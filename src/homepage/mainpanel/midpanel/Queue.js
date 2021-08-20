@@ -399,6 +399,16 @@ const EachSong = ({ index, i, queue, each, songIsPaused, setSongIsPaused, setSon
                             }
                         </div>
                 }
+                {/* {
+                    index === i && !hovered ?
+                    <div className="song-album-cover-nothidden">
+                        {
+                            !songIsPaused ?
+                            <img src={Pause} className="song-album-cover-img" title="Pause" alt="" onClick={pauseOrPlay} /> : 
+                            <img src={Play} className="song-album-cover-img" title="Play" alt="" onClick={pauseOrPlay} />
+                        }
+                    </div> : null
+                } */}
                 {
                     index === i && !hovered ?
                         <div className="song-album-cover">

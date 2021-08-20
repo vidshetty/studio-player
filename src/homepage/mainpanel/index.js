@@ -281,8 +281,7 @@ const TopSearchBar = () => {
     const search = useRef(null);
     const location = useLocation();
     const hist = useHistory();
-    let list = localStorage.getItem("searches") || "[]";
-    list = JSON.parse(list).reverse().slice(0,8);
+    const list = JSON.parse((localStorage.getItem("searches") || "[]")).reverse();
     noLocal = no;
     showListLocal = showList;
 
@@ -319,9 +318,14 @@ const TopSearchBar = () => {
     const handleSearch = e => {
         e.preventDefault();
 
-        let list = localStorage.getItem("searches") || "[]";
-        list = JSON.parse(list);
-        value && !list.includes(value) && list.push(value);
+        const list = JSON.parse((localStorage.getItem("searches") || "[]"));
+        if (value && !list.includes(value)) {
+            const len = list.length;
+            if (len > 7) {
+                for (let i=0; i<len-7; i++) list.shift();
+            }
+            list.push(value);
+        }
         localStorage.setItem("searches", JSON.stringify(list));
 
         if (queueOpen) setQueueOpen(false);
