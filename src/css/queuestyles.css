@@ -597,6 +597,17 @@
     /* background-color: aqua; */
     /* overflow-y: overlay; */
     position: relative;
+    scrollbar-width: none;
+}
+@media screen and (-webkit-min-device-pixel-ratio:0){
+    .tab-container{
+        overflow-y: overlay;
+    }
+}
+@-moz-document url-prefix() {
+    .tab-container{
+        overflow-y: auto;
+    }
 }
 .tab-container::-webkit-scrollbar{
     width: 0px;
@@ -763,6 +774,7 @@
     padding-bottom: 100px; */
     padding-top: 30%;
     padding-bottom: 40%;
+    scrollbar-width: none;
 }
 .lyrics-part::-webkit-scrollbar{
     width: 0px;

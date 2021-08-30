@@ -13,7 +13,17 @@
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    overflow-y: overlay;
+    scrollbar-width: none;
+}
+@media screen and (-webkit-min-device-pixel-ratio:0){
+    .main-outer-container{
+        overflow-y: overlay;
+    }
+}
+@-moz-document url-prefix() {
+    .main-outer-container{
+        overflow-y: auto;
+    }
 }
 .main-outer-container::-webkit-scrollbar, .main-outer-container.scrolling::-webkit-scrollbar{
     width: 5px;
@@ -54,6 +64,17 @@
     justify-content: center;
     align-items: flex-start;
     /* overflow-y: overlay; */
+    scrollbar-width: none;
+}
+@media screen and (-webkit-min-device-pixel-ratio:0){
+    .dummyoutermid{
+        overflow-y: overlay;
+    }
+}
+@-moz-document url-prefix() {
+    .dummyoutermid{
+        overflow-y: auto;
+    }
 }
 .dummyoutermid::-webkit-scrollbar{
     width: 5px;

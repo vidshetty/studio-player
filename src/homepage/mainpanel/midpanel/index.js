@@ -276,6 +276,7 @@ const OpenQueue = () => {
 const Mid = () => {
     const [openerDetails,] = useContext(MenuContext);
     const [playing,] = useContext(PlayerContext);
+    const [scroll, setScroll] = useState(null);
     openLocal = openerDetails.open;
     const scrollRef = useRef(null);
 
@@ -300,11 +301,21 @@ const Mid = () => {
         };
     }, []);
 
+    useEffect(() => {
+        scrollRef.current = document.querySelector(".main-outer-container");
+        if (openLocal) {
+            setScroll(scrollRef.current.style.overflowY);
+            scrollRef.current.style.overflowY = "hidden";
+        } else {
+            scrollRef.current.style.overflowY = scroll;
+        }
+    }, [openLocal]);
+
     return(
         <div className="midmain-without-player">
             { playing ? <Queue/> : null }
             <div className="main-outer-container"
-            style={{ overflowY: `${ openLocal ? "hidden" : "overlay" }` }}
+            // style={{ overflowY: `${ openLocal ? "hidden" : "overlay" }` }}
             >
                 <Switch>
                     <Route path={`${prefix}${basename}/homescreen`}><HomeScreen/></Route>

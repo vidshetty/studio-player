@@ -454,6 +454,7 @@ const EachSong = ({ index, i, queue, each, songIsPaused, setSongIsPaused, setSon
 const NewRightQueue = ({ song, songIsPaused, setSongIsPaused, setSong, openerFunc, openerDetails }) => {
     const [queue, setQueue] = useContext(QueueContext);
     const [showScroll, setShowScroll] = useState(false);
+    const [scrollType, setScrollType] = useState(null);
     const [position, setPosition] = useState({ show: false, top: 0 });
     const [selected, setSelected] = useState(false);
     const index = queue.findIndex(each => each.id === song.id);
@@ -539,9 +540,20 @@ const NewRightQueue = ({ song, songIsPaused, setSongIsPaused, setSong, openerFun
         }
     }, [song, queue]);
 
+    useEffect(() => {
+        container.current = document.querySelector(".tab-container");
+        if (openerDetails.open) {
+            setScrollType(container.current.style.overflowY);
+            container.current.style.overflowY = "hidden";
+        } else {
+            container.current.style.overflowY = scrollType;
+        }
+    }, [openerDetails.open]);
+
+
     return(
         <div className={`tab-container${showScroll ? " show" : ""}`}
-        style={{ overflowY: `${openerDetails.open ? "" : "overlay"}` }}
+        // style={{ overflowY: `${openerDetails.open ? "" : "overlay"}` }}
         onMouseOver={mouseover}
         onMouseOut={mouseout}
         onMouseMove={mousemove}
