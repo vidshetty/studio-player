@@ -295,6 +295,7 @@ const NewActualLibrary = () => {
     const [more, setMore] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
     const [pageLoading, setPageLoading] = useState(false);
+    const [scroll, setScroll] = useState(null);
     const [openerDetails, setOpenerDetails] = useContext(MenuContext);
     const [playingSong, setAlbumForPlayer] = useContext(AlbumContext);
     const [queue, setQueue] = useContext(QueueContext);
@@ -496,13 +497,27 @@ const NewActualLibrary = () => {
 
     }, [isLoading]);
 
+    useEffect(() => {
+        if (isLoading) return;
+        
+        topDiv.current = document.querySelector(".dummyoutermid");
+        if (isOpen) {
+            setScroll(topDiv.current.style.overflowY);
+            topDiv.current.style.overflowY = "hidden";
+        } else {
+            topDiv.current.style.overflowY = scroll;
+        }
+    }, [isOpen]);
+
 
     if (isLoading) {
         return <MidPanelLoader/>
     }
     return(
         // <div className="dummymid" style={{ overflowY: `${ isOpen ? "hidden" : "overlay" }` }}>
-        <div className="dummyoutermid" style={{ overflowY: `${ isOpen ? "hidden" : "overlay" }` }}>
+        <div className="dummyoutermid"
+        // style={{ overflowY: `${ isOpen ? "hidden" : "overlay" }` }}
+        >
             <div className="dummymid">
                 <div className="libraryname">Library</div>
                 <div className="librarycontainer">

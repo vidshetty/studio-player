@@ -1035,7 +1035,9 @@ const NewActualHomeScreen = () => {
         return <MidPanelLoader/>
     }
     return(
-        <div className="newhome" style={{ overflowY: `${ openerDetails.open ? "hidden" : "overlay" }` }}>
+        <div className="newhome"
+        // style={{ overflowY: `${ openerDetails.open ? "hidden" : "pverlay" }` }}
+        >
             {
                 recentlyPlayed.length !== 0 ?
                 <RecentlyPlayed played={recentlyPlayed} songIsPaused={songIsPaused} song={playingSong}

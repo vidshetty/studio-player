@@ -427,6 +427,7 @@ const Player = () => {
     const timeupdate = (e) => {
         localStorage.setItem("time", audio.currentTime);
         elapsedTime.innerText = convertTime(audio.currentTime);
+        // console.log(audio.currentTime);
 
         if (lyricsLocal.length > 0 && song.lyrics && song.sync) {
             let found = false;
@@ -926,41 +927,41 @@ const Player = () => {
                             <div className="innerplayerpart">
                                 { Object.keys(song).length !== 0 ?
                                     <>
-                                    <div className="outer-album">
-                                        <div className="albumthumbnail" style={{ backgroundImage: `url(${Placeholder})`, backgroundSize: "cover" }}>
-                                            <img src={song.Thumbnail} alt="" />
+                                        <div className="outer-album">
+                                            <div className="albumthumbnail" style={{ backgroundImage: `url(${Placeholder})`, backgroundSize: "cover" }}>
+                                                <img src={song.Thumbnail} alt="" />
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="songdetails">
-                                        <div className="songtitle">{song.Title || song.Album}</div>
-                                        <div className="songartists">
-                                            {
-                                                song.Album.length > 30 ?
-                                                <>
-                                                <p>{`${song.Artist.slice(0,30)}...`}</p>
+                                        <div className="songdetails">
+                                            <div className="songtitle">{song.Title || song.Album}</div>
+                                            <div className="songartists">
+                                                {
+                                                    song.Album.length > 30 ?
+                                                    <>
+                                                    <p>{`${song.Artist.slice(0,30)}...`}</p>
+                                                    <div className="home-separator"><div></div></div>
+                                                    <p>{`${song.Album.slice(0,30)}...`}</p>
+                                                    </>
+                                                    :
+                                                    song.Artist.length > 30 ?
+                                                    <>
+                                                    <p>{`${song.Artist.slice(0,30)}...`}</p>
+                                                    <div className="home-separator"><div></div></div>
+                                                    <p>{`${song.Album}`}</p>
+                                                    </>
+                                                    :
+                                                    <>
+                                                    <p>{`${song.Artist}`}</p>
+                                                    <div className="home-separator"><div></div></div>
+                                                    <p>{`${song.Album}`}</p>
+                                                    </>
+                                                }
                                                 <div className="home-separator"><div></div></div>
-                                                <p>{`${song.Album.slice(0,30)}...`}</p>
-                                                </>
-                                                :
-                                                song.Artist.length > 30 ?
-                                                <>
-                                                <p>{`${song.Artist.slice(0,30)}...`}</p>
+                                                <p>{song.Duration}</p>
                                                 <div className="home-separator"><div></div></div>
-                                                <p>{`${song.Album}`}</p>
-                                                </>
-                                                :
-                                                <>
-                                                <p>{`${song.Artist}`}</p>
-                                                <div className="home-separator"><div></div></div>
-                                                <p>{`${song.Album}`}</p>
-                                                </>
-                                            }
-                                            <div className="home-separator"><div></div></div>
-                                            <p>{song.Duration}</p>
-                                            <div className="home-separator"><div></div></div>
-                                            <p>{song.Year}</p>
+                                                <p>{song.Year}</p>
+                                            </div>
                                         </div>
-                                    </div>
                                     </> : null
                                 }
                             </div>

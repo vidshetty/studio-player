@@ -67,12 +67,13 @@
     padding-left: 10px;
 }
 .outer-album{
-    width: 70px;
+    width: 50px;
     height: 100%;
     display: flex;
-    justify-content: center;
+    /* justify-content: center; */
+    justify-content: flex-start;
     align-items: center;
-    /* background-color: aquamarine; */
+    /* background-color: aqua; */
 }
 .albumthumbnail{
     width: 38px;
@@ -86,7 +87,8 @@
 .songdetails{
     /* width: 200px; */
     height: 40px;
-    width: calc(100% - 70px);
+    width: auto;
+    /* width: calc(100% - 70px); */
     /* height: 100%; */
     /* background-color: black; */
     /* display: flex;
@@ -366,8 +368,22 @@
     cursor: pointer;
     transition: width 0.2s ease-in-out, height 0.2s ease-in-out;
 }
+.range::-moz-range-thumb{
+    width: 0px;
+    height: 0px;
+    border-radius: 50%;
+    background-color: #066bff;
+    cursor: pointer;
+    border: none;
+    transition: width 0.2s ease-in-out, height 0.2s ease-in-out;
+}
 .range:hover{
     height: 2px;
+}
+.range:hover::-moz-range-thumb{
+    width: 15px;
+    height: 15px;
+    border: none;
 }
 .range:hover::-webkit-slider-thumb{
     width: 15px;
@@ -392,8 +408,12 @@
     }
 }
 .dummycover:hover .range::-webkit-slider-thumb{
-    width: 13px;
-    height: 13px;
+    width: 15px;
+    height: 15px;
+}
+.dummycover:hover .range::-moz-range-thumb{
+    width: 15px;
+    height: 15px;
 }
 /* .dummycover:hover .range{
     height: 3px;
@@ -494,6 +514,15 @@
     background-color: #808080;
     cursor: pointer;
     transition: width 0.3s ease-in-out, height 0.3s ease-in-out;
+}
+.volumerange::-moz-range-thumb{
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #808080;
+    cursor: pointer;
+    transition: width 0.3s ease-in-out, height 0.3s ease-in-out;
+    border: none;
 }
 /* .volumeinput:hover .volumerange::-webkit-slider-thumb{
     width: 10px;
