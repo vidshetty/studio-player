@@ -1,17 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 
-    <head>
+    <head>        
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#030303" />
-        <!-- <link rel="icon" href="latest-bluewhite.svg" type="image/x-icon"/> -->
         <link rel="icon" href="latest-bluetransparent.svg" type="image/x-icon"/>
         <link rel="manifest" href="manifest.json" />
         <title>StudioMusic</title>
+
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="https://studiomusic.herokuapp.com">
+        <meta property="og:title" content="StudioMusic">
+        <meta property="og:description" content="Music For Everyone">
+        <meta property="og:image" content="https://studiomusic.herokuapp.com/player/latest-blueblack.jpg">
     </head>
 
-    <body>
+    <body
+    style="box-sizing: border-box; margin: 0; padding: 0;
+    background-color: #030303;"
+    >
         <div id="root"></div>
         <script src="registerSW.js"></script>
     </body>
