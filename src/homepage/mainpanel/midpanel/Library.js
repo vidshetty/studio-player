@@ -229,6 +229,16 @@ const NewActualLibrary = () => {
         navigator.clipboard.writeText(`${sharingBaseLink}/album/${item._albumId}`);
     };
 
+    const sharePlayableAlbum = item => {
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
+        setResObj(prev => {
+            return { ...prev, open: true, msg: "Album link copied to clipboard" };
+        });
+        navigator.clipboard.writeText(`${sharingBaseLink}/album/${item._albumId}/playable`);
+    };
+
     const handleMenu = (e, { dimensions, windowDim, each: album }) => {
         e.stopPropagation();
         const data = [
@@ -243,6 +253,10 @@ const NewActualLibrary = () => {
             {
                 name: "Share album",
                 func: () => shareAlbum(album)
+            },
+            {
+                name: "Share playable album",
+                func: () => sharePlayableAlbum(album)
             }
         ];
         setOpenerDetails({

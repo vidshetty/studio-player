@@ -103,6 +103,20 @@ const Trackview = () => {
         navigator.clipboard.writeText(`${sharingBaseLink}/track/${track._albumId}/${track._trackId}`);
     };
 
+    const sharePlayableTrack = () => {
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
+        setResObj(prev => {
+            return {
+                ...prev,
+                open: true,
+                msg: "Track link copied to clipboard"
+            };
+        });
+        navigator.clipboard.writeText(`${sharingBaseLink}/track/${track._albumId}/${track._trackId}/playable`);
+    };
+
     const goToAlbum = () => {
         setOpenerDetails(prev => {
             return { ...prev, open: false };
@@ -121,6 +135,10 @@ const Trackview = () => {
             {
                 name: "Share track",
                 func: shareTrack
+            },
+            {
+                name: "Share playable track",
+                func: sharePlayableTrack
             },
             {
                 name: "Go to album",

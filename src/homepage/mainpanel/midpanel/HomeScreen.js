@@ -409,6 +409,20 @@ const NewActualHomeScreen = () => {
         navigator.clipboard.writeText(`${sharingBaseLink}/track/${item._albumId}/${item._trackId}`);
     };
 
+    const sharePlayableTrack = item => {
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
+        setResObj(prev => {
+            return {
+                ...prev,
+                open: true,
+                msg: "Track link copied to clipboard"
+            };
+        });
+        navigator.clipboard.writeText(`${sharingBaseLink}/track/${item._albumId}/${item._trackId}/playable`);
+    };
+
     const handleMenuForPicks = (e, { dimensions, windowDim, song: album }) => {
         const data = [
             {
@@ -426,6 +440,10 @@ const NewActualHomeScreen = () => {
             {
                 name: "Share track",
                 func: () => shareTrack(album)
+            },
+            {
+                name: "Share playable track",
+                func: () => sharePlayableTrack(album)
             }
         ];
         e.stopPropagation();
@@ -494,6 +512,20 @@ const NewActualHomeScreen = () => {
         });
     };
 
+    const sharePlayableAlbum = item => {
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
+        setResObj(prev => {
+            return {
+                ...prev,
+                open: true,
+                msg: "Album link copied to clipboard"
+            };
+        });
+        navigator.clipboard.writeText(`${sharingBaseLink}/album/${item._albumId}/playable`);
+    };
+
     const handleMenuForAlbums = (e, { dimensions, windowDim, album }) => {
         const data = [
             {
@@ -507,6 +539,10 @@ const NewActualHomeScreen = () => {
             {
                 name: "Share album",
                 func: () => shareAlbum(album)
+            },
+            {
+                name: "Share playable album",
+                func: () => sharePlayableAlbum(album)
             }
         ];
         setOpenerDetails(prev => {
@@ -608,6 +644,10 @@ const NewActualHomeScreen = () => {
             {
                 name: "Share album",
                 func: () => shareAlbum(album)
+            },
+            {
+                name: "Share playable album",
+                func: () => sharePlayableAlbum(album)
             }
         ];
         e.stopPropagation();

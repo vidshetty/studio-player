@@ -675,6 +675,20 @@ const Queue = () => {
         navigator.clipboard.writeText(`${sharingBaseLink}/track/${item._albumId}/${item._trackId}`);
     };
 
+    const sharePlayableTrack = item => {
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
+        setResBar(prev => {
+            return {
+                ...prev,
+                open: true,
+                msg: "Track link copied to clipboard"
+            };
+        });
+        navigator.clipboard.writeText(`${sharingBaseLink}/track/${item._albumId}/${item._trackId}/playable`);
+    };
+
     const handleMenu = (e, { dimensions, windowDim, song: selectedSong, shouldNotGiveOption }) => {
         e.stopPropagation();
         const data = [
@@ -689,6 +703,10 @@ const Queue = () => {
             {
                 name: "Share track",
                 func: () => shareTrack(selectedSong)
+            },
+            {
+                name: "Share playable track",
+                func: () => sharePlayableTrack(selectedSong)
             }
         ];
         if (!shouldNotGiveOption) data.splice(1,0,{

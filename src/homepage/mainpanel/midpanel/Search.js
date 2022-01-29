@@ -366,6 +366,20 @@ const NewSearch = () => {
         navigator.clipboard.writeText(`${sharingBaseLink}/track/${song._albumId}/${song._trackId}`);
     };
 
+    const sharePlayableTrack = song => {
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
+        setResObj(prev => {
+            return {
+                ...prev,
+                open: true,
+                msg: "Track link copied to clipboard"
+            };
+        });
+        navigator.clipboard.writeText(`${sharingBaseLink}/track/${song._albumId}/${song._trackId}/playable`);
+    };
+
     const handleSongMenu = (e, { dimensions, windowDim, song: album }) => {
         const data = [
             {
@@ -383,6 +397,10 @@ const NewSearch = () => {
             {
                 name: "Share track",
                 func: () => shareTrack(album)
+            },
+            {
+                name: "Share playable track",
+                func: () => sharePlayableTrack(album)
             }
             // {
             //     name: "Start radio",
@@ -463,6 +481,20 @@ const NewSearch = () => {
         navigator.clipboard.writeText(`${sharingBaseLink}/album/${item._albumId}`);
     };
 
+    const sharePlayableAlbum = item => {
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
+        setResObj(prev => {
+            return {
+                ...prev,
+                open: true,
+                msg: "Album link copied to clipboard"
+            };
+        });
+        navigator.clipboard.writeText(`${sharingBaseLink}/album/${item._albumId}/playable`);
+    };
+
     const handleAlbumMenu = (e, { dimensions, windowDim, song: album }) => {
         const data = [
             {
@@ -476,6 +508,10 @@ const NewSearch = () => {
             {
                 name: "Share album",
                 func: () => shareAlbum(album)
+            },
+            {
+                name: "Share playable album",
+                func: () => sharePlayableAlbum(album)
             }
         ];
         e.stopPropagation();

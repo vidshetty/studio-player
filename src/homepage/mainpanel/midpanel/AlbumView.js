@@ -255,6 +255,20 @@ const NewActualAlbumView = () => {
         navigator.clipboard.writeText(`${sharingBaseLink}/album/${album._albumId}`);
     };
 
+    const sharePlayableAlbum = () => {
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
+        setResObj(prev => {
+            return {
+                ...prev,
+                open: true,
+                msg: "Album link copied to clipboard"
+            };
+        });
+        navigator.clipboard.writeText(`${sharingBaseLink}/album/${album._albumId}/playable`);
+    };
+
     const handleMenu = e => {
         e.stopPropagation();
         const dimensions = { x: e.clientX, y: e.clientY };
@@ -266,6 +280,10 @@ const NewActualAlbumView = () => {
             {
                 name: "Share album",
                 func: shareAlbum
+            },
+            {
+                name: "Share playable album",
+                func: sharePlayableAlbum
             }
         ];
         setOpenerDetails(prev => {
@@ -333,6 +351,20 @@ const NewActualAlbumView = () => {
         navigator.clipboard.writeText(`${sharingBaseLink}/track/${album._albumId}/${selectedSong._trackId}`);
     };
 
+    const sharePlayableTrack = selectedSong => {
+        setOpenerDetails(prev => {
+            return { ...prev, open: false };
+        });
+        setResObj(prev => {
+            return {
+                ...prev,
+                open: true,
+                msg: "Track link copied to clipboard"
+            };
+        });
+        navigator.clipboard.writeText(`${sharingBaseLink}/track/${album._albumId}/${selectedSong._trackId}/playable`);
+    };
+
     const handleEachMenu = (e, { dimensions, windowDim, song: selectedSong }) => {
         e.stopPropagation();
         const data = [
@@ -347,6 +379,10 @@ const NewActualAlbumView = () => {
             {
                 name: "Share track",
                 func: () => shareTrack(selectedSong)
+            },
+            {
+                name: "Share playable track",
+                func: () => sharePlayableTrack(selectedSong)
             }
         ];
         setOpenerDetails(prev => {
