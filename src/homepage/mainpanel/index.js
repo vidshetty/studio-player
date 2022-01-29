@@ -88,10 +88,7 @@ const TopSearchBar = () => {
         listLocal = [ ...list ];
         if (value && !listLocal.includes(value)) {
             listLocal.unshift(value);
-            const len = listLocal.length;
-            if (len > 8) {
-                for (let i=0; i<len-8; i++) listLocal.pop();
-            }
+            while (listLocal.length > 8) listLocal.pop();
             setList(prev => {
                 localStorage.setItem("searches", JSON.stringify(listLocal));
                 return listLocal;
@@ -130,7 +127,7 @@ const TopSearchBar = () => {
             }
             setNum(numLocal+1);
         } else if (e.keyCode === 38 && showListLocal) {
-            if (numLocal-1 === -1) {
+            if (numLocal-1 < 0) {
                 numLocal = 7;
                 setNum(7);
                 return;
