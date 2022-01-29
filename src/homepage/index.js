@@ -4,67 +4,30 @@ import "../css/playerstyles.css";
 import "../css/albumview.css";
 import MainPanel from "./mainpanel";
 import React, { useState, useEffect, useRef, useContext } from "react";
-import { useHistory } from "react-router-dom";
-// import Play from "../assets/playwhite.png";
 import Play from "../assets/playbutton-white.svg";
-// import Pause from "../assets/pausewhite.png";
 import Pause from "../assets/pausebutton-white.svg";
 import Close from "../assets/deletewhite.svg";
 import Placeholder from "../assets/placeholder.svg";
-// import repeat from "../assets/repeat.png";
 import repeat from "../assets/repeat-white.svg";
-// import repeatOne from "../assets/repeatone.png";
 import repeatOne from "../assets/repeat-one-white.svg";
-// import noRepeat from "../assets/norepeat.png";
 import noRepeat from "../assets/norepeat-disabled.svg";
 import shuffleoff from "../assets/shuffle-disabled.svg";
 import shuffleon from "../assets/shuffle-enabled.svg";
-// import next from "../assets/nexttrack.png";
 import next from "../assets/nextbutton-white.svg";
-import next_trans from "../assets/nextbutton-transparent.svg";
-// import previous from "../assets/previoustrack.png";
 import previous from "../assets/previousbutton-white.svg";
-import previous_trans from "../assets/previousbutton-transparent.svg";
-import queuewhite from "../assets/queuewhite.png";
-import queueaquamarine from "../assets/queueaquamarine.png";
-import fullscreenaquamarine from "../assets/fullscreenaquamarine.svg";
-import fullscreenwhite from "../assets/fullscreenwhite.svg";
-import innerfullaquamarine from "../assets/innerfullaquamarine.svg";
-import innerfullwhite from "../assets/innerfullwhite.svg";
 import upArrow from "../assets/uparrow.svg";
 import downArrow from "../assets/downarrow.svg";
-import Expand from "../assets/expand-white.svg";
-import volumesvg from "../assets/volume.svg";
 import Button from "../Button";
+
 import {
-    CustomUseState,
-    playingGlobal,
-    albumGlobal,
     convertTime,
     wait,
-    queueGlobal,
-    queueOpenedGlobal,
-    songIsPausedGlobal,
-    repeatTypeGlobal,
-    radioGlobal,
-    openerGlobal,
-    homeClass,
-    responseBar,
-    searchBarGlobal,
-    topBarGlobal,
     sendRequest,
     Timer,
-    fullScreenGlobal,
-    miniPlayerGlobal,
-    usePrevious,
-    profileOpener,
-    lyricsGlobal,
-    lyricTextGlobal,
     global,
-    skipSecs,
-    prefix,
-    basename
+    skipSecs
 } from "../common";
+
 import {
     PlayerContext,
     QueueContext,
@@ -83,28 +46,41 @@ import {
     KeyShortcutContext,
     UserContext
 } from "../index";
+
+
 export const audio = new Audio();
-const shouldCache = false;
+
+
+// Player
+export let pauseOrPlay = null;
+let trackingTimer = null, elapsedTime = null;
+let duration = null, range = null;
+let volumerange = null;
+let setVolume = 1, percent = 0, bufferPercent = 0;
+let whichRepeat = null;
+let goToNext = null, goToPrevious = null;
 let mainVolume = 1;
-let loaded = false;
-let whichRepeat;
+let actualQueue = null;
+let currentSongIndex = 0, isSongPlaying = null;
+let isBuffering = null, manuallyPausedLocal = null, timeout = null;
+let screenLocal = null, currentLyricIndex = null;
+let lyricsLocal = null, lyricTextLocal = null;
 let ctrlKey = false, vKey = false;
-let currentSongIndex = 0, isSongPlaying, actualQueue;
-let volumerange, elapsedTime, duration, range, percent = 0, style, bufferPercent = 0;
-export let pauseOrPlay;
-let goToNext, goToPrevious;
-let setVolume = 1, isBuffering, manuallyPausedLocal, songPausedLocal, timeout = null;
-let trackingTimer, screenLocal, currentLyricIndex = null, lyricsLocal, lyricTextLocal, preLoadedLocal;
+const shouldCache = false;
+
+// Opener
+let style = null;
+
+// ProfileOpener
+let signOutLoading = null;
 
 
 const changeColor = (percent,bufferPercent) => {
-    return `linear-gradient(to right, #066bff ${percent}%, #404040 ${percent}%, #404040 ${bufferPercent}%, #303030 0%)`;
-    // return `linear-gradient(to right, #2941ab ${percent}%, #404040 ${percent}%, #404040 ${bufferPercent}%, #303030 0%)`;
-    // return `linear-gradient(to right, #ffffff ${percent}%, #404040 ${percent}%, #404040 ${bufferPercent}%, #303030 0%)`;
+    return `linear-gradient(to right, #066bff ${percent}%, ` + 
+            `#404040 ${percent}%, #404040 ${bufferPercent}%, #303030 0%)`;
 };
 
 const changeColorVolume = (value) => {
-    // return `linear-gradient(to right, white ${value}%, rgba(255,255,255,0.1) 0%)`;
     return `linear-gradient(to right, #808080 ${value}%, rgba(255,255,255,0.1) 0%)`;
 };
 
@@ -148,44 +124,38 @@ const trial = async () => {
 };
 
 const Player = () => {
+
     const [hovered, setHovered] = useState(false);
     const [, setMuteOptions] = useState({ mute: false, lastlevel: null });
-    const [preLoaded, setPreLoaded] = useState(false);
+    const [, setPreLoaded] = useState(false);
     const [song, setSong] = useContext(AlbumContext);
-    const [playerOn,setPlaying] = useContext(PlayerContext);
+    const [, setPlaying] = useContext(PlayerContext);
     const [queue, setQueue] = useContext(QueueContext);
     const [buffering, setBuffering] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
     const [manuallyPaused, setManuallyPaused] = useState(false);
-    // const [buttonshow, setButtonshow] = useState(false);
     const [repeatType, setRepeatType] = useContext(RepeatTypeContext);
     const [shuffle, setShuffle] = useState(false);
     const [queueOpened, setQueueOpened] = useContext(QueueOpenedContext);
-    const [songPaused, setSongPaused] = useContext(SongIsPausedContext);
-    // const [topBarConfig, setTopBarConfig] = CustomUseState(topBarGlobal);
-    const [screen, setScreen] = useContext(FullScreenContext);
+    const [,setSongPaused] = useContext(SongIsPausedContext);
+    const [screen,] = useContext(FullScreenContext);
     const [openerDetails, setOpenerDetails] = useContext(MenuContext);
-    const [resBar, setResBar] = useContext(ResponseBarContext);
+    const [, setResBar] = useContext(ResponseBarContext);
     const [lyrics,] = useContext(LyricsContext);
     const [lyricText ,setLyricText] = useContext(LyricsTextContext);
-    const prevSong = usePrevious(song);
-    screenLocal = screen;
-    // topBar = topBarConfig;
     const [isRadioOn, setRadioOn] = useContext(RadioContext);
-    const [update, setUpdate] = useState(true);
-    const hist = useHistory();
+    const [update,] = useState(true);
+
+    screenLocal = screen;
     actualQueue = queue;
     currentSongIndex = queue.findIndex(each => {
         return each.id === song.id;
     });
     manuallyPausedLocal = manuallyPaused;
-    preLoadedLocal = preLoaded;
     isSongPlaying = isPlaying;
     isBuffering = buffering;
-    songPausedLocal = songPaused;
     lyricsLocal = lyrics;
     lyricTextLocal = lyricText;
-    let playerOnLocal = playerOn;
 
 
     const changeRepeat = e => {
@@ -196,50 +166,21 @@ const Player = () => {
     };
     pauseOrPlay = async e => {
         e && e.stopPropagation && e.stopPropagation();
-        if (song.url === "") {
-            const index = actualQueue.indexOf(song);
-            song.url = song.backup;
-            delete song.backup;
-            setSong(song);
-            actualQueue[index] = song;
-            setQueue(actualQueue);
-            setUpdate(!update);
-            return;
-        }
         if (isSongPlaying) {
-            // setSongPaused(true);
-            // setIsPlaying(false);
-            // mainVolume = audio.volume;
-            // const reduce = setInterval(() => {
-            //     audio.volume = audio.volume - 0.2 >= 0 ? audio.volume - 0.2 : audio.volume;
-            // },50);
-            // await wait(800);
-            // clearInterval(reduce);
             setManuallyPaused(true);
             audio.pause();
         } else {
-            // setSongPaused(false);
-            // setIsPlaying(true);
             setManuallyPaused(false);
             audio.play();
-            // const increase = setInterval(() => {
-            //     audio.volume = audio.volume + 0.2 <= mainVolume ? audio.volume + 0.2 : mainVolume;
-            // },50);
-            // await wait(800);
-            // clearInterval(increase);
         }
     };
     const openQueue = e => {
         e && e.stopPropagation();
         documentClick(e);
         setQueueOpened(!queueOpened);
-        // if (!queueOpened) hist.push(`${prefix}${basename}/queue`);
-        // else hist.goBack();
     };
     goToNext = e => {
         e && e.stopPropagation && e.stopPropagation();
-        localStorage.removeItem("time");
-        localStorage.removeItem("duration");
         if (actualQueue.length === 1) {
             audio.currentTime = 0;
         } else {
@@ -258,7 +199,6 @@ const Player = () => {
                 }
                 return nextIndex;
             };
-            // const nextIndex = currentSongIndex < actualQueue.length - 1 ? currentSongIndex + 1 : 0;
             const nextIndex = findNextIndex();
             setSong(actualQueue[nextIndex]);
             currentSongIndex = nextIndex;
@@ -267,8 +207,6 @@ const Player = () => {
     };
     goToPrevious = e => {
         e && e.stopPropagation && e.stopPropagation();
-        localStorage.removeItem("time");
-        localStorage.removeItem("duration");
         setSongPaused(true);
         if (actualQueue.length === 1 || audio.currentTime > 10) {
             audio.currentTime = 0;
@@ -291,7 +229,6 @@ const Player = () => {
                 }
                 return previousIndex;
             };
-            // const prevIndex = currentSongIndex === 0 ? actualQueue.length-1 : currentSongIndex - 1;
             const prevIndex = findPreviousIndex();
             setSong(actualQueue[prevIndex]);
             currentSongIndex = prevIndex;
@@ -301,7 +238,6 @@ const Player = () => {
         setPlaying(false);
         audio.src = "";
         setSong({});
-        localStorage.removeItem("queue");
         setQueue([]);
         setRadioOn(false);
         if (queueOpened) setQueueOpened(!queueOpened);
@@ -315,24 +251,21 @@ const Player = () => {
         arr.splice(0,0,song);
         return arr;
     };
-    const shuffleHandler = e => {
+    const shuffleHandler = async e => {
+
         e.stopPropagation();
+
         if (!shuffle && actualQueue.length > 3) {
             const dummyQueue = actualQueue;
             const index = dummyQueue.indexOf(song);
             [dummyQueue[0], dummyQueue[index]] = [dummyQueue[index], dummyQueue[0]];
-            const shuffled = randomize(dummyQueue.slice(1,actualQueue.length));
-            localStorage.setItem("queue",JSON.stringify(shuffled));
+            const shuffled = randomize(dummyQueue.slice(1, actualQueue.length));
             setQueue(shuffled);
-            // setShuffle(!shuffle);
             setShuffle(true);
-            setTimeout(() => {
-                setShuffle(false);
-            },500);
+            await wait(500);
+            setShuffle(false);
         }
-        // if (shuffle) {
-        //     setShuffle(!shuffle);
-        // }
+
     };
     const goToNextForMediaSession = () => {
         localStorage.removeItem("time");
@@ -400,8 +333,6 @@ const Player = () => {
 
 
     const metadata = (e) => {
-        loaded = true;
-        localStorage.setItem("duration",audio.duration);
         range.max = audio.duration;
         duration.innerText = convertTime(audio.duration);
         setBuffering(false);
@@ -410,14 +341,6 @@ const Player = () => {
             audio.play();
             if (!trackingTimer.hasStarted()) trackingTimer.start();
         }, 500);
-        // const time = localStorage.getItem("time");
-        // console.log("time",time);
-        // if (time === null) {
-        //     audio.currentTime = 0;
-        // } else {
-        //     audio.currentTime = time;
-        //     console.log("setting time");
-        // }
     };
     const waiting = (e) => {
         setBuffering(true);
@@ -425,9 +348,8 @@ const Player = () => {
         if (trackingTimer.canPause()) trackingTimer.pause();
     };
     const timeupdate = (e) => {
-        localStorage.setItem("time", audio.currentTime);
+
         elapsedTime.innerText = convertTime(audio.currentTime);
-        // console.log(audio.currentTime);
 
         if (lyricsLocal.length > 0 && song.lyrics && song.sync) {
             let found = false;
@@ -460,6 +382,7 @@ const Player = () => {
         }
         bufferPercent = (value/range.max) * 100;
         range.style.background = changeColor(percent,bufferPercent);
+
     };
     const canplay = (e) => {
         if (!manuallyPausedLocal) {
@@ -479,21 +402,28 @@ const Player = () => {
         range.style.background = changeColor(0,0);
         if (whichRepeat === 2) {
             audio.currentTime = 0;
-            setTimeout(() => audio.play(), 300);
+            setTimeout(() => {
+                audio.play();
+            }, 300);
             trackingTimer.stop();
             trackingTimer = new Timer(30, addToRecentlyPlayed);
             if (!trackingTimer.hasStarted()) trackingTimer.start();
-        } else if (whichRepeat === 0) {
+        }
+        else if (whichRepeat === 0) {
             setIsPlaying(false);
             setSongPaused(true);
-        } else {
+        }
+        else {
             if (actualQueue.length === 1) {
                 audio.currentTime = 0;
-                setTimeout(() => audio.play(), 300);
+                setTimeout(() => {
+                    audio.play();
+                }, 300);
                 trackingTimer.stop();
                 trackingTimer = new Timer(30, addToRecentlyPlayed);
                 if (!trackingTimer.hasStarted()) trackingTimer.start();
-            } else {
+            }
+            else {
                 goToNext();
             }
         }
@@ -504,9 +434,6 @@ const Player = () => {
         setIsPlaying(false);
         if (trackingTimer.canPause()) trackingTimer.pause();
         document.title = "StudioMusic";
-        // ipcRenderer.send("paused");
-        // await wait(1000);
-        // audio.volume = 0;
     };
     const onplaying = async (e) => {
         setManuallyPaused(false);
@@ -514,10 +441,6 @@ const Player = () => {
         setIsPlaying(true);
         if (trackingTimer.canContinue()) trackingTimer.continue();
         document.title = `${song.Title || song.Album} | StudioMusic`;
-        // ipcRenderer.send("playing");
-        // await wait(1000);
-        // audio.volume = mainVolume;
-        // pauseOrPlay();
     };
 
     const forward = () => {
@@ -534,8 +457,9 @@ const Player = () => {
         }
     };
     const onkeydown = (e) => {
+
         if (e.keyCode === 17) ctrlKey = true;
-        if (e.keyCode === 86) vKey = true;
+        if (e.keyCode === 86) vKey = true
 
         if (global.searchBarOpen) return;
 
@@ -582,6 +506,31 @@ const Player = () => {
             goToPrevious();
         }
 
+        if (e.keyCode === 38 && !global.searchBarOpen) {
+            e.preventDefault();
+            const val = parseFloat(volumerange.value);
+            volumerange.value = val+5 > 100 ? 100 : val+5;
+            volumechange();
+            setResBar(prev => {
+                return { ...prev, open: true, msg: `Volume: ${Math.floor(volumerange.value)}%` };
+            });
+        }
+        
+        if (e.keyCode === 40 && !global.searchBarOpen) {
+            e.preventDefault();
+            const val = parseFloat(volumerange.value);
+            volumerange.value = val-5 < 0 ? 0 : val-5;
+            volumechange();
+            setResBar(prev => {
+                return { ...prev, open: true, msg: `Volume: ${Math.floor(volumerange.value)}%` };
+            });
+        }
+
+    };
+    const onkeyup = (e) => {
+        if (e.keyCode === 17) ctrlKey = false;
+        if (e.keyCode === 86) vKey = false;
+
         if (e.keyCode === 39) {
             e.preventDefault();
             forward();
@@ -591,42 +540,16 @@ const Player = () => {
             e.preventDefault();
             rewind();
         }
-
-        if (e.keyCode === 107 && vKey) {
-            const val = parseFloat(volumerange.value);
-            volumerange.value = val+5 > 100 ? 100 : val+5;
-            volumechange();
-            setResBar(prev => {
-                return { ...prev, open: true, msg: `Volume: ${Math.floor(volumerange.value)}%` };
-            });
-        }
-        
-        if (e.keyCode === 109 && vKey) {
-            const val = parseFloat(volumerange.value);
-            volumerange.value = val-5 < 0 ? 0 : val-5;
-            volumechange();
-            setResBar(prev => {
-                return { ...prev, open: true, msg: `Volume: ${Math.floor(volumerange.value)}%` };
-            });
-        }
-    };
-    const onkeyup = (e) => {
-        if (e.keyCode === 17) ctrlKey = false;
-        if (e.keyCode === 86) vKey = false;
     };
 
     const seek = e => {
         if (e.action === "seekforward") {
             forward();
-        } else if (e.action === "seekbackward") {
+        }
+        else if (e.action === "seekbackward") {
             rewind();
-        } else if (e.action === "seekto") {}
-    };
-
-    const lessen = () => {
-        const split = song.Color.split(",");
-        split[3] = "0.3)";
-        return split.join(",");
+        }
+        else if (e.action === "seekto") return null;
     };
 
     const cacheNextSong = async () => {
@@ -652,82 +575,33 @@ const Player = () => {
     };
 
     const addToRecentlyPlayed = () => {
+
         sendRequest({
             method: "POST",
             endpoint: "/addToRecentlyPlayed",
-            data: {
-                albumId: song._albumId
-            }
+            data: { albumId: song._albumId }
         });
+
         if (shouldCache) {
             cacheNextSong();
         }
     };
 
-    const screenSetting = () => {
-        if (playerOnLocal) {
-            setScreen({
-                ...screenLocal,
-                show: !screenLocal.show
-            });
-            // ipcRenderer.send("full");
-        }
-    };
-
     const documentClick = e => {
         if (openerDetails.open) {
-            setOpenerDetails({
-                ...openerDetails,
-                open: false
+            setOpenerDetails(prev => {
+                return { ...prev, open: false };
             });
         }
-    };
-
-    const calcColor = () => {
-        const split = song.Color.split(",");
-        split[3] = "0.1)";
-        return split.join(",");
     };
 
     useEffect(() => {
         setPreLoaded(false);
         currentLyricIndex = null;
         setLyricText("");
-        let shouldRemove = false;
-        (() => {
-            if (Object.keys(prevSong).length < 1) {
-                return;
-            }
-            if (prevSong.Type !== song.Type) {
-                shouldRemove = true;
-                return;
-            }
-            const titleExistsInCurrent = song.Title !== undefined;
-            const titleExistsInPrev = prevSong.Title !== undefined;
-            if (titleExistsInCurrent && titleExistsInPrev) {
-                if (prevSong.Title !== song.Title) {
-                    shouldRemove = true;
-                    return;
-                }
-            } else if (!titleExistsInCurrent && titleExistsInPrev) {
-                shouldRemove = true;
-                return;
-            } else if (titleExistsInCurrent && !titleExistsInPrev) {
-                shouldRemove = true;
-                return;
-            } else if (!titleExistsInCurrent && !titleExistsInPrev) {
-                if (prevSong.Album !== song.Album) {
-                    shouldRemove = true;
-                    return;
-                }
-            }
-        })();
-        if (shouldRemove) {
-            localStorage.removeItem("time");
-            localStorage.removeItem("duration");
-        }
-        if (Object.keys(song).length !== 0) {
-            trackingTimer = new Timer(20,addToRecentlyPlayed);
+
+        if (Object.keys(song).length > 0) {
+            trackingTimer = new Timer(20, addToRecentlyPlayed);
             if ("mediaSession" in navigator) {
                 navigator.mediaSession.metadata = new window.MediaMetadata({
                     title: song.Title || song.Album,
@@ -746,6 +620,7 @@ const Player = () => {
                 navigator.mediaSession.setActionHandler("seekto", seek);
             }
         }
+
         return () => {
             document.title = "StudioMusic";
             if (trackingTimer) {
@@ -756,119 +631,67 @@ const Player = () => {
     },[song]);
 
     useEffect(() => {
-        const setUp = async () => {
-            audio.volume = setVolume;
-            elapsedTime = document.querySelector(".elapsedtime");
-            duration = document.querySelector(".progressduration");
-            range = document.querySelector(".range");
-            volumerange = document.querySelector(".volumerange");
-            const rType = parseInt(localStorage.getItem("repeatType"));
-            whichRepeat = 1;
-            if (rType) {
-                setRepeatType(rType);
-                whichRepeat = rType;
-            }
 
-            // if (prevSong.Album !== song.Album) {
-            //     localStorage.removeItem("time");
-            //     localStorage.removeItem("duration");
+        audio.volume = setVolume;
+        elapsedTime = document.querySelector(".elapsedtime");
+        duration = document.querySelector(".progressduration");
+        range = document.querySelector(".range");
+        volumerange = document.querySelector(".volumerange");
+        const rType = parseInt(localStorage.getItem("repeatType"));
+        whichRepeat = 1;
+        if (rType) {
+            setRepeatType(rType);
+            whichRepeat = rType;
+        }
+
+        document.addEventListener("keydown",onkeydown);
+        document.addEventListener("keyup",onkeyup);
+        // document.addEventListener("click",documentClick);
+
+        volumerange.value = audio.volume * 100;
+        volumerange.style.background = changeColorVolume(volumerange.value);
+        volumerange.addEventListener("input",volumeinput);
+        volumerange.addEventListener("change",volumechange);
+        range && range.addEventListener("input",progressinput);
+        range && range.addEventListener("change",progresschange);
+
+        // setIsPlaying(true);
+        // percent = 0;
+        duration.innerText = "0: 00";
+
+        if (Object.keys(song).length > 0) {
+            // let LINK;
+            // if (shouldCache) {
+            //     const cache = await caches.open("song-data");
+            //     const songdata = await cache.match(song.url);
+            //     if (songdata) {
+            //         const blob = await songdata.blob();
+            //         LINK = URL.createObjectURL(blob);
+            //     } else {
+            //         LINK = song.url;
+            //     }
+            // } else {
+            //     LINK = song.url;
             // }
+            // audio.src = LINK;
+            audio.src = song.url;
+        }
+        else {
+            shutdown();
+        }
 
-            document.addEventListener("keydown",onkeydown);
-            document.addEventListener("keyup",onkeyup);
-            // document.addEventListener("click",documentClick);
-
-            volumerange.value = audio.volume * 100;
-            volumerange.style.background = changeColorVolume(volumerange.value);
-            volumerange.addEventListener("input",volumeinput);
-            volumerange.addEventListener("change",volumechange);
-            range && range.addEventListener("input",progressinput);
-            range && range.addEventListener("change",progresschange);
-
-            // setIsPlaying(true);
-            // percent = 0;
-            duration.innerText = "0: 00";
-            loaded = false;
-            if (Object.keys(song).length !== 0) {
-                let LINK;
-                if (shouldCache) {
-                    const cache = await caches.open("song-data");
-                    const songdata = await cache.match(song.url);
-                    if (songdata) {
-                        const blob = await songdata.blob();
-                        LINK = URL.createObjectURL(blob);
-                    } else {
-                        LINK = song.url;
-                    }
-                } else {
-                    LINK = song.url;
-                }
-
-                audio.src = LINK;
-
-                // fetchStream(song.url).then(response => {
-                //     const blob = new Blob([response.value], { type: 'audio/mp3' });
-                //     const url = window.URL.createObjectURL(blob);
-                //     audio.src = url;
-                //     audio.play();
-                // })
-                // .catch((error) => {
-                //     console.log("error",error.message);
-                // });
-            } else {
-                shutdown();
-            }
-
-            let oldDuration = undefined, oldTime = undefined;
-            if (song.url !== "") {
-                setIsPlaying(true);
-                setBuffering(true);
-                audio.addEventListener("loadedmetadata",metadata);
-                audio.addEventListener("waiting",waiting);
-                audio.addEventListener("timeupdate",timeupdate);
-                audio.addEventListener("canplay",canplay);
-                // audio.addEventListener("play",onplay);
-                audio.addEventListener("ended",ended);
-                audio.addEventListener("pause",onpaused);
-                audio.addEventListener("playing",onplaying);
-
-                localStorage.setItem("nowplaying",JSON.stringify(song));
-                // oldDuration = localStorage.getItem("duration");
-                // oldTime = localStorage.getItem("time");
-                oldDuration = null;
-                oldTime = null;
-                if (oldDuration !== null && oldTime !== null) {
-                    audio.currentTime = oldTime;
-                    range.max = oldDuration;
-                    range.value = oldTime;
-                    percent = range.value/range.max * 100;
-                    range.style.background = changeColor(percent,0);
-                    duration.innerText = convertTime(oldDuration);
-                    elapsedTime.innerText = convertTime(oldTime);
-                }
-            } else {
-                setSongPaused(true);
-                oldDuration = localStorage.getItem("duration");
-                oldTime = localStorage.getItem("time");
-                range.max = oldDuration;
-                range.value = oldTime;
-                percent = range.value/range.max * 100;
-                range.style.background = changeColor(percent,0);
-                duration.innerText = convertTime(oldDuration);
-                elapsedTime.innerText = convertTime(oldTime);
-            }
-        };
-
-        setUp();
+        setIsPlaying(true);
+        setBuffering(true);
+        audio.addEventListener("loadedmetadata",metadata);
+        audio.addEventListener("waiting",waiting);
+        audio.addEventListener("timeupdate",timeupdate);
+        audio.addEventListener("canplay",canplay);
+        // audio.addEventListener("play",onplay);
+        audio.addEventListener("ended",ended);
+        audio.addEventListener("pause",onpaused);
+        audio.addEventListener("playing",onplaying);
 
         return () => {
-            if (song.url === "") {
-                const index = actualQueue.indexOf(song);
-                song.url = song.backup;
-                delete song.backup;
-                actualQueue[index] = song;
-                setQueue(actualQueue);
-            }
             document.removeEventListener("keydown",onkeydown);
             document.removeEventListener("keyup",onkeyup);
             // document.removeEventListener("click",documentClick);
@@ -888,15 +711,13 @@ const Player = () => {
             audio.removeEventListener("playing",onplaying);
         };
 
-    },[song, update]);
+    }, [song, update]);
 
     return(
         <div className="dummycover">
             <input type="range" min="0" defaultValue="0" className="range" disabled={buffering || song.url === ""} />
             <div className="outerplayer">
-                <div className="player"
-                // style={{ backgroundColor: `${calcColor()}` }}
-                >
+                <div className="player">
                     <div className="innerplayer" onClick={openQueue}
                     onMouseOver={() => setHovered(true)}
                     onMouseOut={() => setHovered(false)}>
@@ -992,25 +813,13 @@ const Player = () => {
                                     <img src={queueOpened ? downArrow : upArrow} alt="" title="Player" />
                                 </div>
                             }
-                            {/* { Object.keys(song).length !== 0 ?
-                                <div className="destroyplayer" onClick={shutdown}>
-                                    <img src={Close} alt="" />
-                                </div> : ""
-                            } */}
-                            {/* <div className="fullscreenbutton"
-                            onClick={screenSetting}
-                            onMouseOver={() => setButtonshow(true)}
-                            onMouseOut={() => setButtonshow(false)}
-                            >
-                                <img src={ screenLocal.show ? (buttonshow ? innerfullaquamarine : innerfullwhite) : 
-                                    (buttonshow ? fullscreenaquamarine : fullscreenwhite) } alt="" />
-                            </div> */}
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     );
+    
 };
 
 
@@ -1023,7 +832,10 @@ const Opener = ({ openerDetails, setOpenerDetails }) => {
     };
 
     const click = e => {
-        if (!((e.target === opener.current) || opener.current.contains(e.target))) {
+        if (
+            !(e.target === opener.current ||
+                opener.current.contains(e.target))
+        ) {
             setOpenerDetails(prev => {
                 return { ...prev, open: false };
             });
@@ -1101,6 +913,7 @@ const MiniPlayer = () => {
     const [queue,] = useContext(QueueContext);
     const [songIsPaused,] = useContext(SongIsPausedContext);
     const anim = useRef(null);
+
     if (queue.length === 0 && mini) {
         setMini(false);
     }
@@ -1142,7 +955,7 @@ const MiniPlayer = () => {
     );
 };
 
-const ResponseBar = () => {
+export const ResponseBar = () => {
     const [obj, setObj] = useContext(ResponseBarContext);
     const [playing,] = useContext(PlayerContext);
 
@@ -1163,11 +976,10 @@ const ResponseBar = () => {
             setObj(prev => {
                 return { ...prev, open: false };
             });
-        }, 1500);
+        }, 3000);
     }
 
     return(
-        // <div className={ obj.open ? "responsebar up" : obj.open !== "" ? "responsebar down" : "responsebar start" }>
         <div className={decideClass()}>
             <div className="message">{obj.msg}</div>
         </div>
@@ -1179,12 +991,7 @@ const ProfileOpener = ({ setProfileOpen }) => {
     const [user,] = useContext(UserContext);
     const [isLoading, setIsLoading] = useState(false);
     const profileOpener = useRef(null);
-    window.isLoading = isLoading;
-
-    const openAccount = () => {
-        window.open("/account", "_blank");
-        return true;
-    };
+    signOutLoading = isLoading;
 
     const signOut = async () => {
         setIsLoading(true);
@@ -1204,33 +1011,26 @@ const ProfileOpener = ({ setProfileOpen }) => {
     };
 
     const click = e => {
-        if (!(e.target === profileOpener.current || profileOpener.current.contains(e.target))) {
-            setProfileOpen(false);
-        }
+        if (
+            !(e.target === profileOpener.current ||
+                profileOpener.current.contains(e.target)) && !signOutLoading
+        ) setProfileOpen(false);
     };
 
     const keyShort = () => {
-        if (!openKeyShort) {
-            setOpenKeyShort(true);
-        }
+        if (!openKeyShort) setOpenKeyShort(true);
         return true;
     };
 
     const data = [
-        // { name: "Account", func: openAccount },
-        // { name: "History", func: ()=>{ return false; } },
         { name: "Keyboard Shortcuts", func: keyShort },
         { name: "Sign Out", func: signOut, only: true }
     ];
 
     const handle = async (menu) => {
-        if (window.isLoading) {
-            return;
-        }
+        if (signOutLoading) return;
         const hide = await menu.func();
-        if (hide) {
-            setProfileOpen(false);
-        }
+        if (hide) setProfileOpen(false);
     };
 
     useEffect(() => {
@@ -1258,7 +1058,7 @@ const ProfileOpener = ({ setProfileOpen }) => {
                     <p>{user.limit}</p>
                 </div>
             </div>
-            { data.length !== 0 ?
+            { data.length > 0 ?
                 data.map(menu => {
                     return(
                         <div className="rowinmenu" onClick={() => handle(menu)}>
@@ -1289,12 +1089,12 @@ const KeyboardShortcut = ({ setOpenKeyShort }) => {
 
     const data = [
         { name: "Play/Pause", keys: ["Space"] },
-        { name: `Forward ${skipSecs} secs`, keys: ["->"] },
-        { name: `Rewind ${skipSecs} secs`, keys: ["<-"] },
+        { name: `Forward ${skipSecs} secs`, keys: ["Right"] },
+        { name: `Rewind ${skipSecs} secs`, keys: ["Left"] },
         { name: "Previous song", keys: ["P"] },
         { name: "Next song", keys: ["N"] },
-        { name: "Volume Up", keys: ["V","+"] },
-        { name: "Volume Down", keys: ["V","-"] },
+        { name: "Volume Up", keys: ["Up"] },
+        { name: "Volume Down", keys: ["Down"] },
         { name: "Mute/Unmute", keys: ["M"] }
     ];
 
@@ -1337,13 +1137,12 @@ const KeyboardShortcut = ({ setOpenKeyShort }) => {
     );
 };
 
+
 const Home = () => {
     const [playing,] = useContext(PlayerContext);
     const [profileOpen, setProfileOpen] = useContext(ProfileContext);
     const [openerDetails, setOpenerDetails] = useContext(MenuContext);
     const [openKeyShort, setOpenKeyShort] = useContext(KeyShortcutContext);
-    // const [name,] = CustomUseState(homeClass);
-    const [screen,] = useContext(FullScreenContext);
 
     return(
         <div className="homemain">
@@ -1352,11 +1151,11 @@ const Home = () => {
             { profileOpen ? <ProfileOpener setProfileOpen={setProfileOpen} /> : null }
             <MiniPlayer/>
             <ResponseBar/>
-            { screen.show ? <FullScreen/> : null }
             <MainPanel/>
             { playing ? <Player/> : null }
         </div>
     );
 };
+
 
 export default Home;

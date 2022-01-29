@@ -3,36 +3,22 @@ import { useHistory, useLocation } from "react-router-dom";
 import "../../../css/searchstyles.css";
 import "../../../css/homestyles.css";
 import "../../../css/hometeststyles.css";
-import SearchIcon from "../../../assets/searchicon.svg";
-import Close from "../../../assets/blackclose.png";
 import Play from "../../../assets/playbutton-white.svg";
 import Pause from "../../../assets/pausebutton-white.svg";
+import Button from "../../../Button";
+import { MidPanelLoader } from "./index";
+import { pauseOrPlay } from "../../index";
+
 import {
     sendRequest,
-    queueOpenedGlobal,
-    CustomUseState,
-    searchBarGlobal,
-    searchInputGlobal,
-    topBarGlobal,
-    topBgColorGlobal,
-    albumGlobal,
-    songIsPausedGlobal,
-    openerGlobal,
     checkX,
     checkY,
     prefix,
     basename,
-    playingGlobal,
-    queueGlobal,
-    responseBar,
     global,
     sharingBaseLink
 } from "../../../common";
-import Queue from "./Queue";
-import Button from "../../../Button";
-import { MidPanelLoader } from "./index";
-import { HorizontalList } from "./HomeScreen";
-import { pauseOrPlay } from "../../index";
+
 import {
     AlbumContext,
     MenuContext,
@@ -42,299 +28,6 @@ import {
     SearchInputContext,
     SongIsPausedContext
 } from "../../../index";
-let timeout = undefined, searchBar, topBar, topBgColorLocal, setcolor = false;
-
-
-
-const InnerSongList = ({ obj }) => {
-    const [hidden, setHidden] = useState(true);
-
-    const decide = () => {
-        if (hidden) {
-            return true;
-        }
-        return false;
-    };
-
-    return(
-        <div className="leftlist" onMouseOver={() => setHidden(false)} onMouseOut={() => setHidden(true)}
-        style={{ backgroundColor: decide() ? "#181818" : "rgba(255,255,255,0.1)" }}>
-            <div className="leftalbumart">
-                {/* <div className="innerleftalbumart"> */}
-                    <img src={obj.Thumbnail} alt="" />
-                {/* </div> */}
-            </div>
-            <div className="names">
-                <div className="songtitlename">{obj.Title || obj.Album}</div>
-                <div className="songartist">{obj.Artist}</div>
-            </div>
-            <div className={ decide() ? "songplay hidden" : "songplay" }>
-                <div className="innersongplay">
-                    <img src={Play} alt="" className="img"/>
-                </div>
-            </div>
-            <div className={ decide() ? "beforesongresult hidden" : "beforesongresult" }>
-                <div className="customopener">
-                    <div className="opener1"></div>
-                    <div className="opener2"></div>
-                    <div className="opener3"></div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-const SongList = ({ list }) => {
-    return(
-        <div className="songlist">
-            {
-                list.map(each => {
-                    return <InnerSongList obj={each} />;
-                })
-            }
-        </div>
-    );
-};
-
-const Each = ({ each }) => {
-    const [hover, setHover] = useState(false);
-    // let hoverLocal = hover;
-
-    const lessen = (value) => {
-        let colors = each.Color.split(",");
-        colors[3] = `${value})`;
-        colors = colors.join(",");
-        return colors;
-    };
-
-    return(
-        <div className="eachitem">
-            <div className="songitem"
-            // style={{ backgroundColor: `${ hover ? lessen(0.1) : lessen(0.7) }` }}
-            // style={{ backgroundImage: `url(${each.Thumbnail})`, backgroundSize: "cover" }}
-            onMouseOver={() => setHover(true)}
-            onMouseOut={() => setHover(false)}
-            >
-                <div className="innersongitem"
-                style={{ backgroundImage: `url(${each.Thumbnail})`, backgroundSize: "cover" }}
-                >
-                    <div className="fullscreen"
-                    style={{ backgroundColor: `${ hover ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0.7)" }` }}>
-                        <div className="actualcontents">
-                            {/* <img src={each.Thumbnail} className="itemart" alt="" /> */}
-                            <div className="itemalbum">{each.Album}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-const RecommendedRow = ({ row }) => {
-    return(
-        <div className="recommendedrow">
-            {
-                row.map(each => {
-                    return(
-                        <Each each={each} />
-                    );
-                })
-            }
-        </div>
-    );
-};
-
-const ActualSearch = () => {
-    const [isLoading, setIsLoading] = useState(true);
-    const [searchConfig, setSearchConfig] = CustomUseState(searchBarGlobal);
-    const [topBarConfig, setTopBarConfig] = CustomUseState(topBarGlobal);
-    const [topBgColor, setTopBgColor] = CustomUseState(topBgColorGlobal);
-    const [recents, setRecents] = useState([]);
-    const [recommended, setRecommended] = useState({});
-    searchBar = searchConfig;
-    topBar = topBarConfig;
-    topBgColorLocal = topBgColor;
-    let { result, input, callLoading } = searchBar;
-
-    const recentSearches = async () => {
-        const res = await sendRequest({
-            method: "GET",
-            endpoint: "/getRecentSearch"
-        });
-        setIsLoading(false);
-        setRecents(res.recents);
-        setRecommended(res.recommended);
-        // setTopBarConfig({
-        //     ...topBar,
-        //     // bgColor: "#121212"
-        //     bgColor: topBgColor
-        // });
-    };
-
-    const closeFunc = async (item) => {
-        const res = await sendRequest({
-            method: "POST",
-            endpoint: "/removeFromRecents",
-            data: {
-                item
-            }
-        });
-    };
-
-    const scrollHandler = (e) => {
-        const top = e.currentTarget.scrollTop;
-        if (top > 100 && !setcolor) {
-            setTopBarConfig({
-                ...topBar,
-                bgColor: topBgColorLocal
-            });
-            setcolor = true;
-        }
-        if (top < 100 && setcolor) {
-            setTopBarConfig({
-                ...topBar,
-                // bgColor: "#121212"
-                bgColor: "transparent"
-            });
-            setcolor = false;
-        }
-    };
-
-    useEffect(() => {
-        setSearchConfig({
-            ...searchBar,
-            show: true,
-            // input: "",
-            result: {}
-        });
-        setTopBarConfig({
-            ...topBar,
-            // bgColor: "#121212"
-            bgColor: "transparent"
-        });
-        recentSearches();
-        return () => {
-            setSearchConfig({
-                ...searchBar,
-                input: "",
-                show: false,
-                callLoading: false
-            });
-
-        }
-    },[]);
-
-    if (isLoading) {
-        return <MidPanelLoader/>
-    }
-    return(
-        <div className="searchmain" onScroll={scrollHandler}>
-            <div className="librarytop"
-            style={{ backgroundColor: topBgColor }}
-            >
-                <div className="innerlibrarytop">
-                    <div className="forblur"></div>
-                    <div className="bigtitle">Search</div>
-                </div>
-            </div>
-            <div className="noncolour">
-            {
-                callLoading ? <MidPanelLoader/> : ""
-            }
-            {
-                recents.length !== 0 && !callLoading && input === "" ?
-                <>
-                    <div style={{ width: "100%", height: "10px" }}/>
-                    <div className="outline">
-                        <div className="maintitle">
-                            <p>Recent Searches</p>
-                            <div className="viewmore">
-                                <p>Clear All</p>
-                            </div>
-                        </div>
-                        <div className="list">
-                            <HorizontalList list={recents} addCloseButton={true} closeFunc={closeFunc}/>
-                        </div>
-                    </div>
-                </> : ""
-            }
-            {
-                Object.keys(recommended).length !== 0 && !callLoading && input === "" ?
-                <div className="outline">
-                    <div className="maintitle">
-                        <p>Recommended</p>
-                    </div>
-                    <div style={{ width: "100%", height: "0px" }}></div>
-                    {/* {
-                        Object.keys(recommended).map(row => {
-                            return(
-                                <RecommendedRow row={recommended[row]} />
-                            );
-                        })
-                    } */}
-                    {
-                        Object.keys(recommended).map(each => {
-                            return(
-                                <div className="list">
-                                    <HorizontalList list={recommended[each]} />
-                                </div>
-                            );
-                        })
-                    }
-                </div> : ""
-            }
-            {
-                result.noResults && !callLoading && input !== "" ?
-                <div className="noresults">No results found for "{input}"</div> : ""
-            }
-            {   
-                Object.keys(result).length > 1 && input !== "" ?
-                <div className="smain">
-                    <div className="outline">
-                        {
-                            Object.keys(result.songs).length !== 0 ?
-                            <div className="maintitle">
-                                <p>Songs</p>
-                            </div> : ""
-                        }
-                        {   
-                            Object.keys(result.songs).map(each => {
-                                return(
-                                    // <div className="list">
-                                        <SongList list={result.songs[each]}/>
-                                    // </div>
-                                );
-                            })
-                        }
-                        {
-                            Object.keys(result.albums).length !== 0 ?
-                            <div style={{ width: "100%", height: "15px" }}></div> : ""
-                        }
-                        {
-                            Object.keys(result.albums).length !== 0 ?
-                            <div className="maintitle">
-                                <p>Albums</p>
-                            </div> : ""
-                        }
-                        {   
-                            Object.keys(result.albums).map(each => {
-                                return(
-                                    <div className="list">
-                                        <HorizontalList list={result.albums[each]}/>
-                                    </div>
-                                );
-                            })
-                        }
-                    </div>
-                </div> 
-                : ""
-            }
-            </div>
-        </div>
-    );
-};
-
 
 
 const EachInSongList = ({
@@ -350,6 +43,7 @@ const EachInSongList = ({
     openerDetails,
     setOpenerDetails
 }) => {
+
     const [hovered, setHovered] = useState(false);
 
     const determine = () => playingSong._trackId === song._trackId;
@@ -368,7 +62,6 @@ const EachInSongList = ({
         main.id = global.id = 0;
         setQueue([main]);
         setPlayingSong(main);
-        localStorage.setItem("queue",JSON.stringify([main]));
         setSongIsPaused(true);
     };
 
@@ -407,26 +100,6 @@ const EachInSongList = ({
                             </Button>
                         </div> : null
                     }
-                    {/* {
-                        !hovered && determine() ? 
-                        <div className="anim-cover">
-                            {
-                                !songIsPaused ?
-                                <div className="playinganim">
-                                    <div className="div1"></div>
-                                    <div className="div2"></div>
-                                    <div className="div3"></div>
-                                    <div className="div4"></div>
-                                </div> : 
-                                <div className="pausedanim">
-                                    <div className="div5"></div>
-                                    <div className="div6"></div>
-                                    <div className="div7"></div>
-                                    <div className="div8"></div>
-                                </div> 
-                            }
-                        </div> : null
-                    } */}
                 </div>
             </div>
             <div className={ hovered ? "each-list-song-details short" : "each-list-song-details" }>
@@ -450,6 +123,7 @@ const EachInSongList = ({
             </div>
         </div>
     );
+
 };
 
 const EachInAlbumList = ({
@@ -465,6 +139,7 @@ const EachInAlbumList = ({
     openerDetails,
     setOpenerDetails
 }) => {
+
     const hist = useHistory();
     const [hovered, setHovered] = useState(false);
 
@@ -501,7 +176,6 @@ const EachInAlbumList = ({
             setQueue(main);
             setPlayingSong(main[0]);
         }
-        localStorage.setItem("queue",JSON.stringify(main));
         setSongIsPaused(true);
     };
 
@@ -514,9 +188,7 @@ const EachInAlbumList = ({
 
     return(
         <Button className="each-album-button" onClick={display}>
-        <div className="each-list-song" onMouseOver={() => setHovered(true)} onMouseOut={() => setHovered(false)}
-        // style={{ backgroundColor: `${ hovered ? "#202020" : "" }` }}
-        >
+        <div className="each-list-song" onMouseOver={() => setHovered(true)} onMouseOut={() => setHovered(false)}>
             <div className="each-list-song-cover">
                 <div className="each-list-song-cover-inner">
                     <img className="each-list-song-cover-inner-img" src={album.Thumbnail} alt="" />
@@ -551,34 +223,11 @@ const EachInAlbumList = ({
         </div>
         </Button>
     );
-    // return(
-    //     <div className="each-list-album">
-    //         <div className="each-list-album-inner">
-    //             <Button className="eachartcover" onClick={display} title={album.Album}>
-    //                 <div className="eachshadow"></div>
-    //                 <div className={ (playingSong.Album === album.Album) ? "showplaybuttonfixed" : "showplaybutton" }>
-    //                     <Button className="innerplaybutton" onClick={handlePlayPause}
-    //                     title={ (!songIsPaused && playingSong.Album === album.Album) ? "Pause" : "Play" } >
-    //                         <img src={ (!songIsPaused && playingSong.Album === album.Album) ? Pause : Play } alt="" />
-    //                     </Button>
-    //                 </div>
-    //                 <div className="library-opener" onClick={handleMenu} title="More Options">
-    //                     <div className="library-opener1"></div>
-    //                     <div className="library-opener2"></div>
-    //                     <div className="library-opener3"></div>
-    //                 </div>
-    //                 <img src={album.Thumbnail} alt="" className="eachalbumart" />
-    //             </Button>
-    //             <div className="eachalbumname" onClick={display}>{album.Album}</div>
-    //             <span className="eachbottom">
-    //                 <span>{album.AlbumArtist}</span>
-    //             </span>
-    //         </div>
-    //     </div>
-    // );
+
 };
 
 const SongsList = ({ songs, openerFunc, openerDetails, setOpenerDetails, songsOpenerFunc }) => {
+
     const [playingSong, setPlayingSong] = useContext(AlbumContext);
     const [songIsPaused, setSongIsPaused] = useContext(SongIsPausedContext);
     const [playing, setPlaying] = useContext(PlayerContext);
@@ -615,9 +264,11 @@ const SongsList = ({ songs, openerFunc, openerDetails, setOpenerDetails, songsOp
             </div>
         </div>
     );
+
 };
 
 const AlbumsList = ({ albums, openerFunc, openerDetails, setOpenerDetails }) => {
+
     const [playingSong, setPlayingSong] = useContext(AlbumContext);
     const [songIsPaused, setSongIsPaused] = useContext(SongIsPausedContext);
     const [playing, setPlaying] = useContext(PlayerContext);
@@ -628,7 +279,6 @@ const AlbumsList = ({ albums, openerFunc, openerDetails, setOpenerDetails }) => 
             <div className="songs-list-title">
                 <p>Albums</p>
             </div>
-            {/* <div className="albums-list-grid"> */}
             <div className="albums-list-container">
                 {
                     albums.map(each => {
@@ -641,15 +291,17 @@ const AlbumsList = ({ albums, openerFunc, openerDetails, setOpenerDetails }) => 
             </div>
         </div>
     );
+
 };
 
 const NewSearch = () => {
+
     const [playingSong, setPlayingSong] = useContext(AlbumContext);
     const [input,] = useContext(SearchInputContext);
     const [openerDetails, setOpenerDetails] = useContext(MenuContext);
     const [player, setPlayer] = useContext(PlayerContext);
     const [queue, setQueue] = useContext(QueueContext);
-    const [, setResObj] = useContext(ResponseBarContext);
+    const [,setResObj] = useContext(ResponseBarContext);
     const [isLoading, setIsLoading] = useState(true);
     const [songsList, setSongsList] = useState([]);
     const [albumsList, setAlbumsList] = useState([]);
@@ -660,7 +312,6 @@ const NewSearch = () => {
         const searchValue = location.search.replace("q","name");
         const res = await sendRequest({
             method: "GET",
-            // endpoint: `/search?name=${input}`
             endpoint: `/search${searchValue}`
         });
         setSongsList(res.songs);
@@ -760,7 +411,6 @@ const NewSearch = () => {
         if (album.Type === "Single") {
             main.id = ++global.id;
             mainQueue.push(main);
-            localStorage.setItem("queue",JSON.stringify(mainQueue));
             setQueue(mainQueue);
             setResObj({ open: true, msg: `Added single to queue` });
         } else {
@@ -770,7 +420,6 @@ const NewSearch = () => {
                 delete obj.Tracks;
                 mainQueue.push(obj);
             });
-            localStorage.setItem("queue",JSON.stringify(mainQueue));
             setQueue(mainQueue);
             setResObj({ open: true, msg: `Added album to queue` });
         }
@@ -796,7 +445,6 @@ const NewSearch = () => {
                 mainQueue.splice(index+1+i, 0, obj);
             });
         }
-        localStorage.setItem("queue",JSON.stringify(mainQueue));
         setQueue(mainQueue);
         setResObj({ open: true, msg: `Playing ${album.Album} next` });
     };
@@ -928,10 +576,7 @@ const NewSearch = () => {
         });
     };
 
-    // useEffect(() => {
-    //     setIsLoading(true);
-    //     call();
-    // }, [input]);
+
     useEffect(() => {
         setIsLoading(true);
         call();
@@ -967,6 +612,7 @@ const NewSearch = () => {
             </div>
         </div>
     );
+
 };
 
 

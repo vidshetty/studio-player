@@ -20,6 +20,7 @@ export const SearchContext = React.createContext();
 export const SearchInputContext = React.createContext();
 export const KeyShortcutContext = React.createContext();
 export const UserContext = React.createContext();
+export const AutoPlayContext = React.createContext();
 
 
 const MainApp = () => {
@@ -41,6 +42,7 @@ const MainApp = () => {
     const [search, setSearch] = useState({ open: false, input: "", prevTab: "" });
     const [openKeyShortcuts, setOpenKeyShortcuts] = useState(false);
     const [user, setUser] = useState({ name: "", email: "", picture: "", limit: "" });
+    const [autoPlay, setAutoPlay] = useState({ show: false, isOn: false });
 
     return(
         <PlayerContext.Provider value={[playing, setPlaying]}>
@@ -61,7 +63,9 @@ const MainApp = () => {
         <SearchInputContext.Provider value={[searchInput, setSearchInput]}>
         <KeyShortcutContext.Provider value={[openKeyShortcuts, setOpenKeyShortcuts]}>
         <UserContext.Provider value={[user, setUser]}>
+        <AutoPlayContext.Provider value={[autoPlay, setAutoPlay]}>
             <App/>
+        </AutoPlayContext.Provider>
         </UserContext.Provider>
         </KeyShortcutContext.Provider>
         </SearchInputContext.Provider>

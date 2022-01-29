@@ -3,6 +3,7 @@ import React from "react";
 
 
 const Button = props => {
+    
     const createRipple = e => {
         const button = e.currentTarget;
         // const circle = button.getElementsByClassName("ripple")[0];
@@ -33,6 +34,7 @@ const Button = props => {
             <span className="ripple hidden"></span>
         </div>
     );
+    
 };
 
 

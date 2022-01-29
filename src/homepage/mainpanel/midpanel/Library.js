@@ -1,36 +1,22 @@
-// import "../../../css/library.css";
 import "../../../css/teststyles.css";
-import React, { useState, useEffect, useRef, memo, useCallback, useContext } from "react";
-import { Redirect, useHistory } from "react-router-dom";
+import React, { useState, useEffect, useRef, useContext } from "react";
+import { useHistory } from "react-router-dom";
 import { MidPanelLoader } from "./index";
 import { pauseOrPlay } from "../../../homepage";
-import { HorizontalList } from "./HomeScreen";
 import Play from "../../../assets/playbutton-white.svg";
 import Pause from "../../../assets/pausebutton-white.svg";
+import Button from "../../../Button";
+
 import {
-    wait,
-    queueOpenedGlobal,
-    CustomUseState,
     sendRequest,
-    topBarGlobal,
-    topBgColorGlobal,
-    modifyLibrary,
-    routesGlobal,
-    albumGlobal,
-    songIsPausedGlobal,
-    playingGlobal,
-    queueGlobal,
-    openerGlobal,
     checkX,
     checkY,
-    responseBar,
     prefix,
     basename,
     global,
     sharingBaseLink
 } from "../../../common";
-import Queue from "./Queue";
-import Button from "../../../Button";
+
 import {
     AlbumContext,
     MenuContext,
@@ -39,135 +25,10 @@ import {
     ResponseBarContext,
     SongIsPausedContext
 } from "../../../index";
-let topBar, isOpen = null, moreLocal;
 
+// Library view
+let isOpen = null, moreLocal = null;
 
-const ActualLibrary = () => {
-    const [isLoading, setIsLoading] = useState(true);
-    const [library, setLibrary] = useState({});
-    const [topBarConfig, setTopBarConfig] = CustomUseState(topBarGlobal);
-    const [topBgColor, setBgColor] = CustomUseState(topBgColorGlobal);
-    topBar = topBarConfig;
-    // let scrolled = false;
-
-    const scrollHandler = (e) => {
-        const top = e.currentTarget.scrollTop;
-        sessionStorage.setItem("library-scroll",top);
-        if (top > 200 && topBar.bgColor === "transparent") {
-            setTopBarConfig({
-                ...topBar,
-                button: false,
-                bgColor: topBgColor
-            });
-        } else if (top < 200 && topBar.bgColor !== "transparent") {
-            setTopBarConfig({
-                ...topBar,
-                button: false,
-                bgColor: "transparent"
-            });
-        }
-    };
-
-    useEffect(() => {
-        const call = async () => {
-            const saved = JSON.parse(sessionStorage.getItem("library"));
-            if (saved !== null) {
-                setLibrary(saved);
-                setIsLoading(false);
-                return;
-            }
-            const res = await sendRequest({
-                method: "GET",
-                endpoint: `/getLibrary`
-            });
-            await wait(500);
-            sessionStorage.setItem("library",JSON.stringify(res));
-            setLibrary(res);
-            setIsLoading(false);
-        };
-        if (isLoading) {
-            call();
-        } else {
-            const main = document.querySelector(".main");
-            main.scrollTop = sessionStorage.getItem("library-scroll") || 0;
-        }
-        setTopBarConfig({
-            ...topBar,
-            button: false,
-            // bgColor: "transparent"
-        });
-        // return () => {
-        //     setTopBarConfig({
-        //         ...topBar,
-        //         button: false,
-        //         bgColor: "transparent"
-        //     }); 
-        // };
-    },[isLoading]);
-
-    if (isLoading) {
-        return <MidPanelLoader/>
-    }
-    return(
-        <div className="library">
-            <div className="main" onScroll={scrollHandler}>
-                <div className="librarytop"
-                style={{ backgroundColor: `${topBgColor}` }}
-                >
-                    <div className="innerlibrarytop">
-                        <div className="forblur"></div>
-                        <div className="bigtitle">Library</div>
-                    </div>
-                </div>
-                <div className="librarybottom">
-                    <div className="outline">
-                        {/* <div className="bigmaintitle">
-                            <p>Library</p>
-                        </div> */}
-                        {   
-                            Object.keys(library).map(key => {
-                                if (library[key].length !== 0) {
-                                    return(
-                                        <div className="list">
-                                            <HorizontalList list={library[key]}/>
-                                        </div>
-                                    );
-                                }
-                                return null;
-                            })
-                        }
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-const CreateRow = ({ row, openerFunc }) => {
-    return(
-        <div className="createrow">
-            {
-                row.map((each,i) => {
-                    // if (i<6) {
-                        if (Object.keys(each).length > 0) {
-                            return <EachAlbum each={each} openerFunc={openerFunc} />
-                        }
-                        return <div className="eachinrow"></div>
-                    // }
-                    // return "";
-                })
-            }
-        </div>
-    );
-};
-
-const CreateAnotherRow = ({ row }) => {
-    return(
-        <div className="createanotherrow">
-
-        </div>
-    );
-};
 
 const EachAlbum = ({
     each,
@@ -180,6 +41,7 @@ const EachAlbum = ({
     songPaused,
     setSongPaused
 }) => {
+
     let songPausedLocal = songPaused;
     const hist = useHistory();
 
@@ -224,13 +86,10 @@ const EachAlbum = ({
             setQueue(dummy);
             setAlbumForPlayer(dummy[0]);
         }
-        localStorage.setItem("queue",JSON.stringify(main));
         setSongPaused(true);
     };
 
     return(
-        // <div className="eachinrow" ref={setElement}>
-        //     { show ?
         <div className="innerineach">
             <Button className="eachartcover" onClick={goToAlbum} title={each.Album}>
                 <div className="eachshadow"></div>
@@ -252,21 +111,18 @@ const EachAlbum = ({
                 <span>{each.AlbumArtist}</span>
             </span>
         </div> 
-        //         :
-        //         null
-        //     }
-        // </div>
     );
 };
 
 const Between = props => {
+
     const [element, setElement] = useState(null);
     const [show, setShow] = useState(false);
 
     const observer = new IntersectionObserver(([entry]) => {
         const { isIntersecting } = entry;
         setShow(isIntersecting);
-    }, { threshold: 0.1 });
+    }, { threshold: 0 });
 
     useEffect(() => {
         const currentElement = element;
@@ -290,6 +146,7 @@ const Between = props => {
 };
 
 const NewActualLibrary = () => {
+
     const [library, setLibrary] = useState([]);
     const [page, setPage] = useState(1);
     const [more, setMore] = useState(true);
@@ -306,7 +163,6 @@ const NewActualLibrary = () => {
     const grid = useRef(null);
     isOpen = openerDetails.open;
     moreLocal = more;
-    const list = ["libraryopener","libraryopener1","libraryopener2","libraryopener3"];
 
 
     const addAlbumToQueue = each => {
@@ -398,15 +254,6 @@ const NewActualLibrary = () => {
         });
     };
 
-    const documentClick = e => {
-        if (!list.includes(e.target.className)) {
-            setOpenerDetails({
-                ...openerDetails,
-                open: false
-            });
-        }
-    };
-
     const documentScroll = e => {
         const { scrollHeight, scrollTop, clientHeight } = topDiv.current;
         if (clientHeight + scrollTop > scrollHeight - 500) {
@@ -489,10 +336,8 @@ const NewActualLibrary = () => {
         topDiv.current = document.querySelector(".dummyoutermid");
         grid.current = document.querySelector(".librarygrid");
         topDiv.current && topDiv.current.addEventListener("scroll", documentScroll);
-        // document.addEventListener("click", documentClick);
         return () => {
             topDiv.current && topDiv.current.removeEventListener("scroll", documentScroll);
-            // document.removeEventListener("click", documentClick);
         };
 
     }, [isLoading]);
@@ -514,10 +359,7 @@ const NewActualLibrary = () => {
         return <MidPanelLoader/>
     }
     return(
-        // <div className="dummymid" style={{ overflowY: `${ isOpen ? "hidden" : "overlay" }` }}>
-        <div className="dummyoutermid"
-        // style={{ overflowY: `${ isOpen ? "hidden" : "overlay" }` }}
-        >
+        <div className="dummyoutermid">
             <div className="dummymid">
                 <div className="libraryname">Library</div>
                 <div className="librarycontainer">
@@ -525,8 +367,9 @@ const NewActualLibrary = () => {
                         {
                             library.map(item => {
                                 return <Between each={item} openerFunc={handleMenu} keyId={item.keyId}
-                                playingSong={playingSong} setAlbumForPlayer={setAlbumForPlayer} queue={queue} setQueue={setQueue}
-                                playing={playing} setPlaying={setPlaying} songPaused={songPaused} setSongPaused={setSongPaused} />;
+                                playingSong={playingSong} setAlbumForPlayer={setAlbumForPlayer}
+                                queue={queue} setQueue={setQueue} playing={playing} setPlaying={setPlaying}
+                                songPaused={songPaused} setSongPaused={setSongPaused} />;
                             })
                         }
                     </div>
@@ -544,6 +387,7 @@ const NewActualLibrary = () => {
             </div>
         </div>
     );
+
 };
 
 

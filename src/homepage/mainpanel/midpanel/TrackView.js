@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useContext } from "react";
-import { useHistory, useParams } from "react-router-dom";
+import React, { useState, useEffect, useContext, useRef } from "react";
+import { useHistory, useParams, useLocation } from "react-router-dom";
 import "../../../css/albumview.css";
 import Play from "../../../assets/playbutton-black.svg";
 import Pause from "../../../assets/pausebutton-black.svg";
@@ -16,6 +16,7 @@ import {
     global,
     sharingBaseLink
 } from "../../../common";
+
 import {
     SongIsPausedContext,
     AlbumContext,
@@ -27,17 +28,20 @@ import {
 
 
 const Trackview = () => {
+
     const [track, setTrack] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [releaseDate, setReleaseDate] = useState("");
     const [songPaused, setSongPaused] = useContext(SongIsPausedContext);
     const [playingSong, setPlayingSong] = useContext(AlbumContext);
-    const [, setOpenerDetails] = useContext(MenuContext);
+    const [,setOpenerDetails] = useContext(MenuContext);
     const [,setResObj] = useContext(ResponseBarContext);
     const [queue, setQueue] = useContext(QueueContext);
     const [playing, setPlaying] = useContext(PlayerContext);
+    const buttonRef = useRef(null);
     const params = useParams();
     const hist = useHistory();
+    const location = useLocation();
 
     const decidePlayOrPause = () => playingSong._trackId === track._trackId;
 
@@ -51,7 +55,6 @@ const Trackview = () => {
         const item = { ...track };
         item.id = global.id = 0;
         setQueue([ item ]);
-        localStorage.setItem("queue",JSON.stringify([item]));
         setSongPaused(true);
         setPlayingSong(item);
     };
@@ -156,9 +159,20 @@ const Trackview = () => {
         hist.push(`${prefix}${basename}/homescreen`);
     };
 
+    const playTrack = () => {
+        buttonRef.current = document.querySelector(".playbuttonview");
+        buttonRef.current && buttonRef.current.click();
+    };
+
+
     useEffect(() => {
-        call();
-    }, []);
+        if (isLoading) call();
+        else if (
+            location.pathname.includes("playable") &&
+            queue.length === 0
+        ) playTrack();
+    }, [isLoading]);
+
 
     if (isLoading) {
         return <MidPanelLoader/>;

@@ -2,278 +2,39 @@ import "../../../css/homestyles.css";
 import "../../../css/teststyles.css";
 import "../../../css/albumview.css";
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { Route, Switch, useHistory } from "react-router-dom";
+import { Route, Switch } from "react-router-dom";
 import HomeScreen from "./HomeScreen";
 import AlbumView from "./AlbumView";
 import TrackView from "./TrackView";
 import Library from "./Library";
-import Radio from "./Radio";
 import Search from "./Search";
-import back from "../../../assets/backbutton.png";
-import dropdown from "../../../assets/dropdown.png";
-import SearchIcon from "../../../assets/searchicon.svg";
-import Close from "../../../assets/blackclose.png";
-import { 
-    CustomUseState,
-    openerGlobal,
-    homeClass,
-    wait,
-    sendRequest,
-    albumGlobal,
-    topBarGlobal,
-    searchBarGlobal,
-    playingGlobal,
+import Queue from "./Queue";
+
+import {
     prefix,
     basename
 } from "../../../common";
+
 import {
     MenuContext,
-    PlayerContext,
-    QueueOpenedContext
+    PlayerContext
 } from "../../../index";
-import Queue from "./Queue";
-let actualIsOpen, topBar, timeout = undefined, searchBar, openLocal;
+
+
+// Mid
+let openLocal = null;
 let scrollTimeout = null;
 
 
-export const MidPanelLoader = () => {
-    return(
-        <div className="loader">
-            <div className="loaderinner">
-                <div className="one"></div>
-                <div className="two"></div>
-                <div className="three"></div>
-            </div>
-        </div>
-    );
-};
+// const NewReleases = () => {
+//     return(
+//         <div className="third"></div>
+//     );
+// };
 
-const NewReleases = () => {
-    return(
-        <div className="third"></div>
-    );
-};
-
-const SearchBar = () => {
-    const [searchConfig, setSearchConfig] = CustomUseState(searchBarGlobal);
-    searchBar = searchConfig;
-
-    const call = async () => {
-        timeout = undefined;
-        let res;
-        if (searchBar.input !== "") {
-            setSearchConfig({
-                ...searchBar,
-                callLoading: true
-            });
-            res = await sendRequest({
-                method: "GET",
-                endpoint: `/search?name=${searchBar.input}`
-            });
-            setSearchConfig({
-                ...searchBar,
-                result: res,
-                callLoading: false
-            });
-        } else {
-            setSearchConfig({
-                ...searchBar,
-                callLoading: false
-            });
-        }
-    };
-
-    const handleInput = e => {
-        if (e.target.value) {
-            setSearchConfig({
-                ...searchBar,
-                input: e.target.value,
-                callLoading: true,
-                result: {}
-            }); 
-        } else {
-            setSearchConfig({
-                ...searchBar,
-                input: e.target.value,
-                callLoading: true
-            });
-        }
-        // setInput(e.target.value);
-        if (timeout) clearTimeout(timeout);
-        timeout = setTimeout(call,500);
-    };
-
-    const clearInput = e => {
-        // setInput("");
-        // setResult({ songs: {}, albums: {} });
-        setSearchConfig({
-            ...searchBar,
-            input: "",
-            result: { songs: {}, albums: {} }
-        });
-        timeout = undefined;
-    };
-
-    if (searchBar.show) {
-        return(
-            <div className="searchrelated">
-                <div className="searchbar">
-                    <div className="searchimg">
-                        <img src={SearchIcon} alt="" />
-                    </div>
-                    <input type="text" value={searchBar.input} placeholder="Search for Songs or Albums"
-                    className="searchinput" spellCheck="false" onInput={handleInput} autoFocus={true}/>
-                    {
-                        searchBar.input !== "" ?
-                        <div className="clearinput">
-                            <img src={Close} alt="" onClick={clearInput} />
-                        </div> : <div style={{ width: "50px", height: "100%" }}></div>
-                    }
-                </div>
-            </div>
-        );
-    }
-    return <></>;
-};
-
-const ProfileBar = () => {
-    const userName = localStorage.getItem("username");
-    const [openerDetails, setOpenerDetails] = CustomUseState(openerGlobal);
-    const [redirectValue, setRedirectValue] = useState({ status: false, to: "" });
-    const [,setClass] = CustomUseState(homeClass);
-    const [,setSong] = CustomUseState(albumGlobal);
-    const [topBarConfig,] = CustomUseState(topBarGlobal);
-    actualIsOpen = openerDetails.open;
-    topBar = topBarConfig;
-    let { button, buttonFunc, title, bgColor } = topBar;
-
-    const min = () => {
-        // ipcRenderer.send("minimize");
-        // ipcRenderer.send("full");
-    };
-
-    // const max = () => {
-    //     ipcRenderer.send("maximize");
-    // };
-
-    const close = () => {
-        // ipcRenderer.send("close");
-    };
-
-    const handleClick = (e) => {
-        const list = ["rowinmenu","rowtext"];
-        if (list.indexOf(e.target.className) === -1 && actualIsOpen) {
-            setOpenerDetails({
-                open: false,
-                xValue: 0,
-                yValue: 0,
-                type: null
-            });
-        }
-        // setOpenerDetails({ ...openerDetails, open: false });
-    };
-
-    const modifyLocalStorage = async () => {
-        let text = localStorage.getItem("email");
-        let password = localStorage.getItem("password");
-        await wait(1000);
-        localStorage.clear();
-        localStorage.setItem("email",text);
-        localStorage.setItem("password",password);
-        await wait(1000);
-        sessionStorage.clear();
-    };
-
-    const logOut = async () => {
-        modifyLocalStorage();
-        sendRequest({
-            method: "GET",
-            endpoint: `/logout`
-        });
-        setClass("homemain end");
-        setSong({});
-        await wait(500);
-        setRedirectValue({ status: true, to: "/" });
-        setOpenerDetails({ ...openerDetails, open: false });
-    };
-
-    const openNew = async () => {
-        // ipcRenderer.send("opennew");
-    };
-
-    const handleMenu = (e) => {
-        e.stopPropagation();
-        setOpenerDetails({
-            open: !actualIsOpen,
-            yValue: e.clientY + 10,
-            xValue: e.clientX - 200,
-            type: "album",
-            data: [
-                // {
-                //     name: "Account",
-                //     func: openNew
-                // },
-                {
-                    name: "Log out",
-                    func: logOut
-                }
-            ]
-        });
-    };
-
-    useEffect(() => {
-        document.addEventListener("mousedown",handleClick);
-        return () => {
-            document.removeEventListener("mousedown",handleClick);
-        }
-    },[]);
-
-
-    if (redirectValue.status) {
-        // return <Redirect to={redirectValue.to} />
-    }
-    return(
-        <div className="entiretop"
-        style={ bgColor === "transparent" ? { backgroundColor: "transparent" } : { backgroundColor: "#121212" } }
-        >
-            <div className="topbar" style={{backgroundColor: bgColor}}>
-                <SearchBar/>
-                { button ?
-                    <div className="backbutton" onClick={buttonFunc}>
-                        <img src={back} alt=""/>
-                    </div> : ""
-                }
-                {
-                    title ? 
-                    <div className="toptitlediv">{title}</div> : ""
-                }
-                <div className="profilebardiv">
-                    <div className="name">{userName}</div>
-                    <div className="logoutbutton">
-                        <img src={dropdown} alt="" onClick={handleMenu}/>
-                    </div>
-                </div>
-                <div className="topbuttons">
-                    <div onClick={min} className="minimize"></div>
-                    {/* <div onClick={max} className="maximize"></div> */}
-                    <div onClick={close} className="close"></div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-const OpenQueue = () => {
-    const [queueOpen, setQueueOpen] = useContext(QueueOpenedContext);
-
-    useEffect(() => {
-        setQueueOpen(true);
-    }, []);
-
-    return null;
-};
 
 const Mid = () => {
+
     const [openerDetails,] = useContext(MenuContext);
     const [playing,] = useContext(PlayerContext);
     const [scroll, setScroll] = useState(null);
@@ -314,19 +75,31 @@ const Mid = () => {
     return(
         <div className="midmain-without-player">
             { playing ? <Queue/> : null }
-            <div className="main-outer-container"
-            // style={{ overflowY: `${ openLocal ? "hidden" : "overlay" }` }}
-            >
+            <div className="main-outer-container">
                 <Switch>
                     <Route path={`${prefix}${basename}/homescreen`}><HomeScreen/></Route>
                     <Route path={`${prefix}${basename}/search`}><Search/></Route>
-                    <Route path={`${prefix}${basename}/new-releases`}><NewReleases/></Route>
+                    <Route path={`${prefix}${basename}/album/:albumId/playable`}><AlbumView/></Route>
                     <Route path={`${prefix}${basename}/album/:albumId`}><AlbumView/></Route>
+                    <Route path={`${prefix}${basename}/track/:albumId/:trackId/playable`}><TrackView/></Route>
                     <Route path={`${prefix}${basename}/track/:albumId/:trackId`}><TrackView/></Route>
                     <Route path={`${prefix}${basename}/library`}><Library/></Route>
-                    <Route path={`${prefix}${basename}/radio`}><Radio/></Route>
-                    {/* <Route path={`${prefix}${basename}/queue`}><OpenQueue/></Route> */}
+                    {/* <Route path={`${prefix}${basename}/new-releases`}><NewReleases/></Route> */}
                 </Switch>
+            </div>
+        </div>
+    );
+
+};
+
+
+export const MidPanelLoader = () => {
+    return(
+        <div className="loader">
+            <div className="loaderinner">
+                <div className="one"></div>
+                <div className="two"></div>
+                <div className="three"></div>
             </div>
         </div>
     );

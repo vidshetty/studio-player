@@ -1,142 +1,46 @@
 import "../../../css/queuestyles.css";
 import React, { useState, useEffect, useRef, useContext } from "react";
-import { Redirect, useHistory } from "react-router-dom";
+import { useHistory } from "react-router-dom";
 import Close from "../../../assets/deletewhite.svg";
-import Placeholder from "../../../assets/placeholder.svg";
 import Play from "../../../assets/playbutton-white.svg";
 import Pause from "../../../assets/pausebutton-white.svg";
-import Expand from "../../../assets/expand-white.svg";
-// import Expand from "../../../assets/fullscreen.png";
 import Minimize from "../../../assets/new-minimizeplayer-white.svg";
-import LyricsIcon from "../../../assets/lyrics-white.svg";
 import { MidPanelLoader } from "./index";
 import { pauseOrPlay } from "../../index";
+import LyricsIcon from "../../../assets/lyrics-white.svg";
+import Button from "../../../Button";
+
 import {
-    CustomUseState,
-    queueGlobal,
-    queueOpenedGlobal,
-    songIsPausedGlobal,
-    albumGlobal,
-    responseBar,
-    openerGlobal,
-    playingGlobal,
-    topBarGlobal,
-    miniPlayerGlobal,
     checkX,
     checkY,
     prefix,
     basename,
     global,
-    lyricsGlobal,
     sendRequest,
-    lyricTextGlobal,
     sharingBaseLink
 } from "../../../common";
-import Button from "../../../Button";
+
 import {
     AlbumContext,
     LyricsContext,
     LyricsTextContext,
     MenuContext,
     MiniPlayerContext,
-    PlayerContext,
     QueueContext,
     QueueOpenedContext,
     ResponseBarContext,
     SongIsPausedContext
 } from "../../../index";
-let finalQueue = [], queueLength, songIndex, smallArr;
-let actualQueue, firstpart, lastpart, topBar, miniLocal, isOpen, scrollInterval = null;
-let lyricTimeout = null;
+
+// Queue view
+let songIndex = null, actualQueue = null;
+let isOpen = null, lyricTimeout = null;
 
 
 const Loader = () => {
     return(
         <div className="fullcover">
             <div className="bufferloader"/>
-        </div>
-    );
-};
-
-const SongInQueue = ({ nowPlaying = false, songIsPaused = null, song, number = null, openerFunc }) => {
-    const [hovered, setHovered] = useState(false);
-    const [,setPlayingSong] = CustomUseState(albumGlobal);
-    const [,setSongIsPaused] = CustomUseState(songIsPausedGlobal);
-
-    const mouseOver = e => {
-        setHovered(true);
-    };
-
-    const mouseOut = e => {
-        setHovered(false);
-    };
-
-    const setSong = () => {
-        if (nowPlaying) {
-            return;
-        }
-        setPlayingSong(song);
-        setSongIsPaused(true);
-    };
-
-    const handleMenu = e => {
-        e.stopPropagation();
-        const dimensions = { x: e.clientX, y: e.clientY };
-        const windowDim = { width: document.documentElement.clientWidth, height: document.documentElement.clientHeight };
-        openerFunc(e, { dimensions, windowDim, song });
-    };
-
-    return(
-        <div className="nowplaying" style={{
-            marginTop: `${ nowPlaying ? "10px" : "" }`,
-            marginBottom: `${ nowPlaying ? "30px" : "" }`,
-            borderBottom: `${ nowPlaying ? "" : "1px solid rgba(255,255,255,0.1)" }`
-        }} onMouseOver={mouseOver} onMouseOut={mouseOut}>
-            <div className="innernowplaying"
-            style={{ backgroundColor: `${ nowPlaying || hovered ? "#202020" : "" }` }}
-            onClick={setSong}
-            >
-                {
-                    nowPlaying ?
-                    <div className="firstpartifnowplaying">
-                        {
-                            !songIsPaused ?
-                            <div className="playinganim">
-                                <div className="div1"></div>
-                                <div className="div2"></div>
-                                <div className="div3"></div>
-                                <div className="div4"></div>
-                            </div> : 
-                            <div className="pausedanim">
-                                <div className="div5"></div>
-                                <div className="div6"></div>
-                                <div className="div7"></div>
-                                <div className="div8"></div>
-                            </div>
-                        }
-                    </div> :
-                    <div className="firstpart">{number}</div>
-                }
-                <div className="nowplayingart">
-                    <img src={song.Thumbnail} alt=""/>
-                </div>
-                <div className="queuesongdetails">
-                    <div className="startingpart">
-                        <div className="playingsongname"
-                        style={{ color: `${ nowPlaying ? "white" : "white" }` }}>{song.Title || song.Album}</div>
-                        <div className="playingsongartist">{song.Artist}</div>
-                    </div>
-                </div>
-                <div className="lastpart">
-                    <div className={ hovered ? "openercontrol" : "openercontrol hidden" } style={{marginLeft: "0px"}}
-                    onClick={handleMenu}>
-                        <div className="opener1"></div>
-                        <div className="opener2"></div>
-                        <div className="opener3"></div>
-                    </div>
-                    { hovered ? "" : song.Duration }
-                </div>
-            </div>
         </div>
     );
 };
@@ -150,7 +54,44 @@ const EachLyric = ({ each, lyricText }) => {
     );
 };
 
+const BetweenLyrics = (props) => {
+
+    const [element, setElement] = useState(null);
+    const [show, setShow] = useState(false);
+
+    const observer = new IntersectionObserver(([entry]) => {
+        const { isIntersecting } = entry;
+        setShow(isIntersecting);
+    }, { threshold: 0.1 });
+
+    useEffect(() => {
+        const currentElement = element;
+        const currentObserver = observer;
+        if (currentElement) {
+            currentObserver.observe(currentElement);
+        }
+
+        return () => {
+            if (currentElement) {
+                currentObserver.unobserve(currentElement);
+            }
+        };
+    }, [element]);
+
+    return(
+        <div ref={setElement}>
+            {
+                show ?
+                <EachLyric { ...props } /> :
+                <div className={`each-lyric ${props.each.key === props.lyricText.key ? "activetext" : ""}`}></div>
+            }
+        </div>
+    );
+
+};
+
 const LyricsPart = ({ song, setTab }) => {
+
     const lyricsContainer = useRef(null);
     const activeLyrics = useRef(null);
     const [lyrics, setLyrics] = useContext(LyricsContext);
@@ -203,6 +144,7 @@ const LyricsPart = ({ song, setTab }) => {
         }
     }, [song, lyricText]);
 
+
     if (lyricsLoading) {
         return <Loader/>;
     }
@@ -224,7 +166,7 @@ const LyricsPart = ({ song, setTab }) => {
                     <>    
                         {
                             lyrics.map(each => {
-                                return <EachLyric each={each} lyricText={lyricText} />;
+                                return <BetweenLyrics each={each} lyricText={lyricText} />;
                             })
                         }
                     </> : null
@@ -232,6 +174,7 @@ const LyricsPart = ({ song, setTab }) => {
             </div>
         </div>
     );
+
 };
 
 
@@ -252,6 +195,7 @@ const ArtEachLyric = ({ each, lyricText, song }) => {
 };
 
 const ArtLyrics = ({ song, setArtLyricsOpen }) => {
+
     const lyricsContainer = useRef(null);
     const activeLyrics = useRef(null);
     const [lyrics, setLyrics] = useContext(LyricsContext);
@@ -289,7 +233,7 @@ const ArtLyrics = ({ song, setArtLyricsOpen }) => {
         if (lyricsContainer.current && activeLyrics.current) {
             lyricsContainer.current.scroll({
                 top: activeLyrics.current.offsetTop - (lyricsContainer.current.offsetHeight / 2) + 100,
-                behavior: "smooth"
+                // behavior: "smooth"
             });
         }
     }, [lyricsLoading]);
@@ -300,7 +244,7 @@ const ArtLyrics = ({ song, setArtLyricsOpen }) => {
         if (lyricsContainer.current && activeLyrics.current) {
             lyricsContainer.current.scroll({
                 top: activeLyrics.current.offsetTop - (lyricsContainer.current.offsetHeight / 2) + 100,
-                behavior: "smooth"
+                // behavior: "smooth"
             });
         }
     }, [song, lyricText]);
@@ -334,10 +278,15 @@ const ArtLyrics = ({ song, setArtLyricsOpen }) => {
             }
         </div>
     );
+
 };
 
 
-const EachSong = ({ index, i, queue, each, songIsPaused, setSongIsPaused, setSong, openerFunc, playingSong }) => {
+const EachSong = ({ 
+    index, i, queue, each, songIsPaused,
+    setSongIsPaused, setSong, openerFunc, playingSong
+}) => {
+
     const [hovered, setHovered] = useState(false);
 
     const handleMouse = e => e.stopPropagation();
@@ -382,33 +331,38 @@ const EachSong = ({ index, i, queue, each, songIsPaused, setSongIsPaused, setSon
         );
     }
     return(
-        <div className={`each-song${index === i ? " active-song" : ""}`} title={each.Title || each.Album} onMouseDown={mousedown}
-        onMouseUp={mouseup} onMouseOver={mouseover} onMouseOut={mouseout} style={{ marginBottom: `${ i+1 === queue.length ? "10px" : "" }` }}>
-            <div className="song-album" onMouseDown={handleMouse} onMouseUp={handleMouse}>
+        <div className={`each-song${index === i ? " active-song" : ""}`}
+        title={each.Title || each.Album}
+        onMouseDown={mousedown}
+        onMouseUp={mouseup}
+        onMouseOver={mouseover}
+        onMouseOut={mouseout}
+        style={{ marginBottom: `${ i+1 === queue.length ? "10px" : "" }` }}
+        >
+            <div className="song-album"
+            onMouseDown={handleMouse}
+            onMouseUp={handleMouse}
+            >
                 <img className="song-album-img" src={each.Thumbnail} alt="" />
                 {
                     index !== i ?
                         <div className="song-album-cover-hidden">
-                            <img src={Play} className="song-album-cover-img" title="Play" alt="" onClick={playThis} />
+                            <img src={Play} className="song-album-cover-img" title="Play" alt=""
+                            onClick={playThis}
+                            />
                         </div> : 
                         <div className="song-album-cover-hidden">
                             {
                                 !songIsPaused ?
-                                <img src={Pause} className="song-album-cover-img" title="Pause" alt="" onClick={pauseOrPlay} /> : 
-                                <img src={Play} className="song-album-cover-img" title="Play" alt="" onClick={pauseOrPlay} />
+                                <img src={Pause} className="song-album-cover-img" title="Pause" alt=""
+                                onClick={pauseOrPlay}
+                                /> : 
+                                <img src={Play} className="song-album-cover-img" title="Play" alt=""
+                                onClick={pauseOrPlay} 
+                                />
                             }
                         </div>
                 }
-                {/* {
-                    index === i && !hovered ?
-                    <div className="song-album-cover-nothidden">
-                        {
-                            !songIsPaused ?
-                            <img src={Pause} className="song-album-cover-img" title="Pause" alt="" onClick={pauseOrPlay} /> : 
-                            <img src={Play} className="song-album-cover-img" title="Play" alt="" onClick={pauseOrPlay} />
-                        }
-                    </div> : null
-                } */}
                 {
                     index === i && !hovered ?
                         <div className="song-album-cover">
@@ -438,9 +392,15 @@ const EachSong = ({ index, i, queue, each, songIsPaused, setSongIsPaused, setSon
                     <div>{each.Artist}</div>
                 </div>
             </div>
-            <div className="song-options" onMouseDown={handleMouse} onMouseUp={handleMouse}>
-                <div className={ hovered ? "openercontrol" : "openercontrol hidden" } style={{marginLeft: "0px"}}
-                onClick={handleMenu} title="More Options">
+            <div className="song-options"
+            onMouseDown={handleMouse}
+            onMouseUp={handleMouse}
+            >
+                <div className={ hovered ? "openercontrol" : "openercontrol hidden" }
+                style={{marginLeft: "0px"}}
+                title="More Options"
+                onClick={handleMenu}
+                >
                     <div className="opener1"></div>
                     <div className="opener2"></div>
                     <div className="opener3"></div>
@@ -449,9 +409,47 @@ const EachSong = ({ index, i, queue, each, songIsPaused, setSongIsPaused, setSon
             </div>
         </div>
     );
+
+};
+
+const Between = (props) => {
+
+    const [element, setElement] = useState(null);
+    const [show, setShow] = useState(false);
+
+    const observer = new IntersectionObserver(([entry]) => {
+        const { isIntersecting } = entry;
+        setShow(isIntersecting);
+    }, { threshold: 0.1 });
+
+    useEffect(() => {
+        const currentElement = element;
+        const currentObserver = observer;
+        if (currentElement) {
+            currentObserver.observe(currentElement);
+        }
+
+        return () => {
+            if (currentElement) {
+                currentObserver.unobserve(currentElement);
+            }
+        };
+    }, [element]);
+
+    return(
+        <div ref={setElement}>
+            {
+                show ?
+                <EachSong { ...props } /> :
+                <div className={`each-song${props.index === props.i ? " active-song" : ""}`}></div>
+            }
+        </div>
+    );
+
 };
 
 const NewRightQueue = ({ song, songIsPaused, setSongIsPaused, setSong, openerFunc, openerDetails }) => {
+
     const [queue, setQueue] = useContext(QueueContext);
     const [showScroll, setShowScroll] = useState(false);
     const [scrollType, setScrollType] = useState(null);
@@ -479,11 +477,6 @@ const NewRightQueue = ({ song, songIsPaused, setSongIsPaused, setSong, openerFun
             setPosition({ ...position, show: false });
             setSelected(false);
 
-            // const nearestIndex = Math.floor(position.top / 60);
-            // actualQueue.splice(global.selectedSongIndex, 1);
-            // actualQueue.splice(nearestIndex, 0, global.selectedSong);
-
-            // setQueue(actualQueue);
             setQueue(prev => {
                 const nearestIndex = Math.floor(position.top / 60);
                 prev.splice(global.selectedSongIndex, 1);
@@ -496,13 +489,6 @@ const NewRightQueue = ({ song, songIsPaused, setSongIsPaused, setSong, openerFun
             global.selectedSongIndex = null;
             global.selectedSong = null;
         }
-    };
-
-    const keepScrollDown = () => {
-        scrollInterval = setInterval(() => {
-            container.current && container.current.scrollTop++;
-            global.selectedElement.style.top = (1+parseFloat(global.selectedElement.style.top.slice(0,-2))) + "px";
-        },5);
     };
 
     const mousemove = e => {
@@ -518,25 +504,14 @@ const NewRightQueue = ({ song, songIsPaused, setSongIsPaused, setSong, openerFun
         global.scrolled = e.target.scrollTop;
     };
 
-    const flush = () => {
-        const index = actualQueue.findIndex(each => {
-            if (Object.keys(each).length === 1) {
-                return true;
-            }
-            return false;
-        });
-        if (index !== -1) {
-            actualQueue.splice(index,1);
-            setQueue(actualQueue);
-        }
-    };
-
     useEffect(() => {
-        // flush();
         global.activeSong = document.querySelector(".each-song.active-song");
         container.current = document.querySelector(".tab-container");
         if (global.activeSong && container.current && !global.selectedElement) {
-            container.current.scroll({ top: global.activeSong.offsetTop, behavior: "smooth" });
+            container.current.scroll({
+                top: global.activeSong.offsetTop,
+                behavior: "smooth"
+            });
         }
     }, [song, queue]);
 
@@ -553,7 +528,6 @@ const NewRightQueue = ({ song, songIsPaused, setSongIsPaused, setSong, openerFun
 
     return(
         <div className={`tab-container${showScroll ? " show" : ""}`}
-        // style={{ overflowY: `${openerDetails.open ? "" : "overlay"}` }}
         onMouseOver={mouseover}
         onMouseOut={mouseout}
         onMouseMove={mousemove}
@@ -563,17 +537,18 @@ const NewRightQueue = ({ song, songIsPaused, setSongIsPaused, setSong, openerFun
         >
             {
                 queue.map((each,i) => {
-                    return <EachSong index={index} i={i} each={each} queue={queue} songIsPaused={songIsPaused} setSongIsPaused={setSongIsPaused}
-                    setSong={setSong} openerFunc={openerFunc} playingSong={song} />;
+                    return <Between index={index} i={i} each={each} queue={queue}
+                            songIsPaused={songIsPaused} setSongIsPaused={setSongIsPaused}
+                            setSong={setSong} openerFunc={openerFunc} playingSong={song} />;
                 })
             }
             {
                 selected ?
                 <div style={
                     { width: "100%", position: "absolute",
-                      height: `100%`,
-                      top: `${global.scrolled || 0}px`,
-                      left: "0", backgroundColor: "rgba(0,0,0,0.5)", zIndex: "50" }
+                    height: `100%`,
+                    top: `${global.scrolled || 0}px`,
+                    left: "0", backgroundColor: "rgba(0,0,0,0.5)", zIndex: "50" }
                 } ></div> :
                 null
             }
@@ -587,12 +562,13 @@ const NewRightQueue = ({ song, songIsPaused, setSongIsPaused, setSong, openerFun
             }
         </div>
     );
+
 };
 
 const Queue = () => {
+
     const [tab, setTab] = useState(1);
     const [queueOpened, setQueueOpened] = useContext(QueueOpenedContext);
-    const [,setPlaying] = useContext(PlayerContext);
     const [songIsPaused, setSongIsPaused] = useContext(SongIsPausedContext);
     const [song, setSong] = useContext(AlbumContext);
     const [queue, setQueue] = useContext(QueueContext);
@@ -600,28 +576,21 @@ const Queue = () => {
     const [update, setUpdate] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
     const [,setResBar] = useContext(ResponseBarContext);
-    const [topBarConfig, setTopBarConfig] = CustomUseState(topBarGlobal);
-    const [mini, setMini] = useContext(MiniPlayerContext);
+    const [,setMini] = useContext(MiniPlayerContext);
     const [element, setElement] = useState(null);
     const [show, setShow] = useState(false);
     const [artLyricsOpen, setArtLyricsOpen] = useState(false);
-    actualQueue = queue;
-    topBar = topBarConfig;
-    queueLength = queue.length;
-    songIndex = actualQueue.indexOf(song);
-    firstpart = actualQueue.slice(0,songIndex);
-    lastpart = actualQueue.slice(songIndex+1,queueLength);
-    miniLocal = mini;
-    isOpen = openerDetails.open;
     const sDiv = useRef(null);
     const hist = useHistory();
+    actualQueue = queue;
+    songIndex = actualQueue.indexOf(song);
+    isOpen = openerDetails.open;
 
 
     const clearQueue = (e) => {
         e.stopPropagation();
         const index = actualQueue.indexOf(song);
         actualQueue = [actualQueue[index]];
-        localStorage.setItem("queue",JSON.stringify(actualQueue));
         setQueue(actualQueue);
         setResBar({ open: true, msg: "Queue cleared" });
         setUpdate(!update);
@@ -630,36 +599,6 @@ const Queue = () => {
     const goToAlbum = item => {
         setQueueOpened(false);
         hist.push(`${prefix}${basename}/album/${item._albumId}`);
-    };
-    
-    const initial = () => {
-        finalQueue = [];
-        if (queueLength === 1) {
-            return;
-        }
-        songIndex = queue.indexOf(song);
-        if (songIndex === 0) {
-            finalQueue = queue.slice(1,queueLength);
-            return;
-        }
-        if (songIndex === queueLength-1) {
-            finalQueue = queue.slice(0,queueLength-1);
-            return;
-        }
-        finalQueue = queue.slice(songIndex+1,queueLength);
-        smallArr = queue.slice(0,songIndex);
-        smallArr.forEach(each => {
-            finalQueue.push(each);
-        });
-        return;
-    };
-
-    const close = () => {
-        setTopBarConfig({
-            ...topBar,
-            button: false
-        });
-        setQueueOpened(false);
     };
 
     const removeSong = each => {
@@ -673,7 +612,6 @@ const Queue = () => {
             return;
         }
         actualQueue.splice(removeIndex, 1);
-        localStorage.setItem("queue",JSON.stringify(actualQueue));
         setQueue(actualQueue);
         setUpdate(!update);
         setResBar(prev => {
@@ -739,27 +677,10 @@ const Queue = () => {
 
     const handleMenu = (e, { dimensions, windowDim, song: selectedSong, shouldNotGiveOption }) => {
         e.stopPropagation();
-        const data = shouldNotGiveOption ? [
+        const data = [
             {
                 name: "Remove",
                 func: () => removeSong(selectedSong)
-            },
-            {
-                name: "Go to album",
-                func: () => goToAlbum(selectedSong)
-            },
-            {
-                name: "Share track",
-                func: () => shareTrack(selectedSong)
-            }
-        ] : [
-            {
-                name: "Remove",
-                func: () => removeSong(selectedSong)
-            },
-            {
-                name: "Play next",
-                func: () => playSongNext(selectedSong)
             },
             {
                 name: "Go to album",
@@ -770,6 +691,10 @@ const Queue = () => {
                 func: () => shareTrack(selectedSong)
             }
         ];
+        if (!shouldNotGiveOption) data.splice(1,0,{
+            name: "Play next",
+            func: () => playSongNext(selectedSong)
+        });
         setOpenerDetails(prev => {
             return {
                 ...prev,
@@ -778,22 +703,6 @@ const Queue = () => {
                 yValue: checkY(dimensions.y, windowDim.height, data.length),
                 data
             };
-        });
-    };
-
-    const handlePlayingMenu = (e, { dimensions, windowDim, song: selectedSong }) => {
-        e.stopPropagation();
-        setOpenerDetails({
-            ...openerDetails,
-            open: true,
-            xValue: checkX(dimensions.x, windowDim.width),
-            yValue: checkY(dimensions.y, windowDim.height, 1),
-            data: [
-                {
-                    name: "Go to album",
-                    func: () => goToAlbum(selectedSong)
-                }
-            ]
         });
     };
 
@@ -841,6 +750,7 @@ const Queue = () => {
         sDiv.current = document.querySelector(".scrollcontainer");
         document.addEventListener("click",documentClick);
         sDiv.current && sDiv.current.addEventListener("scroll",documentScroll);
+
         return () => {
             document.removeEventListener("click",documentClick);
             sDiv.current && sDiv.current.removeEventListener("scroll",documentScroll);
@@ -852,7 +762,8 @@ const Queue = () => {
         return <MidPanelLoader/>
     }
     return(
-        <div className={ queueOpened ? "bottomqueue show" : queueOpened !== "" ? "bottomqueue hide" : "bottomqueue stay" } ref={setElement}>
+        <div className={ queueOpened ? "bottomqueue show" : queueOpened !== "" ? "bottomqueue hide" : "bottomqueue stay" }
+        ref={setElement}>
             { show ?
             <div className="innerbottomqueue">
                 <div className="leftqueuepart">
@@ -864,8 +775,11 @@ const Queue = () => {
                                     <div className="dummyforshadow"></div>
                                     <div className="icons">
                                         <img className="minimizer" onClick={minimizer} src={Minimize} alt="" title="Minimize Player" />
-                                        {/* <img className="expander" src={LyricsIcon} onClick={openLyrics} alt="" title="Lyrics" /> */}
-                                        {/* <img className="minimizer" onClick={minimizer} src={Minimize} alt="" title="Minimize Player" /> */}
+                                        {/* {
+                                            song.lyrics ?
+                                            <img className="expander" src={LyricsIcon} onClick={openLyrics} alt="" title="Lyrics" /> :
+                                            null
+                                        } */}
                                     </div>
                                 </> : null
                             }
@@ -897,6 +811,7 @@ const Queue = () => {
             </div> : null }
         </div>
     );
+
 };
 
 

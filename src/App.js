@@ -3,64 +3,31 @@ import Opening from "./opening";
 import Home from "./homepage";
 import {
     keepServersActive,
-    fullScreenGlobal,
-    playingGlobal,
-    CustomUseState,
-    queueOpenedGlobal,
-    openerGlobal,
     prefix,
-    basename,
-    httpCheck,
-    global
+    basename
 } from "./common";
 import { BrowserRouter as Router, Route } from "react-router-dom";
 import {
-    FullScreenContext,
     QueueOpenedContext,
     MenuContext,
-    PlayerContext,
-    AlbumContext
+    PlayerContext
 } from "./index";
-let queueOpenedLocal, intervalTimeout = null, playingLocal, screenLocal;
+let queueOpenedLocal, playingLocal;
 
 
 const App = () => {
-    httpCheck();
-    const [screen, setScreen] = useContext(FullScreenContext);
+
     const [queueOpened, setQueueOpened] = useContext(QueueOpenedContext);
-    const [openerDetails, setOpenerDetails] = useContext(MenuContext);
+    const [,setOpenerDetails] = useContext(MenuContext);
     const [playing,] = useContext(PlayerContext);
-    screenLocal = screen;
     playingLocal = playing;
     queueOpenedLocal = queueOpened;
-
-    // if (intervalTimeout === null) {
-    //     intervalTimeout = setInterval(() => {
-    //         keepServersActive();
-    //     }, 3*60*1000);
-    // }
 
     const callServersInterval = () => {
         setInterval(() => {
             keepServersActive();
         }, 3*60*1000);
     };
-
-    const screenSet = () => {
-        setScreen({ ...screen, show: !screen.show });
-    };
-
-    function keyDown(e) {
-        // if (e.keyCode === 122 || e.keyCode === 27) {
-        //     e.preventDefault();
-        // }
-        if (e.keyCode === 70 && !global.searchBarOpen) {
-            e.preventDefault();
-            if (playingLocal) {
-                // screenSet();
-            }
-        }
-    }
 
     function check(e) {
         if (queueOpenedLocal) {
@@ -81,11 +48,9 @@ const App = () => {
     useEffect(() => {
         keepServersActive();
         callServersInterval();
-        document.addEventListener("keydown",keyDown);
         window.addEventListener("popstate",check);
         // window.addEventListener("beforeunload",unload);
         return () => {
-            document.removeEventListener("keydown",keyDown);
             window.removeEventListener("popstate",check);
         }
     },[]);
@@ -96,6 +61,8 @@ const App = () => {
             <Route path={`${prefix}${basename}`} component={Home} />
         </Router>
     )
+    
 };
+
 
 export default App;
