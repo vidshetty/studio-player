@@ -172,6 +172,11 @@ const Player = () => {
         } else {
             setManuallyPaused(false);
             audio.play();
+            setTimeout(() => {
+                if (audio.readyState <= 2 && !isBuffering) {
+                    waiting();
+                }
+            }, 500);
         }
     };
     const openQueue = e => {
@@ -338,8 +343,17 @@ const Player = () => {
         setBuffering(false);
         setSongPaused(false);
         setTimeout(() => {
-            audio.play();
-            if (!trackingTimer.hasStarted()) trackingTimer.start();
+            audio.play()
+            .then(() => {
+                if (!trackingTimer.hasStarted()) trackingTimer.start();
+            })
+            .catch(e => {
+                console.log("error",e.message,e.name);
+                setResBar(prev => {
+                    return { ...prev, open: true, msg: "Autoplay disabled!" };
+                });
+                onpaused();
+            });
         }, 500);
     };
     const waiting = (e) => {
@@ -368,9 +382,7 @@ const Player = () => {
             if (Object.keys(lyricTextLocal).length > 0 && !found) setLyricText({});
         }
 
-        if (range === document.activeElement) {
-            return;
-        }
+        if (range === document.activeElement) return;
 
         range.value = audio.currentTime;
         percent = range.value/range.max * 100;
@@ -390,10 +402,6 @@ const Player = () => {
             setSongPaused(false);
             if (trackingTimer.canContinue()) trackingTimer.continue();
         }
-    };
-    const onplay = (e) => {
-        setIsPlaying(true);
-        setSongPaused(false);
     };
     const ended = (e) => {
         range.value = 0;
@@ -448,12 +456,14 @@ const Player = () => {
         const time = audio.currentTime;
         if (time + skipSecs < duration) {
             audio.currentTime = time + skipSecs;
+            timeupdate();
         }
     };
     const rewind = () => {
         const time = audio.currentTime;
         if (time - skipSecs > 0) {
             audio.currentTime = time - skipSecs;
+            timeupdate();
         }
     };
     const onkeydown = (e) => {
@@ -682,14 +692,13 @@ const Player = () => {
 
         setIsPlaying(true);
         setBuffering(true);
-        audio.addEventListener("loadedmetadata",metadata);
-        audio.addEventListener("waiting",waiting);
-        audio.addEventListener("timeupdate",timeupdate);
-        audio.addEventListener("canplay",canplay);
-        // audio.addEventListener("play",onplay);
-        audio.addEventListener("ended",ended);
-        audio.addEventListener("pause",onpaused);
-        audio.addEventListener("playing",onplaying);
+        audio.addEventListener("loadedmetadata", metadata);
+        audio.addEventListener("waiting", waiting);
+        audio.addEventListener("timeupdate", timeupdate);
+        audio.addEventListener("canplay", canplay);
+        audio.addEventListener("ended", ended);
+        audio.addEventListener("pause", onpaused);
+        audio.addEventListener("playing", onplaying);
 
         return () => {
             document.removeEventListener("keydown",onkeydown);
