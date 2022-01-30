@@ -272,32 +272,6 @@ const Player = () => {
         }
 
     };
-    const goToNextForMediaSession = () => {
-        localStorage.removeItem("time");
-        localStorage.removeItem("duration");
-        if (actualQueue.length === 1) {
-            audio.currentTime = 0;
-        } else {
-            const nextIndex = currentSongIndex < actualQueue.length - 1 ? currentSongIndex + 1 : 0;
-            setSong(actualQueue[nextIndex]);
-            currentSongIndex = nextIndex;
-        }
-        setSongPaused(true);
-    };
-    const goToPreviousForMediaSession = () => {
-        localStorage.removeItem("time");
-        localStorage.removeItem("duration");
-        setSongPaused(true);
-        if (actualQueue.length === 1 || audio.currentTime > 10) {
-            audio.currentTime = 0;
-            trackingTimer.stop();
-            trackingTimer = new Timer(30, addToRecentlyPlayed);
-            if (!trackingTimer.hasStarted()) trackingTimer.start();
-        } else {
-            const index = actualQueue.indexOf(song);
-            setSong(index === 0 ? actualQueue[actualQueue.length-1] : actualQueue[index-1]);
-        }
-    };
 
 
     const volumeinput = e => {
@@ -559,7 +533,9 @@ const Player = () => {
         else if (e.action === "seekbackward") {
             rewind();
         }
-        else if (e.action === "seekto") return null;
+        else if (e.action === "seekto") {
+            audio.currentTime = e.seekTime;
+        };
     };
 
     const cacheNextSong = async () => {

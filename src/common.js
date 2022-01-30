@@ -5,6 +5,8 @@ import axios from "axios";
 const songservers = [];
 const PRODUCTION = true;
 const HIDE_ALL_LOGS = true;
+// const LOCAL_URL = "http://192.168.29.77:5000";
+const LOCAL_URL = "http://localhost:5000";
 
 
 export const keepServersActive = async () => {
@@ -13,7 +15,7 @@ export const keepServersActive = async () => {
         songservers.push(
             ...await axios({
                 method: "GET",
-                url: PRODUCTION ? "/api/activateCheck" : "http://localhost:5000/api/activateCheck"
+                url: PRODUCTION ? "/api/activateCheck" : LOCAL_URL + "/api/activateCheck"
             }).then(res => {
                 return (
                     res &&
@@ -22,7 +24,7 @@ export const keepServersActive = async () => {
                 ) || [];
             })
         );
-        songservers.push(PRODUCTION ? "/api/activateCheck" : "http://localhost:5000/api/activateCheck");
+        songservers.push(PRODUCTION ? "/api/activateCheck" : LOCAL_URL + "/api/activateCheck");
     }
 
     await Promise.all(
@@ -43,7 +45,7 @@ export const sendRequest = async config => {
     try {
         const res = await axios({
             method: config.method,
-            url: PRODUCTION ? `/api${config.endpoint}` : `http://localhost:5000/api${config.endpoint}`,
+            url: PRODUCTION ? `/api${config.endpoint}` : `${LOCAL_URL}/api${config.endpoint}`,
             data: config.data || {}
         });
         const { data } = res;
