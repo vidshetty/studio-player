@@ -256,6 +256,9 @@ const Player = () => {
         arr.splice(0,0,song);
         return arr;
     };
+    const seekShortcut = (diff) => {
+        audio.currentTime = diff * 0.1 * audio.duration;
+    };
     const shuffleHandler = async e => {
 
         e.stopPropagation();
@@ -514,6 +517,14 @@ const Player = () => {
     const onkeyup = (e) => {
         if (e.keyCode === 17) ctrlKey = false;
         if (e.keyCode === 86) vKey = false;
+
+        if (e.keyCode >= 48 && e.keyCode <= 57) {
+            seekShortcut(e.keyCode - 48);
+        }
+
+        if (e.keyCode >= 96 && e.keyCode <= 105) {
+            seekShortcut(e.keyCode - 96);
+        }
 
         if (e.keyCode === 39) {
             e.preventDefault();
@@ -1080,7 +1091,8 @@ const KeyboardShortcut = ({ setOpenKeyShort }) => {
         { name: "Next song", keys: ["N"] },
         { name: "Volume Up", keys: ["Up"] },
         { name: "Volume Down", keys: ["Down"] },
-        { name: "Mute/Unmute", keys: ["M"] }
+        { name: "Mute/Unmute", keys: ["M"] },
+        { name: "Seek to specific point (4 meaning 40% of the duration)", keys: ["0 ... 9"] }
     ];
 
     useEffect(() => {
