@@ -8,7 +8,6 @@ import Pause from "../../../assets/pausebutton-white.svg";
 import Button from "../../../Button";
 
 import {
-    sendRequest,
     checkX,
     checkY,
     prefix,
@@ -25,6 +24,7 @@ import {
     ResponseBarContext,
     SongIsPausedContext
 } from "../../../index";
+import { APIService } from "../../../api-service";
 
 // Library view
 let isOpen = null, moreLocal = null;
@@ -294,10 +294,7 @@ const NewActualLibrary = () => {
                 setMore(more);
                 return;
             }
-            const res = await sendRequest({
-                method: "GET",
-                endpoint: `/getLibrary?page=${page}`
-            });
+            const res = await APIService.getLibrary(page);
             if (res) {
                 const { more, data } = res;
                 const saved = JSON.parse(sessionStorage.getItem("library") || "[]");
@@ -330,10 +327,7 @@ const NewActualLibrary = () => {
                 setIsLoading(false);
                 return;
             }
-            const res = await sendRequest({
-                method: "GET",
-                endpoint: `/getLibrary?page=${page}`
-            });
+            const res = await APIService.getLibrary(page);
             if (res) {
                 const { more, data } = res;
                 sessionStorage.setItem("library",JSON.stringify([{ page: 1, response: res }]));

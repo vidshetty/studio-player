@@ -1,65 +1,9 @@
 import React from "react";
-import axios from "axios";
 
 
-const songservers = [];
-const PRODUCTION = true;
+
 const HIDE_ALL_LOGS = true;
-// const LOCAL_URL = "http://192.168.29.77:5000";
-const LOCAL_URL = "http://localhost:5000";
 
-
-export const keepServersActive = async () => {
-
-    if (songservers.length === 0) {
-        songservers.push(
-            ...await axios({
-                method: "GET",
-                url: PRODUCTION ? "/api/activateCheck" : LOCAL_URL + "/api/activateCheck"
-            }).then(res => {
-                return (
-                    res &&
-                    res.data &&
-                    res.data.server
-                ) || [];
-            })
-        );
-        songservers.push(PRODUCTION ? "/api/activateCheck" : LOCAL_URL + "/api/activateCheck");
-    }
-
-    await Promise.all(
-        songservers.map(async server => {
-            try {
-                const res = await axios.get(server);
-                return res;
-            } catch(e) {
-                if (e) return;
-            }
-        })
-    );
-
-};
-
-export const sendRequest = async config => {
-
-    try {
-        const res = await axios({
-            method: config.method,
-            url: PRODUCTION ? `/api${config.endpoint}` : `${LOCAL_URL}/api${config.endpoint}`,
-            data: config.data || {}
-        });
-        const { data } = res;
-        if (data.redirect) {
-            window.location.href = data.to;
-            return null;
-        }
-        return data;
-    }
-    catch (e) {
-        return null;
-    }
-
-};
 
 export const print = (...params) => {
     if (HIDE_ALL_LOGS) return;
@@ -222,8 +166,6 @@ export const basename = "";
 // export const basename = "/player";
 // export const prefix = "";
 export const sharingBaseLink = (() => {
-    if (PRODUCTION) {
-        return `https://studiomusic.herokuapp.com${prefix}${basename}`;
-    }
-    return `http://localhost:3000${prefix}${basename}`;
+    return `https://studiomusic.herokuapp.com${prefix}${basename}`;
+    // return `http://localhost:3000${prefix}${basename}`;
 })();

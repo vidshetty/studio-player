@@ -8,11 +8,12 @@ import "../../css/homestyles.css";
 import "../../css/teststyles.css";
 import "../../css/searchstyles.css";
 
+import { APIService } from "../../api-service";
+
 import {
     prefix,
     basename,
-    global,
-    sendRequest
+    global
 } from "../../common";
 
 import {
@@ -295,13 +296,8 @@ const TopNav = () => {
     };
 
     const call = async () => {
-        const res = await sendRequest({
-            method: "GET",
-            endpoint: "/whosthis"
-        });
-        if (res) {
-            setUser(res);
-        }
+        const res = await APIService.whosThis();
+        if (res) setUser(res);
     };
 
 

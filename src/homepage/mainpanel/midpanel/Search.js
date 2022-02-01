@@ -9,8 +9,9 @@ import Button from "../../../Button";
 import { MidPanelLoader } from "./index";
 import { pauseOrPlay } from "../../index";
 
+import { APIService } from "../../../api-service";
+
 import {
-    sendRequest,
     checkX,
     checkY,
     prefix,
@@ -310,10 +311,7 @@ const NewSearch = () => {
 
     const call = async () => {
         const searchValue = location.search.replace("q","name");
-        const res = await sendRequest({
-            method: "GET",
-            endpoint: `/search${searchValue}`
-        });
+        const res = await APIService.search(searchValue);
         setSongsList(res.songs);
         setAlbumsList(res.albums);
         setIsLoading(false);

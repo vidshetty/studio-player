@@ -1,4 +1,4 @@
-const cacheName = "v1";
+const cacheName = "v2";
 
 
 self.addEventListener("install", e => {
@@ -17,22 +17,24 @@ self.addEventListener("activate", e => {
     );
 });
 
-const callCache = e => {
-    return caches.match(e.request)
-    .then(resp => {
-        if (resp) {
-            return resp;
-        }
-        return caches.open(cacheName).then(cache => {
-            return fetch(e.request).then(response => {
-                cache.put(e.request, response.clone())
-                .catch(e => {
-                    console.log("error in request",e.request);
-                });
-                return response;
-            });
-        });
-    });
+const callCache = async e => {
+
+    const resp = await caches.match(e.request);
+    if (resp) return resp;
+
+    const cache = await caches.open(cacheName);
+    const response = await fetch(e.request);
+    
+    try {
+        await cache.put(e.request, response.clone())
+    }
+    catch(err) {
+        console.log("error in request (sw)", err.request);
+        console.log(err.message);
+    }
+
+    return response;
+
 };
 
 self.addEventListener("fetch", e => {

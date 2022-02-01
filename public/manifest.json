@@ -2,11 +2,26 @@
     "short_name": "StudioMusic",
     "name": "StudioMusic",
     "icons": [
-      {
-        "src": "latest-blueblack.png",
-        "type": "image/png",
-        "sizes": "512x512"
-      }
+        {
+            "src": "16x16.png",
+            "type": "image/png",
+            "sizes": "16x16"   
+        },
+        {
+            "src": "32x32.png",
+            "type": "image/png",
+            "sizes": "32x32"   
+        },
+        {
+            "src": "192x192.png",
+            "type": "image/png",
+            "sizes": "192x192"
+        },
+        {
+            "src": "latest-blueblack.png",
+            "type": "image/png",
+            "sizes": "512x512"
+        }
     ],
     "start_url": "/player",
     "background_color": "#030303",

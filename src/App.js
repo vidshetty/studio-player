@@ -1,17 +1,21 @@
 import React, { useEffect, useContext } from "react";
+import { BrowserRouter as Router, Route } from "react-router-dom";
 import Opening from "./opening";
 import Home from "./homepage";
+
+import { APIService } from "../src/api-service";
+
 import {
-    keepServersActive,
     prefix,
     basename
 } from "./common";
-import { BrowserRouter as Router, Route } from "react-router-dom";
+
 import {
     QueueOpenedContext,
     MenuContext,
     PlayerContext
 } from "./index";
+
 let queueOpenedLocal, playingLocal;
 
 
@@ -25,7 +29,7 @@ const App = () => {
 
     const callServersInterval = () => {
         setInterval(() => {
-            keepServersActive();
+            APIService.keepServersActive();
         }, 3*60*1000);
     };
 
@@ -46,7 +50,7 @@ const App = () => {
     }
 
     useEffect(() => {
-        keepServersActive();
+        APIService.keepServersActive();
         callServersInterval();
         window.addEventListener("popstate",check);
         // window.addEventListener("beforeunload",unload);

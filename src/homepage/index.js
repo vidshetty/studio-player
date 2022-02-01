@@ -19,10 +19,11 @@ import upArrow from "../assets/uparrow.svg";
 import downArrow from "../assets/downarrow.svg";
 import Button from "../Button";
 
+import { APIService } from "../api-service";
+
 import {
     convertTime,
     wait,
-    sendRequest,
     Timer,
     global,
     skipSecs
@@ -67,6 +68,57 @@ let screenLocal = null, currentLyricIndex = null;
 let lyricsLocal = null, lyricTextLocal = null;
 let ctrlKey = false, vKey = false;
 const shouldCache = false;
+
+// seek data
+class SeekData {
+    static #forwardInUse = false;
+    static #rewindInUse = false;
+    static #seekTimer = 0;
+    static #curTime = null;
+    static #newCurTime = null;
+
+    static move(direction) {
+        if (direction === "forward") this.#forwardInUse = true;
+        if (direction === "rewind") this.#rewindInUse = true;
+        this.#curTime = audio.currentTime;
+
+        const duration = audio.duration;
+        this.#seekTimer += direction === "forward" ? skipSecs : skipSecs * -1;
+        this.#newCurTime = (() => {
+            if (direction === "forward") {
+                return this.#curTime + this.#seekTimer > duration ? duration : this.#curTime + this.#seekTimer;
+            }
+            return this.#curTime + this.#seekTimer < 0 ? 0 : this.#curTime + this.#seekTimer;
+        })();
+
+        range.value = this.#newCurTime;
+        percent = range.value/range.max * 100;
+        range.style.background = changeColor(percent,bufferPercent);
+    }
+
+    static inUse(direction = null) {
+        if (direction === null) return this.#forwardInUse || this.#rewindInUse;
+        if (direction === "forward") return this.#forwardInUse;
+        if (direction === "rewind") return this.#rewindInUse;
+    }
+
+    static #set() {
+        audio.currentTime = this.#newCurTime;
+    }
+
+    static release(direction = null) {
+        if (direction === "forward") this.#forwardInUse = false;
+        else if (direction === "rewind") this.#rewindInUse = false;
+        else {
+            this.#forwardInUse = false;
+            this.#rewindInUse = false;
+        }
+        this.#seekTimer = 0;
+        this.#curTime = null;
+        this.#set();
+        this.#newCurTime = null;
+    }
+}
 
 // Opener
 let style = null;
@@ -257,7 +309,11 @@ const Player = () => {
         return arr;
     };
     const seekShortcut = (diff) => {
-        audio.currentTime = diff * 0.1 * audio.duration;
+        const amount = diff * 0.1 * audio.duration;
+        audio.currentTime = amount;
+        range.value = amount;
+        percent = range.value/range.max * 100;
+        range.style.background = changeColor(percent,bufferPercent);
     };
     const shuffleHandler = async e => {
 
@@ -361,11 +417,19 @@ const Player = () => {
 
         if (range === document.activeElement) return;
 
+        if (SeekData.inUse()) return;
+
         range.value = audio.currentTime;
         percent = range.value/range.max * 100;
-        let value;
+        let value = 0;
         try {
-            value = (audio.buffered && audio.buffered.end(audio.buffered.length - 1));
+            for (let i=0; i<audio.buffered.length; i++) {
+                if (audio.currentTime < audio.buffered.end(i)) {
+                    value = audio.buffered.end(i);
+                    break;
+                }
+            }
+            // value = (audio.buffered && audio.buffered.end(audio.buffered.length - 1));
         } catch(e) {
             value = 0;
         }
@@ -429,19 +493,12 @@ const Player = () => {
     };
 
     const forward = () => {
-        const duration = audio.duration;
-        const time = audio.currentTime;
-        if (time + skipSecs < duration) {
-            audio.currentTime = time + skipSecs;
-            timeupdate();
-        }
+        if (SeekData.inUse("rewind")) return;
+        SeekData.move("forward");
     };
     const rewind = () => {
-        const time = audio.currentTime;
-        if (time - skipSecs > 0) {
-            audio.currentTime = time - skipSecs;
-            timeupdate();
-        }
+        if (SeekData.inUse("forward")) return;
+        SeekData.move("rewind");
     };
     const onkeydown = (e) => {
 
@@ -502,6 +559,16 @@ const Player = () => {
                 return { ...prev, open: true, msg: `Volume: ${Math.floor(volumerange.value)}%` };
             });
         }
+
+        if (e.keyCode === 39) {
+            e.preventDefault();
+            forward();
+        }
+
+        if (e.keyCode === 37) {
+            e.preventDefault();
+            rewind();
+        }
         
         if (e.keyCode === 40 && !global.searchBarOpen) {
             e.preventDefault();
@@ -528,12 +595,12 @@ const Player = () => {
 
         if (e.keyCode === 39) {
             e.preventDefault();
-            forward();
+            if (SeekData.inUse("forward")) SeekData.release();
         }
 
         if (e.keyCode === 37) {
             e.preventDefault();
-            rewind();
+            if (SeekData.inUse("rewind")) SeekData.release();
         }
     };
 
@@ -572,13 +639,7 @@ const Player = () => {
     };
 
     const addToRecentlyPlayed = () => {
-
-        sendRequest({
-            method: "POST",
-            endpoint: "/addToRecentlyPlayed",
-            data: { albumId: song._albumId }
-        });
-
+        APIService.addToRecentlyPlayed({ albumId: song._albumId });
         if (shouldCache) {
             cacheNextSong();
         }
@@ -972,7 +1033,7 @@ export const ResponseBar = () => {
             setObj(prev => {
                 return { ...prev, open: false };
             });
-        }, 3000);
+        }, 2000);
     }
 
     return(
@@ -991,10 +1052,7 @@ const ProfileOpener = ({ setProfileOpen }) => {
 
     const signOut = async () => {
         setIsLoading(true);
-        const res = await sendRequest({
-            method: "GET",
-            endpoint: "/sign-out"
-        });
+        const res = await APIService.signOut();
         if (res.success) {
             localStorage.clear();
             window.location.href = "/";

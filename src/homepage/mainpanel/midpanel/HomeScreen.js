@@ -9,8 +9,9 @@ import Pause from "../../../assets/pausebutton-white.svg";
 import Button from "../../../Button";
 import { pauseOrPlay } from "../../../homepage";
 
+import { APIService } from "../../../api-service";
+
 import {
-    sendRequest,
     checkX,
     checkY,
     prefix,
@@ -81,10 +82,7 @@ const EachInQuickPick = ({
                 return { ...prev, open: true, msg: "Starting radio...." };
             });
             setRadio(true);
-            const songList = await sendRequest({
-                method: "GET",
-                endpoint: `/startradio?exclude=${song._trackId}&type=qr`
-            });
+            const songList = await APIService.startRadio(song._trackId, "qr");
             if (songList) {
                 songList.forEach(each => {
                     each.id = ++global.id;
@@ -329,10 +327,7 @@ const NewActualHomeScreen = () => {
     const hist = useHistory();
 
     const call = async () => {
-        const res = await sendRequest({
-            method: "GET",
-            endpoint: `/getHomeAlbums`
-        });
+        const res = await APIService.getHomeAlbums();
         if (res) {
             setData(res.albums);
             setPicks(res.quickPicks);
@@ -614,10 +609,7 @@ const NewActualHomeScreen = () => {
                 return { ...prev, open: true, msg: "Playing from your history...." };
             });
             setRadio(true);
-            const songList = await sendRequest({
-                method: "GET",
-                endpoint: `/startradio?exclude=${album._albumId}&type=rp`
-            });
+            const songList = await APIService.startRadio(album._albumId, "rp");
             songList.forEach(each => {
                 each.id = ++global.id;
             });

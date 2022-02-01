@@ -10,13 +10,14 @@ import { pauseOrPlay } from "../../index";
 import LyricsIcon from "../../../assets/lyrics-white.svg";
 import Button from "../../../Button";
 
+import { APIService } from "../../../api-service";
+
 import {
     checkX,
     checkY,
     prefix,
     basename,
     global,
-    sendRequest,
     sharingBaseLink
 } from "../../../common";
 
@@ -100,10 +101,7 @@ const LyricsPart = ({ song, setTab }) => {
 
     const call = async () => {
         if (!lyricsLoading) setLyricsLoading(true);
-        const res = await sendRequest({
-            method: "GET",
-            endpoint: `/getLyrics?name=${song.Title || song.Album}`
-        });
+        const res = await APIService.getLyrics(song);
         if (res) {
             setLyricsLoading(false);
             setLyrics(res);
@@ -209,10 +207,7 @@ const ArtLyrics = ({ song, setArtLyricsOpen }) => {
 
     const call = async () => {
         if (!lyricsLoading) setLyricsLoading(true);
-        const res = await sendRequest({
-            method: "GET",
-            endpoint: `/getLyrics?name=${song.Title || song.Album}`
-        });
+        const res = await APIService.getLyrics(song);
         if (res) {
             setLyricsLoading(false);
             setLyrics(res);

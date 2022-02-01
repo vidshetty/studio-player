@@ -2,9 +2,11 @@ import React, { useState, useEffect, useContext } from "react";
 import { Redirect } from "react-router-dom";
 import "../css/opening2styles.css";
 import logo2 from "../assets/latest-bluetransparent.svg";
+
+import { APIService } from "../api-service";
+
 import {
     wait,
-    sendRequest,
     prefix,
     basename
 } from "../common";
@@ -28,15 +30,9 @@ const Opening2 = () => {
     const [, setLoaderClass] = useState("opening-loader hidden");
 
     const request = async () => {
-        const res = await sendRequest({
-            method: "GET",
-            endpoint: "/activateCheck"
-        });
+        const res = await APIService.activateCheck();
         if (res.status === "active") {
-            sendRequest({
-                method: "GET",
-                endpoint: "/recordTime"
-            });
+            APIService.recordTime();
             await wait(500);
             if (requestTimeout === null) return;
             clearTimeout(requestTimeout);

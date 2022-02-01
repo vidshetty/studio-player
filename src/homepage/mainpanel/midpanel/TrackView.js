@@ -8,8 +8,10 @@ import copyright from "../../../assets/copyright.png";
 import Button from "../../../Button";
 import { pauseOrPlay } from "../../../homepage";
 import { MidPanelLoader } from "./index";
+
+import { APIService } from "../../../api-service";
+
 import {
-    sendRequest,
     prefix,
     basename,
     dateToString,
@@ -164,10 +166,7 @@ const Trackview = () => {
     };
 
     const call = async () => {
-        const res = await sendRequest({
-            method: "GET",
-            endpoint: `/getTrack?albumId=${params.albumId}&trackId=${params.trackId}`
-        });
+        const res = await APIService.getTrack(params.albumId, params.trackId);
         if (res && res.track) {
             setTrack(res.track);
             setReleaseDate(dateToString(res.track.releaseDate));

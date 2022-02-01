@@ -11,8 +11,9 @@ import copyright from "../../../assets/copyright.png";
 import { pauseOrPlay } from "../../../homepage";
 import Button from "../../../Button";
 
+import { APIService } from "../../../api-service";
+
 import {
-    sendRequest,
     checkX,
     checkY,
     global,
@@ -210,11 +211,8 @@ const NewActualAlbumView = () => {
     };
 
     const call = async () => {
-        const res = await sendRequest({
-            method: "GET",
-            endpoint: `/getAlbumDetails?albumId=${params.albumId}`
-        });
-        if (res) {
+        const res = await APIService.getAlbum(params.albumId);
+        if (res && res.album) {
             setReleaseDate(dateToString(res.album.releaseDate));
             setAlbum(res.album);
             setIsLoading(false);
