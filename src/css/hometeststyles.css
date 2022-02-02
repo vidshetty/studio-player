@@ -569,8 +569,8 @@
     background-color: rgba(0,0,0,0.9);
 }
 .keyboard{
-    width: 700px;
-    height: 400px;
+    width: 850px;
+    height: 450px;
     background-color: #1e2429;
     border-radius: 5px;
     display: flex;

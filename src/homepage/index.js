@@ -49,79 +49,40 @@ import {
 } from "../index";
 
 
-export const audio = new Audio();
+const audio = new Audio();
 
 
 // Player
 export let pauseOrPlay = null;
-let trackingTimer = null, elapsedTime = null;
-let duration = null, range = null;
-let volumerange = null;
-let setVolume = 1, percent = 0, bufferPercent = 0;
-let whichRepeat = null;
-let goToNext = null, goToPrevious = null;
-let mainVolume = 1;
-let actualQueue = null;
-let currentSongIndex = 0, isSongPlaying = null;
-let isBuffering = null, manuallyPausedLocal = null, timeout = null;
-let screenLocal = null, currentLyricIndex = null;
-let lyricsLocal = null, lyricTextLocal = null;
-let ctrlKey = false, vKey = false;
+let trackingTimer = null;
 const shouldCache = false;
-
-// seek data
-class SeekData {
-    static #forwardInUse = false;
-    static #rewindInUse = false;
-    static #seekTimer = 0;
-    static #curTime = null;
-    static #newCurTime = null;
-
-    static move(direction) {
-        if (direction === "forward") this.#forwardInUse = true;
-        if (direction === "rewind") this.#rewindInUse = true;
-        this.#curTime = audio.currentTime;
-
-        const duration = audio.duration;
-        this.#seekTimer += direction === "forward" ? skipSecs : skipSecs * -1;
-        this.#newCurTime = (() => {
-            if (direction === "forward") {
-                return this.#curTime + this.#seekTimer > duration ? duration : this.#curTime + this.#seekTimer;
-            }
-            return this.#curTime + this.#seekTimer < 0 ? 0 : this.#curTime + this.#seekTimer;
-        })();
-
-        range.value = this.#newCurTime;
-        percent = range.value/range.max * 100;
-        range.style.background = changeColor(percent,bufferPercent);
-    }
-
-    static inUse(direction = null) {
-        if (direction === null) return this.#forwardInUse || this.#rewindInUse;
-        if (direction === "forward") return this.#forwardInUse;
-        if (direction === "rewind") return this.#rewindInUse;
-    }
-
-    static #set() {
-        audio.currentTime = this.#newCurTime;
-    }
-
-    static release(direction = null) {
-        if (direction === "forward") this.#forwardInUse = false;
-        else if (direction === "rewind") this.#rewindInUse = false;
-        else {
-            this.#forwardInUse = false;
-            this.#rewindInUse = false;
-        }
-        this.#seekTimer = 0;
-        this.#curTime = null;
-        this.#set();
-        this.#newCurTime = null;
-    }
+class PlayerData {
+    static trackingTimer = null;
+    static elapsedTime = null;
+    static duration = null;
+    static range = null;
+    static volumerange = null;
+    static setVolume = 1;
+    static percent = 0
+    static bufferPercent = 0;
+    static repeatType = null;
+    static mainVolume = 1;
+    static queue = null;
+    static currentSongIndex = null;
+    static isPlaying = null;
+    static buffering = null;
+    static manuallyPaused = null;
+    static screen = null;
+    static currentLyricIndex = null;
+    static lyrics = null;
+    static lyricsText = null;
 }
 
 // Opener
 let style = null;
+
+// Response bar
+let timeout = null;
 
 // ProfileOpener
 let signOutLoading = null;
@@ -175,11 +136,11 @@ const trial = async () => {
       
 };
 
+
 const Player = () => {
 
     const [hovered, setHovered] = useState(false);
     const [, setMuteOptions] = useState({ mute: false, lastlevel: null });
-    const [, setPreLoaded] = useState(false);
     const [song, setSong] = useContext(AlbumContext);
     const [, setPlaying] = useContext(PlayerContext);
     const [queue, setQueue] = useContext(QueueContext);
@@ -198,97 +159,150 @@ const Player = () => {
     const [isRadioOn, setRadioOn] = useContext(RadioContext);
     const [update,] = useState(true);
 
-    screenLocal = screen;
-    actualQueue = queue;
-    currentSongIndex = queue.findIndex(each => {
+    PlayerData.screen = screen;
+    PlayerData.queue = queue;
+    PlayerData.manuallyPaused = manuallyPaused;
+    PlayerData.isPlaying = isPlaying;
+    PlayerData.buffering = buffering;
+    PlayerData.lyrics = lyrics;
+    PlayerData.lyricsText = lyricText;
+    PlayerData.currentSongIndex = PlayerData.queue.findIndex(each => {
         return each.id === song.id;
     });
-    manuallyPausedLocal = manuallyPaused;
-    isSongPlaying = isPlaying;
-    isBuffering = buffering;
-    lyricsLocal = lyrics;
-    lyricTextLocal = lyricText;
 
 
-    const changeRepeat = e => {
-        e.stopPropagation();
-        localStorage.setItem("repeatType",repeatType+1 > 2 ? 0 : repeatType+1);
-        whichRepeat = repeatType+1 > 2 ? 0 : repeatType+1;
-        setRepeatType(prev => prev+1 > 2 ? 0 : prev+1);
-    };
-    pauseOrPlay = async e => {
-        e && e.stopPropagation && e.stopPropagation();
-        if (isSongPlaying) {
-            setManuallyPaused(true);
-            audio.pause();
-        } else {
-            setManuallyPaused(false);
-            audio.play();
-            setTimeout(() => {
-                if (audio.readyState <= 2 && !isBuffering) {
-                    waiting();
+    class SeekData {
+
+        static #forwardInUse = false;
+        static #rewindInUse = false;
+        static #seekTimer = 0;
+        static #curTime = null;
+        static #newCurTime = null;
+    
+        static move(direction) {
+            if (direction === "forward") this.#forwardInUse = true;
+            if (direction === "rewind") this.#rewindInUse = true;
+            this.#curTime = audio.currentTime;
+    
+            const duration = audio.duration;
+            this.#seekTimer += direction === "forward" ? skipSecs : skipSecs * -1;
+            this.#newCurTime = (() => {
+                if (direction === "forward") {
+                    return this.#curTime + this.#seekTimer > duration ? duration : this.#curTime + this.#seekTimer;
                 }
+                return this.#curTime + this.#seekTimer < 0 ? 0 : this.#curTime + this.#seekTimer;
+            })();
+    
+            PlayerData.range.value = this.#newCurTime;
+            PlayerData.percent = PlayerData.range.value/PlayerData.range.max * 100;
+            PlayerData.range.style.background = changeColor(PlayerData.percent, PlayerData.bufferPercent);
+        }
+    
+        static inUse(direction = null) {
+            if (direction === null) return this.#forwardInUse || this.#rewindInUse;
+            if (direction === "forward") return this.#forwardInUse;
+            if (direction === "rewind") return this.#rewindInUse;
+        }
+    
+        static #set() {
+            audio.currentTime = this.#newCurTime;
+        }
+    
+        static release(direction = null) {
+            if (direction === "forward") this.#forwardInUse = false;
+            else if (direction === "rewind") this.#rewindInUse = false;
+            else {
+                this.#forwardInUse = false;
+                this.#rewindInUse = false;
+            }
+            this.#seekTimer = 0;
+            this.#curTime = null;
+            this.#set();
+            this.#newCurTime = null;
+        }
+
+    }
+
+
+    pauseOrPlay = (e) => {
+        e && e.stopPropagation && e.stopPropagation();
+
+        if (!PlayerData.manuallyPaused) {
+            audio.pause();
+            onpaused();
+        }
+        else {
+            audio.play()
+            .then(() => {
+                if (!trackingTimer.hasStarted()) trackingTimer.start();
+            });
+            setTimeout(() => {
+                if (audio.readyState <= 2 && !PlayerData.buffering) waiting();
             }, 500);
         }
     };
-    const openQueue = e => {
+
+    const changeRepeat = (e) => {
+        e && e.stopPropagation && e.stopPropagation();
+        setRepeatType(prev => {
+            const newVal = prev+1 > 2 ? 0 : prev+1;
+            PlayerData.repeatType = newVal;
+            localStorage.setItem("repeatType", newVal);
+            return newVal;
+        });
+    };
+    const openQueue = (e) => {
         e && e.stopPropagation();
         documentClick(e);
         setQueueOpened(!queueOpened);
     };
-    goToNext = e => {
+    const goToNext = (e) => {
         e && e.stopPropagation && e.stopPropagation();
-        if (actualQueue.length === 1) {
-            audio.currentTime = 0;
-        } else {
+        if (PlayerData.queue.length === 1) audio.currentTime = 0;
+        else {
             const findNextIndex = () => {
                 let found = false;
-                let nowIndex = currentSongIndex;
+                let nowIndex = PlayerData.currentSongIndex;
                 let nextIndex;
                 while (!found) {
-                    nextIndex = nowIndex < actualQueue.length - 1 ? nowIndex + 1 : 0;
-                    const nextSong = actualQueue[nextIndex];
-                    if (Object.keys(nextSong).length < 2) {
-                        nowIndex = nextIndex;
-                    } else {
-                        found = true;
-                    }
+                    nextIndex = nowIndex < PlayerData.queue.length - 1 ? nowIndex + 1 : 0;
+                    const nextSong = PlayerData.queue[nextIndex];
+                    if (Object.keys(nextSong).length < 2) nowIndex = nextIndex;
+                    else found = true;
                 }
                 return nextIndex;
             };
             const nextIndex = findNextIndex();
-            setSong(actualQueue[nextIndex]);
-            currentSongIndex = nextIndex;
+            setSong(PlayerData.queue[nextIndex]);
+            PlayerData.currentSongIndex = nextIndex;
         }
         setSongPaused(true);
     };
-    goToPrevious = e => {
+    const goToPrevious = (e) => {
         e && e.stopPropagation && e.stopPropagation();
         setSongPaused(true);
-        if (actualQueue.length === 1 || audio.currentTime > 10) {
+        if (PlayerData.queue.length === 1 || audio.currentTime > 10) {
             audio.currentTime = 0;
             trackingTimer.stop();
             trackingTimer = new Timer(30, addToRecentlyPlayed);
             if (!trackingTimer.hasStarted() && !audio.paused) trackingTimer.start();
-        } else {
+        }
+        else {
             const findPreviousIndex = () => {
                 let found = false;
-                let nowIndex = currentSongIndex;
+                let nowIndex = PlayerData.currentSongIndex;
                 let previousIndex;
                 while (!found) {
-                    previousIndex = nowIndex === 0 ? actualQueue.length - 1 : nowIndex - 1;
-                    const previousSong = actualQueue[previousIndex];
-                    if (Object.keys(previousSong).length < 2) {
-                        nowIndex = previousIndex;
-                    } else {
-                        found = true;
-                    }
+                    previousIndex = nowIndex === 0 ? PlayerData.queue.length - 1 : nowIndex - 1;
+                    const previousSong = PlayerData.queue[previousIndex];
+                    if (Object.keys(previousSong).length < 2) nowIndex = previousIndex;
+                    else found = true;
                 }
                 return previousIndex;
             };
             const prevIndex = findPreviousIndex();
-            setSong(actualQueue[prevIndex]);
-            currentSongIndex = prevIndex;
+            setSong(PlayerData.queue[prevIndex]);
+            PlayerData.currentSongIndex = prevIndex;
         }
     };
     const shutdown = () => {
@@ -309,118 +323,116 @@ const Player = () => {
         return arr;
     };
     const seekShortcut = (diff) => {
+        if (isNaN(audio.duration)) return;
         const amount = diff * 0.1 * audio.duration;
         audio.currentTime = amount;
-        range.value = amount;
-        percent = range.value/range.max * 100;
-        range.style.background = changeColor(percent,bufferPercent);
+        PlayerData.range.value = amount;
+        PlayerData.percent = PlayerData.range.value/PlayerData.range.max * 100;
+        PlayerData.range.style.background = changeColor(PlayerData.percent, PlayerData.bufferPercent);
     };
-    const shuffleHandler = async e => {
-
+    const shuffleHandler = async (e) => {
         e.stopPropagation();
-
-        if (!shuffle && actualQueue.length > 3) {
-            const dummyQueue = actualQueue;
+        if (!shuffle && PlayerData.queue.length > 3) {
+            const dummyQueue = PlayerData.queue;
             const index = dummyQueue.indexOf(song);
             [dummyQueue[0], dummyQueue[index]] = [dummyQueue[index], dummyQueue[0]];
-            const shuffled = randomize(dummyQueue.slice(1, actualQueue.length));
+            const shuffled = randomize(dummyQueue.slice(1, PlayerData.queue.length));
             setQueue(shuffled);
             setShuffle(true);
             await wait(500);
             setShuffle(false);
         }
-
     };
 
 
-    const volumeinput = e => {
+    const volumeinput = (e) => {
         e.stopPropagation();
-        volumerange.style.background = changeColorVolume(volumerange.value);
-        audio.volume = volumerange.value/100;
-        mainVolume = volumerange.value/100;
-        setVolume = volumerange.value/100;
+        PlayerData.volumerange.style.background = changeColorVolume(PlayerData.volumerange.value);
+        audio.volume = PlayerData.volumerange.value/100;
+        PlayerData.mainVolume = PlayerData.volumerange.value/100;
+        PlayerData.setVolume = PlayerData.volumerange.value/100;
         setMuteOptions(prev => {
-            return { ...prev, mute: false, lastlevel: volumerange.value };
+            return { ...prev, mute: false, lastlevel: PlayerData.volumerange.value };
         });
     };
-    const volumechange = e => {
+    const volumechange = (e) => {
         e && e.stopPropagation();
-        volumerange.style.background = changeColorVolume(volumerange.value);
-        audio.volume = volumerange.value/100;
-        mainVolume = volumerange.value/100;
-        setVolume = volumerange.value/100;
+        PlayerData.volumerange.style.background = changeColorVolume(PlayerData.volumerange.value);
+        audio.volume = PlayerData.volumerange.value/100;
+        PlayerData.mainVolume = PlayerData.volumerange.value/100;
+        PlayerData.setVolume = PlayerData.volumerange.value/100;
         setMuteOptions(prev => {
-            return { ...prev, mute: false, lastlevel: volumerange.value };
+            return { ...prev, mute: false, lastlevel: PlayerData.volumerange.value };
         });
     };
 
 
     const progressinput = (e) => {
-        range.focus();
-        elapsedTime.innerText = convertTime(range.value);
-        percent = range.value/range.max * 100;
-        range.style.background = changeColor(percent,bufferPercent);
+        PlayerData.range.focus();
+        PlayerData.elapsedTime.innerText = convertTime(PlayerData.range.value);
+        PlayerData.percent = PlayerData.range.value/PlayerData.range.max * 100;
+        PlayerData.range.style.background = changeColor(PlayerData.percent, PlayerData.bufferPercent);
     };
     const progresschange = (e) => {
-        audio.currentTime = range.value;
-        audio.volume = mainVolume;
-        range.blur();
-        percent = range.value/range.max * 100;
-        range.style.background = changeColor(percent,bufferPercent);
+        audio.currentTime = PlayerData.range.value;
+        audio.volume = PlayerData.mainVolume;
+        PlayerData.range.blur();
+        PlayerData.percent = PlayerData.range.value/PlayerData.range.max * 100;
+        PlayerData.range.style.background = changeColor(PlayerData.percent, PlayerData.bufferPercent);
     };
 
 
     const metadata = (e) => {
-        range.max = audio.duration;
-        duration.innerText = convertTime(audio.duration);
-        setBuffering(false);
-        setSongPaused(false);
-        setTimeout(() => {
-            audio.play()
-            .then(() => {
-                if (!trackingTimer.hasStarted()) trackingTimer.start();
-            })
-            .catch(e => {
-                console.log("error",e.message,e.name);
-                setResBar(prev => {
-                    return { ...prev, open: true, msg: "Autoplay disabled!" };
-                });
-                onpaused();
+        PlayerData.range.max = audio.duration;
+        PlayerData.duration.innerText = convertTime(audio.duration);
+
+        if (PlayerData.manuallyPaused) return;
+
+        audio.play()
+        .then(() => {
+            if (!trackingTimer.hasStarted()) trackingTimer.start();
+        })
+        .catch(e => {
+            console.log("error",e.message,e.name);
+            setResBar(prev => {
+                return { ...prev, open: true, msg: "Autoplay disabled!" };
             });
-        }, 500);
+            onpaused();
+        });
     };
     const waiting = (e) => {
         setBuffering(true);
         setSongPaused(true);
+        setIsPlaying(false);
         if (trackingTimer.canPause()) trackingTimer.pause();
     };
     const timeupdate = (e) => {
 
-        elapsedTime.innerText = convertTime(audio.currentTime);
+        PlayerData.elapsedTime.innerText = convertTime(audio.currentTime);
 
-        if (lyricsLocal.length > 0 && song.lyrics && song.sync) {
+        if (PlayerData.lyrics.length > 0 && song.lyrics && song.sync) {
             let found = false;
-            for (let i=0; i<lyricsLocal.length; i++) {
-                const each = lyricsLocal[i];
+            for (let i=0; i<PlayerData.lyrics.length; i++) {
+                const each = PlayerData.lyrics[i];
                 if (audio.currentTime < each.from) break;
                 if (audio.currentTime <= each.to) {
                     found = true;
-                    if (currentLyricIndex !== i) {
+                    if (PlayerData.currentLyricIndex !== i) {
                         setLyricText(each);
-                        currentLyricIndex = i;
+                        PlayerData.currentLyricIndex = i;
                     }
                     break;
                 }
             }
-            if (Object.keys(lyricTextLocal).length > 0 && !found) setLyricText({});
+            if (Object.keys(PlayerData.lyricsText).length > 0 && !found) setLyricText({});
         }
 
-        if (range === document.activeElement) return;
+        if (PlayerData.range === document.activeElement) return;
 
         if (SeekData.inUse()) return;
 
-        range.value = audio.currentTime;
-        percent = range.value/range.max * 100;
+        PlayerData.range.value = audio.currentTime;
+        PlayerData.percent = PlayerData.range.value/PlayerData.range.max * 100;
         let value = 0;
         try {
             for (let i=0; i<audio.buffered.length; i++) {
@@ -430,26 +442,28 @@ const Player = () => {
                 }
             }
             // value = (audio.buffered && audio.buffered.end(audio.buffered.length - 1));
-        } catch(e) {
+        }
+        catch(e) {
             value = 0;
         }
-        bufferPercent = (value/range.max) * 100;
-        range.style.background = changeColor(percent,bufferPercent);
+        PlayerData.bufferPercent = (value/PlayerData.range.max) * 100;
+        PlayerData.range.style.background = changeColor(PlayerData.percent, PlayerData.bufferPercent);
 
     };
     const canplay = (e) => {
-        if (!manuallyPausedLocal) {
-            setBuffering(false);
-            setSongPaused(false);
-            if (trackingTimer.canContinue()) trackingTimer.continue();
-        }
+        setBuffering(false);
+        if (PlayerData.manuallyPaused) return;
+
+        setSongPaused(false);
+        setIsPlaying(true);
+        if (trackingTimer.hasStarted() && trackingTimer.canContinue()) trackingTimer.continue();
     };
     const ended = (e) => {
-        range.value = 0;
-        elapsedTime.innerText = "0: 00";
+        PlayerData.range.value = 0;
+        PlayerData.elapsedTime.innerText = "0: 00";
         trackingTimer.stop();
-        range.style.background = changeColor(0,0);
-        if (whichRepeat === 2) {
+        PlayerData.range.style.background = changeColor(0,0);
+        if (PlayerData.repeatType === 2) {
             audio.currentTime = 0;
             setTimeout(() => {
                 audio.play();
@@ -458,12 +472,12 @@ const Player = () => {
             trackingTimer = new Timer(30, addToRecentlyPlayed);
             if (!trackingTimer.hasStarted()) trackingTimer.start();
         }
-        else if (whichRepeat === 0) {
+        else if (PlayerData.repeatType === 0) {
             setIsPlaying(false);
             setSongPaused(true);
         }
         else {
-            if (actualQueue.length === 1) {
+            if (PlayerData.queue.length === 1) {
                 audio.currentTime = 0;
                 setTimeout(() => {
                     audio.play();
@@ -472,25 +486,25 @@ const Player = () => {
                 trackingTimer = new Timer(30, addToRecentlyPlayed);
                 if (!trackingTimer.hasStarted()) trackingTimer.start();
             }
-            else {
-                goToNext();
-            }
+            else goToNext();
         }
     };
-    const onpaused = async (e) => {
+    const onpaused = (e) => {
         setManuallyPaused(true);
         setSongPaused(true);
+        setBuffering(false);
         setIsPlaying(false);
         if (trackingTimer.canPause()) trackingTimer.pause();
         document.title = "StudioMusic";
     };
-    const onplaying = async (e) => {
+    const onplaying = (e) => {
         setManuallyPaused(false);
         setSongPaused(false);
         setIsPlaying(true);
         if (trackingTimer.canContinue()) trackingTimer.continue();
         document.title = `${song.Title || song.Album} | StudioMusic`;
     };
+
 
     const forward = () => {
         if (SeekData.inUse("rewind")) return;
@@ -502,127 +516,162 @@ const Player = () => {
     };
     const onkeydown = (e) => {
 
-        if (e.keyCode === 17) ctrlKey = true;
-        if (e.keyCode === 86) vKey = true
+        if (global.searchBarOpen) return;
+
+        // volume up - up arrow
+        if (e.keyCode === 38) {
+            e.preventDefault();
+            const val = parseFloat(PlayerData.volumerange.value);
+            PlayerData.volumerange.value = val+5 > 100 ? 100 : val+5;
+            volumechange();
+            setResBar(prev => {
+                return { ...prev, open: true, msg: `Volume: ${Math.floor(PlayerData.volumerange.value)}%` };
+            });
+            return;
+        }
+
+        // forward - right arrow
+        if (e.keyCode === 39) {
+            e.preventDefault();
+            forward();
+            return;
+        }
+
+        // rewind - left arrow
+        if (e.keyCode === 37) {
+            e.preventDefault();
+            rewind();
+            return;
+        }
+        
+        // volume down - down arrow
+        if (e.keyCode === 40) {
+            e.preventDefault();
+            const val = parseFloat(PlayerData.volumerange.value);
+            PlayerData.volumerange.value = val-5 < 0 ? 0 : val-5;
+            volumechange();
+            setResBar(prev => {
+                return { ...prev, open: true, msg: `Volume: ${Math.floor(PlayerData.volumerange.value)}%` };
+            });
+            return;
+        }
+
+    };
+    const onkeyup = (e) => {
 
         if (global.searchBarOpen) return;
 
-        if (e.keyCode === 32 && !isBuffering) {
+        // repeat
+        if (e.keyCode === 82) {
             e.preventDefault();
-            pauseOrPlay();
+            changeRepeat();
+            setResBar(prev => {
+                return {
+                    ...prev,
+                    open: true,
+                    msg: (() => {
+                        if (PlayerData.repeatType === 0) return "Repeat Off";
+                        if (PlayerData.repeatType === 1) return "Repeat All";
+                        if (PlayerData.repeatType === 2) return "Repeat One";
+                    })()
+                };
+            });
+            return;
         }
 
+        // pause/play - space bar
+        if (e.keyCode === 32) {
+            e.preventDefault();
+            pauseOrPlay();
+            return;
+        }
+
+        // mute/unmute - m
         if (e.keyCode === 77) {
-            const val = parseFloat(volumerange.value);
+            const val = parseFloat(PlayerData.volumerange.value);
             setMuteOptions(prev => {
                 if (prev.mute) {
                     const val = prev.lastlevel;
-                    volumerange.value = val;
-                    volumerange.style.background = changeColorVolume(volumerange.value);
-                    audio.volume = volumerange.value/100;
-                    mainVolume = volumerange.value/100;
-                    setVolume = volumerange.value/100;
+                    PlayerData.volumerange.value = val;
+                    PlayerData.volumerange.style.background = changeColorVolume(PlayerData.volumerange.value);
+                    audio.volume = PlayerData.volumerange.value/100;
+                    PlayerData.mainVolume = PlayerData.volumerange.value/100;
+                    PlayerData.setVolume = PlayerData.volumerange.value/100;
                     setResBar(pre => {
                         return { ...pre, open: true, msg: `Volume: ${val}%` };
                     });
                     return { ...prev, mute: false };
                 } else {
-                    volumerange.value = 0;
-                    volumerange.style.background = changeColorVolume(volumerange.value);
-                    audio.volume = volumerange.value/100;
-                    mainVolume = volumerange.value/100;
-                    setVolume = volumerange.value/100;
+                    PlayerData.volumerange.value = 0;
+                    PlayerData.volumerange.style.background = changeColorVolume(PlayerData.volumerange.value);
+                    audio.volume = PlayerData.volumerange.value/100;
+                    PlayerData.mainVolume = PlayerData.volumerange.value/100;
+                    PlayerData.setVolume = PlayerData.volumerange.value/100;
                     setResBar(pre => {
                         return { ...pre, open: true, msg: `Volume: 0%` };
                     });
                     return { ...prev, mute: true, lastlevel: val };
                 }
             });
+            return;
         }
 
+        // next - n
         if (e.keyCode === 78) {
             e.preventDefault();
             goToNext();
+            return;
         }
 
+        // previous - p
         if (e.keyCode === 80) {
             e.preventDefault();
             goToPrevious();
+            return;
         }
 
-        if (e.keyCode === 38 && !global.searchBarOpen) {
-            e.preventDefault();
-            const val = parseFloat(volumerange.value);
-            volumerange.value = val+5 > 100 ? 100 : val+5;
-            volumechange();
-            setResBar(prev => {
-                return { ...prev, open: true, msg: `Volume: ${Math.floor(volumerange.value)}%` };
-            });
-        }
-
-        if (e.keyCode === 39) {
-            e.preventDefault();
-            forward();
-        }
-
-        if (e.keyCode === 37) {
-            e.preventDefault();
-            rewind();
-        }
-        
-        if (e.keyCode === 40 && !global.searchBarOpen) {
-            e.preventDefault();
-            const val = parseFloat(volumerange.value);
-            volumerange.value = val-5 < 0 ? 0 : val-5;
-            volumechange();
-            setResBar(prev => {
-                return { ...prev, open: true, msg: `Volume: ${Math.floor(volumerange.value)}%` };
-            });
-        }
-
-    };
-    const onkeyup = (e) => {
-        if (e.keyCode === 17) ctrlKey = false;
-        if (e.keyCode === 86) vKey = false;
-
+        // seek - 0-9
         if (e.keyCode >= 48 && e.keyCode <= 57) {
             seekShortcut(e.keyCode - 48);
+            return;
         }
 
+        // seek 0-9
         if (e.keyCode >= 96 && e.keyCode <= 105) {
             seekShortcut(e.keyCode - 96);
+            return;
         }
 
+        // forward - right arrow
         if (e.keyCode === 39) {
             e.preventDefault();
             if (SeekData.inUse("forward")) SeekData.release();
+            return;
         }
 
+        // rewind - left arrow
         if (e.keyCode === 37) {
             e.preventDefault();
             if (SeekData.inUse("rewind")) SeekData.release();
-        }
-    };
-
-    const seek = e => {
-        if (e.action === "seekforward") {
-            forward();
-        }
-        else if (e.action === "seekbackward") {
-            rewind();
-        }
-        else if (e.action === "seekto") {
-            audio.currentTime = e.seekTime;
-        };
-    };
-
-    const cacheNextSong = async () => {
-        if (actualQueue.length === 1) {
             return;
         }
-        const curIndex = actualQueue.findIndex(e => e.id === song.id);
-        const nextIndex = actualQueue.length-1 === curIndex ? 0 : curIndex+1;
-        const nextSong = actualQueue[nextIndex];
+
+    };
+
+
+    const seek = (e) => {
+        if (e.action === "seekforward") forward();
+        else if (e.action === "seekbackward") rewind();
+        else if (e.action === "seekto") audio.currentTime = e.seekTime;
+    };
+
+
+    const cacheNextSong = async () => {
+        if (PlayerData.queue.length === 1) return;
+
+        const curIndex = PlayerData.queue.findIndex(e => e.id === song.id);
+        const nextIndex = PlayerData.queue.length-1 === curIndex ? 0 : curIndex+1;
+        const nextSong = PlayerData.queue[nextIndex];
 
         const options = {
             method: "GET",
@@ -632,20 +681,16 @@ const Player = () => {
         };
         const cache = await caches.open("song-data");
         const songdata = await cache.match(nextSong.url);
-        if (songdata) {
-            return;
-        }
+        if (songdata) return;
         cache.add(new Request(nextSong.url, options));
     };
-
     const addToRecentlyPlayed = () => {
         APIService.addToRecentlyPlayed({ albumId: song._albumId });
         if (shouldCache) {
             cacheNextSong();
         }
     };
-
-    const documentClick = e => {
+    const documentClick = (e) => {
         if (openerDetails.open) {
             setOpenerDetails(prev => {
                 return { ...prev, open: false };
@@ -653,9 +698,9 @@ const Player = () => {
         }
     };
 
+
     useEffect(() => {
-        setPreLoaded(false);
-        currentLyricIndex = null;
+        PlayerData.currentLyricIndex = null;
         setLyricText("");
 
         if (Object.keys(song).length > 0) {
@@ -683,39 +728,37 @@ const Player = () => {
             document.title = "StudioMusic";
             if (trackingTimer) {
                 trackingTimer.stop();
-                trackingTimer = null;
             }
         };
     },[song]);
 
     useEffect(() => {
 
-        audio.volume = setVolume;
-        elapsedTime = document.querySelector(".elapsedtime");
-        duration = document.querySelector(".progressduration");
-        range = document.querySelector(".range");
-        volumerange = document.querySelector(".volumerange");
+        audio.volume = PlayerData.setVolume;
+        PlayerData.elapsedTime = document.querySelector(".elapsedtime");
+        PlayerData.duration = document.querySelector(".progressduration");
+        PlayerData.range = document.querySelector(".range");
+        PlayerData.volumerange = document.querySelector(".volumerange");
         const rType = parseInt(localStorage.getItem("repeatType"));
-        whichRepeat = 1;
+        PlayerData.repeatType = 1;
         if (rType) {
             setRepeatType(rType);
-            whichRepeat = rType;
+            PlayerData.repeatType = rType;
         }
 
-        document.addEventListener("keydown",onkeydown);
-        document.addEventListener("keyup",onkeyup);
-        // document.addEventListener("click",documentClick);
+        document.addEventListener("keydown", onkeydown);
+        document.addEventListener("keyup", onkeyup);
 
-        volumerange.value = audio.volume * 100;
-        volumerange.style.background = changeColorVolume(volumerange.value);
-        volumerange.addEventListener("input",volumeinput);
-        volumerange.addEventListener("change",volumechange);
-        range && range.addEventListener("input",progressinput);
-        range && range.addEventListener("change",progresschange);
+        PlayerData.volumerange.value = audio.volume * 100;
+        PlayerData.volumerange.style.background = changeColorVolume(PlayerData.volumerange.value);
 
-        // setIsPlaying(true);
-        // percent = 0;
-        duration.innerText = "0: 00";
+        PlayerData.volumerange.addEventListener("input", volumeinput);
+        PlayerData.volumerange.addEventListener("change", volumechange);
+
+        PlayerData.range.addEventListener("input", progressinput);
+        PlayerData.range.addEventListener("change", progresschange);
+
+        PlayerData.duration.innerText = "0: 00";
 
         if (Object.keys(song).length > 0) {
             // let LINK;
@@ -734,12 +777,12 @@ const Player = () => {
             // audio.src = LINK;
             audio.src = song.url;
         }
-        else {
-            shutdown();
-        }
+        else shutdown();
 
-        setIsPlaying(true);
         setBuffering(true);
+        setIsPlaying(true);
+        setSongPaused(true);
+        setManuallyPaused(false);
         audio.addEventListener("loadedmetadata", metadata);
         audio.addEventListener("waiting", waiting);
         audio.addEventListener("timeupdate", timeupdate);
@@ -749,26 +792,26 @@ const Player = () => {
         audio.addEventListener("playing", onplaying);
 
         return () => {
-            document.removeEventListener("keydown",onkeydown);
-            document.removeEventListener("keyup",onkeyup);
-            // document.removeEventListener("click",documentClick);
+            document.removeEventListener("keydown", onkeydown);
+            document.removeEventListener("keyup", onkeyup);
 
-            volumerange.removeEventListener("input",volumeinput);
-            volumerange.removeEventListener("change",volumechange);
-            range && range.removeEventListener("input",progressinput);
-            range && range.removeEventListener("change",progresschange);
+            PlayerData.volumerange.removeEventListener("input", volumeinput);
+            PlayerData.volumerange.removeEventListener("change", volumechange);
+            PlayerData.range.removeEventListener("input", progressinput);
+            PlayerData.range.removeEventListener("change", progresschange);
 
-            audio.removeEventListener("loadedmetadata",metadata);
-            audio.removeEventListener("waiting",waiting);
-            audio.removeEventListener("timeupdate",timeupdate);
-            audio.removeEventListener("canplay",canplay);
+            audio.removeEventListener("loadedmetadata", metadata);
+            audio.removeEventListener("waiting", waiting);
+            audio.removeEventListener("timeupdate", timeupdate);
+            audio.removeEventListener("canplay", canplay);
             // audio.removeEventListener("play",onplay);
-            audio.removeEventListener("ended",ended);
-            audio.removeEventListener("pause",onpaused);
-            audio.removeEventListener("playing",onplaying);
+            audio.removeEventListener("ended", ended);
+            audio.removeEventListener("pause", onpaused);
+            audio.removeEventListener("playing", onplaying);
         };
 
     }, [song, update]);
+
 
     return(
         <div className="dummycover">
@@ -787,8 +830,8 @@ const Player = () => {
                                     <>
                                     {
                                         buffering ? <div className="bufferloader"></div> : 
-                                        <img className="mainplayimg" onClick={pauseOrPlay} src={ isSongPlaying ? Pause : Play } alt=""
-                                        title={ isSongPlaying ? "Pause" : "Play" } />
+                                        <img className="mainplayimg" onClick={pauseOrPlay} src={ PlayerData.isPlaying ? Pause : Play } alt=""
+                                        title={ PlayerData.isPlaying ? "Pause" : "Play" } />
                                     }
                                     </> :
                                     <img className="mainplayimg" src={Play} title="Play" alt="" />
@@ -865,7 +908,7 @@ const Player = () => {
                                 } />
                             </div>
                             {
-                                screenLocal.show ? "" :
+                                PlayerData.screen.show ? "" :
                                 <div className="queueopener" onClick={openQueue}>
                                     <img src={queueOpened ? downArrow : upArrow} alt="" title="Player" />
                                 </div>
@@ -941,26 +984,27 @@ const FullScreen = () => {
     }, []);
     
     return(
-        <div className="full-display">
-            <div className="inner-full-display" style={{ backgroundColor: lessen(0.2) }}>
-                <div className="imageholder">
-                    <img src={song.Thumbnail} alt=""/>
-                </div>
-                {/* <p className="display-title">{song.Title || song.Album}</p> */}
-                <div className="controls-container">
-                    <Button className="button-control" onClick={goToPrevious}>
-                        <img src={previous} alt="" title="Previous Song / Rewind" />
-                    </Button>
-                    <Button className="button-control" onClick={pauseOrPlay}>
-                        <img src={Pause} alt="" title="Play / Pause" />
-                    </Button>
-                    <Button className="button-control" onClick={goToNext}>
-                        <img src={next} alt="" title="Next Song" />
-                    </Button>
-                </div>
-                <div className="bottombar"></div>
-            </div>
-        </div>
+        <></>
+        // <div className="full-display">
+        //     <div className="inner-full-display" style={{ backgroundColor: lessen(0.2) }}>
+        //         <div className="imageholder">
+        //             <img src={song.Thumbnail} alt=""/>
+        //         </div>
+        //         {/* <p className="display-title">{song.Title || song.Album}</p> */}
+        //         <div className="controls-container">
+        //             <Button className="button-control" onClick={goToPrevious}>
+        //                 <img src={previous} alt="" title="Previous Song / Rewind" />
+        //             </Button>
+        //             <Button className="button-control" onClick={pauseOrPlay}>
+        //                 <img src={Pause} alt="" title="Play / Pause" />
+        //             </Button>
+        //             <Button className="button-control" onClick={goToNext}>
+        //                 <img src={next} alt="" title="Next Song" />
+        //             </Button>
+        //         </div>
+        //         <div className="bottombar"></div>
+        //     </div>
+        // </div>
     );
 };
 
@@ -1150,6 +1194,8 @@ const KeyboardShortcut = ({ setOpenKeyShort }) => {
         { name: "Volume Up", keys: ["Up"] },
         { name: "Volume Down", keys: ["Down"] },
         { name: "Mute/Unmute", keys: ["M"] },
+        { name: "Open shortcuts", keys: ["K"] },
+        { name: "Repeat type", keys: ["R"] },
         { name: "Seek to specific point (4 meaning 40% of the duration)", keys: ["0 ... 9"] }
     ];
 
@@ -1198,6 +1244,28 @@ const Home = () => {
     const [profileOpen, setProfileOpen] = useContext(ProfileContext);
     const [openerDetails, setOpenerDetails] = useContext(MenuContext);
     const [openKeyShort, setOpenKeyShort] = useContext(KeyShortcutContext);
+
+    const onkeyup = (e) => {
+
+        if (global.searchBarOpen) return;
+
+        // open shortcut
+        if (e.keyCode === 75) {
+            setOpenKeyShort(prev => {
+                return !prev;
+            });
+        }
+
+    };
+
+
+    useEffect(() => {
+        document.addEventListener("keyup", onkeyup);
+        return () => {
+            document.removeEventListener("keyup", onkeyup);
+        };
+    }, []);
+
 
     return(
         <div className="homemain">
