@@ -433,7 +433,29 @@ const Player = () => {
 
         PlayerData.range.value = audio.currentTime;
         PlayerData.percent = PlayerData.range.value/PlayerData.range.max * 100;
+
+        // let value = 0;
+        // try {
+        //     for (let i=0; i<audio.buffered.length; i++) {
+        //         if (audio.currentTime < audio.buffered.end(i)) {
+        //             value = audio.buffered.end(i);
+        //             break;
+        //         }
+        //     }
+        //     // value = (audio.buffered && audio.buffered.end(audio.buffered.length - 1));
+        // }
+        // catch(e) {
+        //     value = 0;
+        // }
+
+        // PlayerData.bufferPercent = (value/PlayerData.range.max) * 100;
+        PlayerData.range.style.background = changeColor(PlayerData.percent, PlayerData.bufferPercent);
+
+    };
+    const onprogress = (e) => {
+
         let value = 0;
+
         try {
             for (let i=0; i<audio.buffered.length; i++) {
                 if (audio.currentTime < audio.buffered.end(i)) {
@@ -441,11 +463,11 @@ const Player = () => {
                     break;
                 }
             }
-            // value = (audio.buffered && audio.buffered.end(audio.buffered.length - 1));
         }
         catch(e) {
             value = 0;
         }
+
         PlayerData.bufferPercent = (value/PlayerData.range.max) * 100;
         PlayerData.range.style.background = changeColor(PlayerData.percent, PlayerData.bufferPercent);
 
@@ -759,6 +781,7 @@ const Player = () => {
         PlayerData.range.addEventListener("change", progresschange);
 
         PlayerData.duration.innerText = "0: 00";
+        PlayerData.bufferPercent = 0;
 
         if (Object.keys(song).length > 0) {
             // let LINK;
@@ -786,6 +809,7 @@ const Player = () => {
         audio.addEventListener("loadedmetadata", metadata);
         audio.addEventListener("waiting", waiting);
         audio.addEventListener("timeupdate", timeupdate);
+        audio.addEventListener("progress", onprogress);
         audio.addEventListener("canplay", canplay);
         audio.addEventListener("ended", ended);
         audio.addEventListener("pause", onpaused);
@@ -803,6 +827,7 @@ const Player = () => {
             audio.removeEventListener("loadedmetadata", metadata);
             audio.removeEventListener("waiting", waiting);
             audio.removeEventListener("timeupdate", timeupdate);
+            audio.removeEventListener("progress", onprogress);
             audio.removeEventListener("canplay", canplay);
             // audio.removeEventListener("play",onplay);
             audio.removeEventListener("ended", ended);

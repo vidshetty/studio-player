@@ -164,7 +164,7 @@ const LyricsPart = ({ song, setTab }) => {
                     <>    
                         {
                             lyrics.map(each => {
-                                return <BetweenLyrics each={each} lyricText={lyricText} />;
+                                return <EachLyric each={each} lyricText={lyricText} />;
                             })
                         }
                     </> : null
