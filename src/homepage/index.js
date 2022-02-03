@@ -540,6 +540,13 @@ const Player = () => {
 
         if (global.searchBarOpen) return;
 
+        // pause/play - space bar
+        if (e.keyCode === 32) {
+            e && e.preventDefault && e.preventDefault();
+            e && e.stopPropagation && e.stopPropagation();
+            return;
+        }
+
         // volume up - up arrow
         if (e.keyCode === 38) {
             e.preventDefault();
@@ -603,7 +610,8 @@ const Player = () => {
 
         // pause/play - space bar
         if (e.keyCode === 32) {
-            e.preventDefault();
+            e && e.preventDefault && e.preventDefault();
+            e && e.stopPropagation && e.stopPropagation();
             pauseOrPlay();
             return;
         }
@@ -682,8 +690,14 @@ const Player = () => {
 
 
     const seek = (e) => {
-        if (e.action === "seekforward") forward();
-        else if (e.action === "seekbackward") rewind();
+        if (e.action === "seekforward") {
+            forward();
+            if (SeekData.inUse("forward")) SeekData.release();
+        }
+        else if (e.action === "seekbackward") {
+            rewind();
+            if (SeekData.inUse("rewind")) SeekData.release();
+        }
         else if (e.action === "seekto") audio.currentTime = e.seekTime;
     };
 
