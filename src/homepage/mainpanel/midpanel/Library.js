@@ -145,6 +145,45 @@ const Between = props => {
     );
 };
 
+const IO = props => {
+
+    const { library = [] } = props;
+
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            const { isIntersecting } = entry;
+            entry.target.children[0].style.display = isIntersecting ? "" : "none";
+        });
+    }, { threshold: 0 });
+
+    useEffect(() => {
+        const rows = document.querySelectorAll(".eachinrow");
+        rows.forEach(row => {
+            observer.observe(row);
+        });
+        return () => {
+            rows.forEach(row => {
+                observer.unobserve(row);
+            });
+        };
+    }, [library]);
+
+    return(
+        <>
+            {
+                library.map(item => {
+                    return(
+                        <div className="eachinrow" key={item.keyId}>
+                            <EachAlbum each={item} { ...props } />
+                        </div>
+                    );
+                })
+            }
+        </>
+    );
+
+};
+
 const NewActualLibrary = () => {
 
     const [library, setLibrary] = useState([]);
@@ -372,14 +411,18 @@ const NewActualLibrary = () => {
                 <div className="libraryname">Library</div>
                 <div className="librarycontainer">
                     <div className="librarygrid">
-                        {
+                        {/* {
                             library.map(item => {
                                 return <Between each={item} openerFunc={handleMenu} keyId={item.keyId}
                                 playingSong={playingSong} setAlbumForPlayer={setAlbumForPlayer}
                                 queue={queue} setQueue={setQueue} playing={playing} setPlaying={setPlaying}
                                 songPaused={songPaused} setSongPaused={setSongPaused} />;
                             })
-                        }
+                        } */}
+                        <IO library={library} openerFunc={handleMenu}
+                            playingSong={playingSong} setAlbumForPlayer={setAlbumForPlayer}
+                            queue={queue} setQueue={setQueue} playing={playing} setPlaying={setPlaying}
+                            songPaused={songPaused} setSongPaused={setSongPaused} />
                     </div>
                 </div>
                 {
