@@ -114,35 +114,67 @@ const EachAlbum = ({
     );
 };
 
+// const Between = props => {
+
+//     const [element, setElement] = useState(null);
+//     const [show, setShow] = useState(false);
+
+//     const observer = new IntersectionObserver(([entry]) => {
+//         const { isIntersecting } = entry;
+//         setShow(isIntersecting);
+//     }, { threshold: 0 });
+
+//     useEffect(() => {
+//         const currentElement = element;
+//         const currentObserver = observer;
+//         if (currentElement) {
+//             currentObserver.observe(currentElement);
+//         }
+
+//         return () => {
+//             if (currentElement) {
+//                 currentObserver.unobserve(currentElement);
+//             }
+//         };
+//     }, [element]);
+
+//     return(
+//         <div className="eachinrow" ref={setElement} key={props.keyId}>
+//             { show ? <EachAlbum { ...props } /> : null }
+//         </div>
+//     );
+// };
+
 const Between = props => {
 
-    const [element, setElement] = useState(null);
+    const { init, observer } = props;
+
+    const element = useRef(null);
     const [show, setShow] = useState(false);
 
-    const observer = new IntersectionObserver(([entry]) => {
-        const { isIntersecting } = entry;
-        setShow(isIntersecting);
-    }, { threshold: 0 });
+    const set = () => {
+        init(element.current.id, setShow);
+    };
 
     useEffect(() => {
-        const currentElement = element;
-        const currentObserver = observer;
-        if (currentElement) {
-            currentObserver.observe(currentElement);
+        if (element.current) {
+            set();
+            observer.observe(element.current);
         }
-
         return () => {
-            if (currentElement) {
-                currentObserver.unobserve(currentElement);
+            if (element.current) {
+                observer.unobserve(element.current);
             }
         };
-    }, [element]);
+    }, []);
 
     return(
-        <div className="eachinrow" ref={setElement} key={props.keyId}>
+        <div className="eachinrow" ref={element} key={props.keyId}
+        id={props.keyId}>
             { show ? <EachAlbum { ...props } /> : null }
         </div>
     );
+
 };
 
 const IO = props => {
@@ -198,6 +230,7 @@ const NewActualLibrary = () => {
     const [, setResObj] = useContext(ResponseBarContext);
     const [playing, setPlaying] = useContext(PlayerContext);
     const [songPaused, setSongPaused] = useContext(SongIsPausedContext);
+    const [elementIds, setElementIds] = useState({});
     const topDiv = useRef(null);
     const grid = useRef(null);
     isOpen = openerDetails.open;
@@ -316,6 +349,19 @@ const NewActualLibrary = () => {
         }
     };
 
+    const init = (id, setShow) => {
+        setElementIds(prev => {
+            prev[id] = setShow;
+            return prev;
+        });
+    };
+
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            elementIds[entry.target.id](entry.isIntersecting);
+        });
+    }, { threshold: 0 });
+
 
     useEffect(() => {
         const call = async () => {
@@ -411,18 +457,19 @@ const NewActualLibrary = () => {
                 <div className="libraryname">Library</div>
                 <div className="librarycontainer">
                     <div className="librarygrid">
-                        {/* {
+                        {
                             library.map(item => {
                                 return <Between each={item} openerFunc={handleMenu} keyId={item.keyId}
                                 playingSong={playingSong} setAlbumForPlayer={setAlbumForPlayer}
                                 queue={queue} setQueue={setQueue} playing={playing} setPlaying={setPlaying}
-                                songPaused={songPaused} setSongPaused={setSongPaused} />;
+                                songPaused={songPaused} setSongPaused={setSongPaused}
+                                init={init} observer={observer} />;
                             })
-                        } */}
-                        <IO library={library} openerFunc={handleMenu}
+                        }
+                        {/* <IO library={library} openerFunc={handleMenu}
                             playingSong={playingSong} setAlbumForPlayer={setAlbumForPlayer}
                             queue={queue} setQueue={setQueue} playing={playing} setPlaying={setPlaying}
-                            songPaused={songPaused} setSongPaused={setSongPaused} />
+                            songPaused={songPaused} setSongPaused={setSongPaused} /> */}
                     </div>
                 </div>
                 {

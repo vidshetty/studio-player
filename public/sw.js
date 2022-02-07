@@ -46,6 +46,7 @@ self.addEventListener("fetch", e => {
         url.includes(".css") ||
         url.includes(".js") ||
         url.includes("font") ||
+        url.includes("googleusercontent") ||
         url === "https://studiomusic.herokuapp.com" ||
         url === "https://studiomusic.herokuapp.com/" ||
         url === "https://studiomusic.herokuapp.com/player"
