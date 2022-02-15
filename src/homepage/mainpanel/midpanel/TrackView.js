@@ -167,6 +167,7 @@ const Trackview = () => {
 
     const call = async () => {
         const res = await APIService.getTrack(params.albumId, params.trackId);
+        if (res === null) return;
         if (res && res.track) {
             setTrack(res.track);
             setReleaseDate(dateToString(res.track.releaseDate));

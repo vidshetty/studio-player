@@ -212,6 +212,7 @@ const NewActualAlbumView = () => {
 
     const call = async () => {
         const res = await APIService.getAlbum(params.albumId);
+        if (res === null) return;
         if (res && res.album) {
             setReleaseDate(dateToString(res.album.releaseDate));
             setAlbum(res.album);
