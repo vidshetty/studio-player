@@ -129,8 +129,8 @@ const TopSearchBar = () => {
             setNum(numLocal+1);
         } else if (e.keyCode === 38 && showListLocal) {
             if (numLocal-1 < 0) {
-                numLocal = 7;
-                setNum(7);
+                numLocal = listLocal.length - 1;
+                setNum(numLocal);
                 return;
             }
             setNum(numLocal-1);

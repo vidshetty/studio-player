@@ -232,13 +232,12 @@ const Player = () => {
             onpaused();
         }
         else {
+            const cur = audio.currentTime;
+            audio.currentTime = cur;
             audio.play()
             .then(() => {
                 if (!trackingTimer.hasStarted()) trackingTimer.start();
             });
-            setTimeout(() => {
-                if (audio.readyState <= 2 && !PlayerData.buffering) waiting();
-            }, 500);
         }
     };
 
