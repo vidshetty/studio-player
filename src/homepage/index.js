@@ -234,6 +234,7 @@ const Player = () => {
         else {
             const cur = audio.currentTime;
             audio.currentTime = cur;
+            setManuallyPaused(false);
             audio.play()
             .then(() => {
                 if (!trackingTimer.hasStarted()) trackingTimer.start();
@@ -519,7 +520,8 @@ const Player = () => {
         document.title = "StudioMusic";
     };
     const onplaying = (e) => {
-        setManuallyPaused(false);
+        // setManuallyPaused(false);
+        setBuffering(false);
         setSongPaused(false);
         setIsPlaying(true);
         if (trackingTimer.canContinue()) trackingTimer.continue();

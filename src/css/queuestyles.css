@@ -826,28 +826,31 @@
     width: 100%;
     height: auto;
     display: flex;
-    /* justify-content: center; */
     align-items: center;
-    font-size: 1em;
+    /* font-size: 1em; */
+    font-size: 1.1em;
     font-weight: 600;
-    /* color: #909090; */
     color: #505050;
     padding: 20px;
     text-align: left;
-    /* text-align: center; */
 }
 .each-lyric.activetext,.art-each-lyric.activetext{
-    color: white;
-    /* font-size: 1.6em; */
-    font-size: 1.75vw;
-    font-weight: 700;
-    /* margin: 30px 0px; */
-    margin: 1vw 0px;
-    padding: 1.5vw;
-    background-color: #151515;
-    /* justify-content: center; */
-    /* text-align: center; */
-    /* border-radius: 10px; */
+    /* color: white; */
+    color: #dddddd;
+    /* font-size: 1.75vw; */
+    font-size: 1.1em;
+    /* font-weight: 700; */
+    font-weight: 600;
+    /* margin: 1vw 0px;
+    padding: 1.5vw; */
+    padding: 20px;
+    /* background-color: #151515; */
+}
+.each-lyric.before{
+    color: #dddddd;
+    font-size: 1.1em;
+    font-weight: 600;
+    padding: 20px;
 }
 .art-each-lyric{
     font-size: 1.1em;

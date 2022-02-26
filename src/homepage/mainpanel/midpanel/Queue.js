@@ -48,8 +48,19 @@ const Loader = () => {
 
 
 const EachLyric = ({ each, lyricText }) => {
+
+    const find = () => {
+        if (each.key < lyricText.key) {
+            return "before";
+        }
+        if (each.key === lyricText.key) {
+            return "activetext";
+        }
+        return "";
+    };
+
     return(
-        <div className={`each-lyric ${each.key === lyricText.key ? "activetext" : ""}`}>
+        <div className={`each-lyric ${find()}`}>
             {each.text}
         </div>
     );
@@ -125,8 +136,7 @@ const LyricsPart = ({ song, setTab }) => {
         activeLyrics.current = document.querySelector(".each-lyric.activetext");
         if (lyricsContainer.current && activeLyrics.current) {
             lyricsContainer.current.scroll({
-                top: activeLyrics.current.offsetTop - (lyricsContainer.current.offsetHeight / 4),
-                behavior: "smooth"
+                top: activeLyrics.current.offsetTop - (lyricsContainer.current.offsetHeight / 4)
             });
         }
     }, [lyricsLoading]);
