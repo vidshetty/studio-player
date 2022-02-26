@@ -61,7 +61,7 @@ const EachLyric = ({ each, lyricText }) => {
 
     return(
         <div className={`each-lyric ${find()}`}>
-            {each.text}
+            {each.words}
         </div>
     );
 };
@@ -136,7 +136,7 @@ const LyricsPart = ({ song, setTab }) => {
         activeLyrics.current = document.querySelector(".each-lyric.activetext");
         if (lyricsContainer.current && activeLyrics.current) {
             lyricsContainer.current.scroll({
-                top: activeLyrics.current.offsetTop - (lyricsContainer.current.offsetHeight / 4)
+                top: activeLyrics.current.offsetTop - (lyricsContainer.current.offsetHeight / 2.5)
             });
         }
     }, [lyricsLoading]);
@@ -146,7 +146,7 @@ const LyricsPart = ({ song, setTab }) => {
         activeLyrics.current = document.querySelector(".each-lyric.activetext");
         if (lyricsContainer.current && activeLyrics.current) {
             lyricsContainer.current.scroll({
-                top: activeLyrics.current.offsetTop - (lyricsContainer.current.offsetHeight / 4),
+                top: activeLyrics.current.offsetTop - (lyricsContainer.current.offsetHeight / 2.5),
                 behavior: "smooth"
             });
         }
@@ -161,7 +161,7 @@ const LyricsPart = ({ song, setTab }) => {
             {
                 lyrics.length > 0 ?
                 <div className="sync-definer">
-                    { song.sync ? "Lyrics are time synced" : "Lyrics are not time synced" }
+                    { song.sync ? "Lyrics are time synced" : "Lyrics are not time synced, yet!" }
                 </div> : null
             }
             <div className="lyrics-part">

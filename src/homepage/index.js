@@ -410,21 +410,44 @@ const Player = () => {
 
         PlayerData.elapsedTime.innerText = convertTime(audio.currentTime);
 
+        // if (PlayerData.lyrics.length > 0 && song.lyrics && song.sync) {
+        //     let found = false;
+        //     for (let i=0; i<PlayerData.lyrics.length; i++) {
+        //         const each = PlayerData.lyrics[i];
+        //         if (audio.currentTime < each.from) break;
+        //         if (audio.currentTime <= each.to) {
+        //             found = true;
+        //             if (PlayerData.currentLyricIndex !== i) {
+        //                 setLyricText(each);
+        //                 PlayerData.currentLyricIndex = i;
+        //             }
+        //             break;
+        //         }
+        //     }
+        //     if (Object.keys(PlayerData.lyricsText).length > 0 && !found) setLyricText({});
+        // }
+
         if (PlayerData.lyrics.length > 0 && song.lyrics && song.sync) {
-            let found = false;
+
+            let rightLyric = null, rightIndex = -1;
+
             for (let i=0; i<PlayerData.lyrics.length; i++) {
                 const each = PlayerData.lyrics[i];
-                if (audio.currentTime < each.from) break;
-                if (audio.currentTime <= each.to) {
-                    found = true;
-                    if (PlayerData.currentLyricIndex !== i) {
-                        setLyricText(each);
-                        PlayerData.currentLyricIndex = i;
-                    }
-                    break;
-                }
+                if ((audio.currentTime)*1000 < each.startTimeMs) break;
+                rightLyric = each;
+                rightIndex = i;
             }
-            if (Object.keys(PlayerData.lyricsText).length > 0 && !found) setLyricText({});
+
+            if (
+                rightLyric !== null && rightIndex > -1 &&
+                PlayerData.currentLyricIndex !== rightIndex
+            ) {
+                setLyricText(rightLyric);
+                PlayerData.currentLyricIndex = rightIndex;
+            }
+
+            if (Object.keys(PlayerData.lyricsText).length > 0 && rightLyric === null) setLyricText({});
+
         }
 
         if (PlayerData.range === document.activeElement) return;
