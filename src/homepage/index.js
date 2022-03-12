@@ -76,6 +76,7 @@ class PlayerData {
     static currentLyricIndex = null;
     static lyrics = null;
     static lyricsText = null;
+    static queueOpened = null;
 }
 
 // Opener
@@ -166,6 +167,7 @@ const Player = () => {
     PlayerData.buffering = buffering;
     PlayerData.lyrics = lyrics;
     PlayerData.lyricsText = lyricText;
+    PlayerData.queueOpened = queueOpened;
     PlayerData.currentSongIndex = PlayerData.queue.findIndex(each => {
         return each.id === song.id;
     });
@@ -427,7 +429,7 @@ const Player = () => {
         //     if (Object.keys(PlayerData.lyricsText).length > 0 && !found) setLyricText({});
         // }
 
-        if (PlayerData.lyrics.length > 0 && song.lyrics && song.sync) {
+        if (PlayerData.lyrics.length > 0 && PlayerData.queueOpened && song.lyrics && song.sync) {
 
             let rightLyric = null, rightIndex = -1;
 
@@ -761,7 +763,7 @@ const Player = () => {
 
     useEffect(() => {
         PlayerData.currentLyricIndex = null;
-        setLyricText("");
+        setLyricText({});
 
         if (Object.keys(song).length > 0) {
             trackingTimer = new Timer(20, addToRecentlyPlayed);
@@ -819,7 +821,9 @@ const Player = () => {
         PlayerData.range.addEventListener("change", progresschange);
 
         PlayerData.duration.innerText = "0: 00";
+        PlayerData.percent = 0;
         PlayerData.bufferPercent = 0;
+        PlayerData.range.style.background = changeColor(0,0);
 
         if (Object.keys(song).length > 0) {
             // let LINK;
