@@ -69,28 +69,41 @@ const Opening2 = () => {
     };
 
     const call = async () => {
+
         await wait(1000);
         setLoaderClass("opening-loader");
-        let breakOut = false;
+
+        let breakOut = false, error = false;
+
         for (let i=0; i<3 && !breakOut; i++) {
+
             (async () => {
                 const res = await APIService.activateCheck();
                 if (res.status === "active") {
                     APIService.recordTime();
                     await wait(500);
                     breakOut = true;
+                    if (error) return;
                     setRedirectValue(true);
                 }
             })();
+
             setTimeout(() => {
                 if (breakOut) return;
                 setResObj(prev => {
                     return { ...prev, open: true, msg: "Error connecting, trying again...." };
                 });
             }, 4000);
+
             await wait(6000);
+
         }
-        if (!breakOut) setErrorOnRepeat();
+
+        if (!breakOut) {
+            error = true;
+            setErrorOnRepeat();
+        }
+        
     };
 
     useEffect(() => {
