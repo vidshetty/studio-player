@@ -68,41 +68,97 @@ const Opening2 = () => {
         }, 1000);
     };
 
+    const callApi = async () => {
+
+        let resultFound = false, error = false;
+
+        (async () => {
+
+            await Promise.all([
+                APIService.activateCheck(),
+                APIService.recordTime()
+            ]);
+
+            if (error) return;
+            resultFound = true;
+
+        })();
+
+        await wait(4000);
+
+        if (resultFound) return true;
+
+        error = true;
+
+        return false;
+
+    };
+
     const call = async () => {
 
         await wait(1000);
         setLoaderClass("opening-loader");
 
-        let breakOut = false, error = false;
+        let isError = true;
 
-        for (let i=0; i<3 && !breakOut; i++) {
+        for (let i=0; i<3; i++) {
 
-            (async () => {
-                const res = await APIService.activateCheck();
-                if (res.status === "active") {
-                    APIService.recordTime();
-                    await wait(500);
-                    breakOut = true;
-                    if (error) return;
-                    setRedirectValue(true);
-                }
-            })();
+            const found = await callApi();
 
-            setTimeout(() => {
-                if (breakOut) return;
-                setResObj(prev => {
-                    return { ...prev, open: true, msg: "Error connecting, trying again...." };
-                });
-            }, 4000);
+            if (found) {
+                isError = false;
+                break;
+            }
 
-            await wait(6000);
+            setResObj(prev => {
+                return { ...prev, open: true, msg: "Error connecting, trying again...." };
+            });
+
+            await wait(3000);
 
         }
 
-        if (!breakOut) {
-            error = true;
+        if (isError) {
             setErrorOnRepeat();
+            return;
         }
+
+        setRedirectValue(true);
+
+        // let breakOut = false, error = false, move = true;
+
+        // for (let i=0; i<3 && !breakOut; i++) {
+
+        //     (async () => {
+        //         const res = await APIService.activateCheck();
+        //         if (res.status === "active") {
+        //             APIService.recordTime();
+        //             await wait(500);
+        //             breakOut = true;
+        //             if (error) return;
+        //             if (!move) return;
+        //             setRedirectValue(true);
+        //         }
+        //     })();
+
+        //     setTimeout(() => {
+        //         if (breakOut) return;
+        //         move = false;
+        //         setResObj(prev => {
+        //             return { ...prev, open: true, msg: "Error connecting, trying again...." };
+        //         });
+        //     }, 4000);
+
+        //     await wait(6000);
+
+        //     move = true;
+
+        // }
+
+        // if (!breakOut) {
+        //     error = true;
+        //     setErrorOnRepeat();
+        // }
         
     };
 
