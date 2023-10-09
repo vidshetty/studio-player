@@ -166,6 +166,6 @@ export const basename = "";
 // export const basename = "/player";
 // export const prefix = "";
 export const sharingBaseLink = (() => {
-    return `https://studiomusic.herokuapp.com${prefix}${basename}`;
+    return `https://studiomusic.app${prefix}${basename}`;
     // return `http://localhost:3000${prefix}${basename}`;
 })();

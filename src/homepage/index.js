@@ -4,6 +4,7 @@ import "../css/playerstyles.css";
 import "../css/albumview.css";
 import MainPanel from "./mainpanel";
 import React, { useState, useEffect, useRef, useContext } from "react";
+import Hls from "hls.js";
 import Play from "../assets/playbutton-white.svg";
 import Pause from "../assets/pausebutton-white.svg";
 import Close from "../assets/deletewhite.svg";
@@ -840,7 +841,24 @@ const Player = () => {
             //     LINK = song.url;
             // }
             // audio.src = LINK;
-            audio.src = song.url;
+
+            if (song.url.includes(".m3u8")) {
+
+                const hls = new Hls({
+                    xhrSetup: function(xhr, url) { xhr.withCredentials = true; }
+                });
+
+                hls.loadSource(song.url);
+                hls.attachMedia(audio);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    console.log("hls parsed");
+                });
+
+            }
+            else {
+                audio.src = song.url;
+            }
+
         }
         else shutdown();
 
