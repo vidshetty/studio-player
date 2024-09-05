@@ -6,7 +6,7 @@ export class APIService {
     static #songservers = [];
     static #PRODUCTION = true;
     static #LOCAL_URL = "https://studiomusic.app";
-    // static #LOCAL_URL = "http://192.168.29.77:5000";
+    static #LOCAL_URL = "http://0.0.0.0:5002";
 
     static async keepServersActive() {
 

@@ -205,7 +205,7 @@ const TopSearchBar = () => {
 
 const TopNav = () => {
 
-    const topList = ["Home", "Library", "Search"];
+    const topList = ["Home", "Search", "Library"];
     const [tab, setTab] = useState("");
     const [queueOpened, setQueueOpened] = useContext(QueueOpenedContext);
     const [searchConfig, setSearchConfig] = useContext(SearchContext);
@@ -322,15 +322,26 @@ const TopNav = () => {
                     <div className="centermiddlepart">
                         {
                             topList.map(each => {
-                                return(
-                                    <div className={ tabLocal === each ? "tabs" : "lighttabs" }
-                                    onClick={() => {
-                                        setFuncs(each, tabLocal);
-                                        setRouteFunc(each);
-                                    }}>
-                                        {each}
+                                // return(
+                                //     <div className={ tabLocal === each ? "tabs" : "lighttabs" }
+                                //     onClick={() => {
+                                //         setFuncs(each, tabLocal);
+                                //         setRouteFunc(each);
+                                //     }}>
+                                //         {each}
+                                //     </div>
+                                // ); 
+                                return (
+                                    <div className="outer-tab">
+                                        <div className={ tabLocal === each ? "test-tabs" : "test-lighttabs" }
+                                        onClick={() => {
+                                            setFuncs(each, tabLocal);
+                                            setRouteFunc(each);
+                                        }}>
+                                            {each}
+                                        </div>
                                     </div>
-                                ); 
+                                );
                             })
                         }
                     </div>

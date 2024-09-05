@@ -277,6 +277,13 @@
     align-items: center;
     /* background-color: blue; */
 }
+.outer-tab {
+    height: 100%;
+    margin: 0px 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 .tabs,.lighttabs{
     color: white;
     height: 100%;
@@ -295,6 +302,24 @@
 .lighttabs{
     color: rgba(255,255,255,0.5);
 }
+
+.test-tabs,.test-lighttabs{
+    height: 30px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    border-radius: 15px;
+    background-color: #066BFF;
+    color: white;
+    padding: 0px 20px;
+    font-size: 14px;
+}
+.test-lighttabs{
+    background-color: transparent;
+}
+
 .searchicon{
     width: 15px;
     height: auto;
